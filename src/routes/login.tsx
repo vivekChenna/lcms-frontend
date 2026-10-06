@@ -4,7 +4,10 @@ import { LoginPage } from "@/components/login-page";
 import { loadSession, safeRedirect } from "@/lib/guards";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: z.object({ redirect: z.string().optional() }),
+  validateSearch: z.object({
+    redirect: z.string().optional(),
+    notice: z.enum(["password-changed"]).optional().catch(undefined),
+  }),
   beforeLoad: async ({ context, search }) => {
     let me = null;
     try {
@@ -28,6 +31,6 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginRoute() {
-  const { redirect: to } = Route.useSearch();
-  return <LoginPage redirect={to} />;
+  const { redirect: to, notice } = Route.useSearch();
+  return <LoginPage redirect={to} notice={notice} />;
 }

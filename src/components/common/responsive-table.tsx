@@ -14,7 +14,13 @@ type Props<T> = {
   rows: T[];
   rowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
-  /** Phone layout: title line, 2-4 labelled key facts, badges row. */
+  /** Accessible name of a clickable desktop row, e.g. "Open case LC-2026-184". */
+  rowLabel?: (row: T) => string;
+  /**
+   * Phone layout: title line, 2-4 labelled key facts, badges row. With `onRowClick` the card is
+   * wrapped in a <button>, so it must NOT contain interactive elements (links, buttons, inputs).
+   * Desktop `columns` cells may contain them.
+   */
   renderCard: (row: T) => ReactNode;
   empty?: ReactNode;
   /** Wrapper classes, e.g. a max height so the sticky header sticks while the table scrolls. */
@@ -27,6 +33,7 @@ export function ResponsiveTable<T>({
   rows,
   rowKey,
   onRowClick,
+  rowLabel,
   renderCard,
   empty,
   className,
@@ -59,6 +66,8 @@ export function ResponsiveTable<T>({
   }
 
   const onKey = (e: KeyboardEvent, row: T) => {
+    // only the focused row itself; a link or button inside a cell handles its own keys
+    if (e.target !== e.currentTarget) return;
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       onRowClick?.(row);
@@ -90,7 +99,9 @@ export function ResponsiveTable<T>({
                     onClick: () => onRowClick(row),
                     onKeyDown: (e: KeyboardEvent) => onKey(e, row),
                     tabIndex: 0,
-                    className: "cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50",
+                    ...(rowLabel ? { "aria-label": rowLabel(row) } : {}),
+                    className:
+                      "cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
                   }
                 : {})}
             >

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api/errors";
-import { useLogin } from "@/lib/auth";
+import { useLogin, type LoginNotice } from "@/lib/auth";
 import { safeRedirect } from "@/lib/guards";
 
 const loginSchema = z.object({
@@ -25,7 +25,17 @@ function loginErrorMessage(err: unknown): string {
   return "Could not reach the server. Check your connection and try again.";
 }
 
-export function LoginPage({ redirect }: { redirect?: string | undefined }) {
+const NOTICES: Record<LoginNotice, string> = {
+  "password-changed": "Password changed. Sign in with your new password.",
+};
+
+export function LoginPage({
+  redirect,
+  notice,
+}: {
+  redirect?: string | undefined;
+  notice?: LoginNotice | undefined;
+}) {
   const navigate = useNavigate();
   const login = useLogin();
   const [showPassword, setShowPassword] = useState(false);
@@ -52,6 +62,14 @@ export function LoginPage({ redirect }: { redirect?: string | undefined }) {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} noValidate className="space-y-5">
+            {notice && !login.isError && (
+              <p
+                role="status"
+                className="rounded-md border border-info-border bg-info p-3 text-sm text-info-foreground"
+              >
+                {NOTICES[notice]}
+              </p>
+            )}
             {login.isError && (
               <p
                 role="alert"

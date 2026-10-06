@@ -30,6 +30,7 @@ export function ConfirmDialog({
       onOpenChange={onOpenChange}
       title={title}
       description={description}
+      pending={pending}
       footer={
         <>
           <Button variant="outline" disabled={pending} onClick={() => onOpenChange(false)}>

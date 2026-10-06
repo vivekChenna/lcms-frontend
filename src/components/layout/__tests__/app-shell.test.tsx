@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { cleanup, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Profile, UserRole } from "@/lib/api/types";
@@ -62,6 +62,36 @@ describe("AppShell", () => {
     await ue.click(within(sheet).getByRole("link", { name: "Reports" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(router.state.location.pathname).toBe("/reports");
+  });
+
+  it("closes the navigation sheet whenever the path changes", async () => {
+    setViewport(390);
+    const { ue, router } = setup("viewer");
+    await ue.click(await screen.findByRole("button", { name: /open navigation/i }));
+    await screen.findByRole("dialog");
+    await act(() => router.navigate({ to: "/cases" as never }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  // Headless Chrome reports zero safe-area insets, so the env() padding is pinned by class here.
+  it("pads the rail, topbar, main area and nav sheet for notched phones in landscape", async () => {
+    setViewport(844);
+    const { ue, container } = setup("viewer");
+    await screen.findByText("page body");
+    const aside = container.querySelector("aside")!;
+    expect(aside.className).toContain("pl-[env(safe-area-inset-left)]");
+    expect(aside.className).toContain("md:w-[calc(4.5rem+env(safe-area-inset-left))]");
+    const main = container.querySelector("main")!;
+    expect(main.className).toContain("md:pr-[max(1.5rem,env(safe-area-inset-right))]");
+    expect(main.className).toContain("pl-[max(1rem,env(safe-area-inset-left))]");
+    const header = container.querySelector("header")!;
+    expect(header.className).toContain("pt-[env(safe-area-inset-top)]");
+    expect(header.className).toContain("md:pr-[max(1.5rem,env(safe-area-inset-right))]");
+    expect(header.className).toContain("pl-[max(0.5rem,env(safe-area-inset-left))]");
+    await ue.click(screen.getByRole("button", { name: /open navigation/i }));
+    expect((await screen.findByRole("dialog")).className).toContain(
+      "pl-[env(safe-area-inset-left)]",
+    );
   });
 
   it("collapses the desktop sidebar and remembers it", async () => {

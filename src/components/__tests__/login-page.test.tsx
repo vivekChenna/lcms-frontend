@@ -22,12 +22,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function setup(redirect?: string) {
+function setup(redirect?: string, notice?: "password-changed") {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   queryClient.setQueryData(["cases"], { stale: "from another user" });
   render(
     <QueryClientProvider client={queryClient}>
-      <LoginPage redirect={redirect} />
+      <LoginPage redirect={redirect} notice={notice} />
     </QueryClientProvider>,
   );
   return { queryClient, ue: userEvent.setup() };
@@ -40,6 +40,18 @@ async function signIn(ue: ReturnType<typeof userEvent.setup>, password = "Passwo
 }
 
 describe("LoginPage", () => {
+  it("shows the password-changed notice when asked", () => {
+    setup(undefined, "password-changed");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Password changed. Sign in with your new password.",
+    );
+  });
+
+  it("shows no notice by default", () => {
+    setup();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
   it("shows the server message on a wrong password and stays on the page", async () => {
     fetchMock.mockResolvedValue(
       json(401, { error: { code: "UNAUTHORIZED", message: "Invalid email or password" } }),

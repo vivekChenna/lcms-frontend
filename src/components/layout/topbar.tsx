@@ -5,7 +5,10 @@ import { UserMenu } from "./user-menu";
 
 type Props = { title: string; me: Profile; onOpenNav: () => void };
 
-/** Never overflows: the title truncates; everything else is fixed-size. */
+/**
+ * Never overflows: the title truncates; everything else is fixed-size. Safe areas: top inset
+ * always; left/right below md; from md only the right one (the rail beside it takes the left).
+ */
 export function Topbar({ title, me, onOpenNav }: Props) {
   return (
     <header className="sticky top-0 z-30 flex min-h-14 items-center gap-1 border-b bg-background/95 pt-[env(safe-area-inset-top)] pr-[max(0.5rem,env(safe-area-inset-right))] pl-[max(0.5rem,env(safe-area-inset-left))] backdrop-blur md:gap-2 md:pr-[max(1.5rem,env(safe-area-inset-right))] md:pl-6">

@@ -29,14 +29,18 @@ export function useLogin() {
   });
 }
 
+/** One-time message the login page shows after a forced sign-out. */
+export type LoginNotice = "password-changed";
+
 export function useLogout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useMutation({
-    mutationFn: () => apiJson<unknown>("/auth/logout", { method: "POST" }),
-    onSettled: () => {
+    mutationFn: (_?: { notice?: LoginNotice }) =>
+      apiJson<unknown>("/auth/logout", { method: "POST" }),
+    onSettled: (_data, _error, vars) => {
       queryClient.clear();
-      void navigate({ to: "/login" });
+      void navigate({ to: "/login", search: vars?.notice ? { notice: vars.notice } : {} });
     },
   });
 }

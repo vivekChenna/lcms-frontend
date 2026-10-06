@@ -1,4 +1,4 @@
-import { cleanup, render, renderHook, screen, within } from "@testing-library/react";
+import { act, cleanup, render, renderHook, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
@@ -16,7 +16,13 @@ const rows: Row[] = [
   { id: "2", title: "Vendor audit", owner: "Reem" },
 ];
 
-function Table({ onRowClick }: { onRowClick?: (r: Row) => void }) {
+function Table({
+  onRowClick,
+  rowLabel,
+}: {
+  onRowClick?: (r: Row) => void;
+  rowLabel?: (r: Row) => string;
+}) {
   return (
     <ResponsiveTable
       columns={[
@@ -28,6 +34,7 @@ function Table({ onRowClick }: { onRowClick?: (r: Row) => void }) {
       renderCard={(r) => <span>card {r.title}</span>}
       empty={<p>No cases</p>}
       {...(onRowClick ? { onRowClick } : {})}
+      {...(rowLabel ? { rowLabel } : {})}
     />
   );
 }
@@ -59,6 +66,16 @@ describe("useBreakpoint", () => {
     const { result } = renderHook(() => useBreakpoint());
     expect(result.current).toBe(bucket);
   });
+
+  it("updates when the viewport crosses a breakpoint", () => {
+    setViewport(390);
+    const { result } = renderHook(() => useBreakpoint());
+    expect(result.current).toBe("base");
+    act(() => setViewport(1280));
+    expect(result.current).toBe("xl");
+    act(() => setViewport(800));
+    expect(result.current).toBe("md");
+  });
 });
 
 describe("at 390px (phone)", () => {
@@ -77,6 +94,7 @@ describe("at 390px (phone)", () => {
     render(<Dialog />);
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("data-variant", "drawer");
+    expect(dialog).toHaveAttribute("data-vaul-drawer");
     expect(within(dialog).getByText("Edit case")).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
@@ -116,6 +134,21 @@ describe("at 1280px (desktop)", () => {
     expect(onRowClick).toHaveBeenCalledWith(rows[1]);
   });
 
+  it("ResponsiveTable rows are keyboard-operable with an accessible label", async () => {
+    setViewport(1280);
+    const onRowClick = vi.fn();
+    render(<Table onRowClick={onRowClick} rowLabel={(r) => `Open ${r.title}`} />);
+    const row = screen.getByRole("row", { name: "Open Vendor audit" });
+    expect(row).toHaveAttribute("tabindex", "0");
+    expect(row.className).toContain("focus-visible:outline-ring");
+    row.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(onRowClick).toHaveBeenCalledWith(rows[1]);
+    onRowClick.mockClear();
+    await userEvent.keyboard(" ");
+    expect(onRowClick).toHaveBeenCalledWith(rows[1]);
+  });
+
   it("ResponsiveTable shows the empty state when there are no rows", () => {
     setViewport(1280);
     render(
@@ -135,6 +168,7 @@ describe("at 1280px (desktop)", () => {
     setViewport(1280);
     render(<Dialog />);
     expect(screen.getByRole("dialog")).toHaveAttribute("data-variant", "dialog");
+    expect(screen.getByRole("dialog")).not.toHaveAttribute("data-vaul-drawer");
   });
 
   it("FilterSheet shows filters inline", () => {
@@ -171,6 +205,25 @@ describe("ConfirmDialog", () => {
     expect(onConfirm).toHaveBeenCalledOnce();
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it.each([390, 1280])("ignores close requests while pending at %ipx", async (width) => {
+    setViewport(width);
+    const onOpenChange = vi.fn();
+    render(
+      <ConfirmDialog
+        open
+        title="Close case?"
+        description="x"
+        confirmLabel="Close case"
+        pending
+        onConfirm={() => {}}
+        onOpenChange={onOpenChange}
+      />,
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
   it("disables confirm while pending", () => {

@@ -15,6 +15,10 @@ describe("ErrorState", () => {
     [new ApiError(403, "FORBIDDEN", "nope"), "You don't have access to this"],
     [new ApiError(404, "NOT_FOUND", "missing"), "Not found"],
     [new TypeError("Failed to fetch"), "Can't reach the server"],
+    [new TypeError("NetworkError when attempting to fetch resource."), "Can't reach the server"],
+    [new TypeError("Load failed"), "Can't reach the server"],
+    [new TypeError("x is not a function"), "Something went wrong"],
+    [new Error("boom"), "Something went wrong"],
     [new ApiError(409, "CONFLICT", "Case is already closed"), "Case is already closed"],
   ])("shows a message for %s", (error, text) => {
     render(<ErrorState error={error} onRetry={() => {}} />);

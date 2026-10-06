@@ -27,6 +27,8 @@ type Props = {
   children?: ReactNode;
   /** Width below which the drawer is used: md (default) or lg (the filter sheet). */
   drawerBelow?: "md" | "lg";
+  /** While true, Escape, overlay taps, the close button and drags do not close it. */
+  pending?: boolean;
 };
 
 /** Centered dialog from md up; a bottom drawer below md with a scrolling body and sticky footer. */
@@ -38,14 +40,19 @@ export function ResponsiveDialog({
   footer,
   children,
   drawerBelow = "md",
+  pending = false,
 }: Props) {
   const bp = useBreakpoint();
   const desktop = drawerBelow === "md" ? isMdUp(bp) : bp === "lg" || bp === "xl";
+  const onChange = (next: boolean) => {
+    if (!next && pending) return;
+    onOpenChange(next);
+  };
   const noDescription = description ? {} : { "aria-describedby": undefined };
 
   if (desktop) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={onChange}>
         <DialogContent
           data-variant="dialog"
           // `> button` is the built-in close: a 44px target until lg (tablets are touch too)
@@ -57,14 +64,21 @@ export function ResponsiveDialog({
             {description && <DialogDescription>{description}</DialogDescription>}
           </DialogHeader>
           {children && <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4">{children}</div>}
-          {footer && <DialogFooter className="gap-2 border-t px-6 py-4">{footer}</DialogFooter>}
+          {footer && (
+            <DialogFooter className="gap-2 border-t px-6 py-4 sm:space-x-0">{footer}</DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     );
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+    <Drawer
+      open={open}
+      onOpenChange={onChange}
+      dismissible={!pending}
+      shouldScaleBackground={false}
+    >
       <DrawerContent data-variant="drawer" className="max-h-[90dvh]" {...noDescription}>
         <DrawerHeader className="text-left">
           <DrawerTitle className="leading-snug">{title}</DrawerTitle>

@@ -24,6 +24,15 @@ const beforeLoad = (search: { redirect?: string } = {}) =>
     search,
   });
 
+describe("/login search", () => {
+  const validate = Route.options.validateSearch as unknown as { parse: (v: unknown) => unknown };
+  it("accepts only the known notice", () => {
+    expect(validate.parse({ notice: "password-changed" })).toEqual({ notice: "password-changed" });
+    // an unknown value is dropped, never an error page
+    expect(validate.parse({ notice: "<script>" })).toEqual({ notice: undefined });
+  });
+});
+
 describe("/login beforeLoad", () => {
   it("shows the form when the session check fails with a server error", async () => {
     fetchMock.mockResolvedValue(json(500, { error: { code: "INTERNAL", message: "boom" } }));
