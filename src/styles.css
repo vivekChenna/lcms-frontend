@@ -72,6 +72,10 @@
   --color-overdue: var(--overdue);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-info: var(--info);
   --color-info-border: var(--info-border);
   --color-info-foreground: var(--info-foreground);
@@ -127,6 +131,11 @@
   --overdue: oklch(0.96 0.025 25);
   --danger: oklch(0.58 0.2 28);
   --warning: oklch(0.72 0.15 75);
+  /* text on a soft tone background (badges): dark enough for AA on white */
+  --warning-foreground: oklch(0.47 0.11 65);
+  --danger-foreground: oklch(0.48 0.18 28);
+  --success: oklch(0.6 0.13 155);
+  --success-foreground: oklch(0.43 0.1 155);
   --info: oklch(0.95 0.035 245);
   --info-border: oklch(0.78 0.075 245);
   --info-foreground: oklch(0.31 0.09 248);

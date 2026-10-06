@@ -20,10 +20,6 @@ export function setSession(access: string, refresh: string) {
   refreshToken = refresh;
 }
 
-export function hasRemoteApi() {
-  return Boolean(API_BASE_URL);
-}
-
 async function refreshSession() {
   if (!API_BASE_URL || !refreshToken) return false;
   const response = await fetch(`${API_BASE_URL}/auth/refresh`, {

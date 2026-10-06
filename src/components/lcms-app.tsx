@@ -9,7 +9,6 @@ import {
   Option,
   Spinner,
   Textarea,
-  Tooltip,
   webLightTheme,
 } from "@fluentui/react-components";
 import {
@@ -19,47 +18,24 @@ import {
   Building24Regular,
   Calendar24Regular,
   Checkmark24Regular,
-  ChevronLeft24Regular,
-  ChevronRight24Regular,
-  ClipboardTaskListLtr24Regular,
-  DataBarVertical24Regular,
-  DocumentAdd24Regular,
   DocumentBulletList24Regular,
-  DocumentSearch24Regular,
   Filter24Regular,
-  Gavel24Regular,
-  Grid24Regular,
-  Navigation24Regular,
-  People24Regular,
   Person24Regular,
   Search24Regular,
-  Settings24Regular,
   ShieldTask24Regular,
-  SignOut24Regular,
 } from "@fluentui/react-icons";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { cases, roleLabels, type CaseStatus, type LegalCase } from "@/lib/lcms-data";
-import { hasRemoteApi, type UserRole } from "@/lib/lcms-api";
+import { type UserRole } from "@/lib/lcms-api";
 import { useLcms } from "@/lib/lcms-context";
+import { PageHeader } from "@/components/common/page-header";
 
 type PageKey = "dashboard" | "cases" | "new-request" | "case-detail" | "reports" | "audit" | "rules" | "notifications" | "users" | "master-data";
-
-const nav = [
-  { label: "Dashboard", to: "/", icon: Grid24Regular, roles: ["admin", "legal_manager", "legal_rep", "requester", "viewer"] },
-  { label: "Case Repository", to: "/cases", icon: DocumentSearch24Regular, roles: ["admin", "legal_manager", "legal_rep", "requester", "viewer"] },
-  { label: "New Request", to: "/new-request", icon: DocumentAdd24Regular, roles: ["admin", "legal_manager", "legal_rep", "requester"] },
-  { label: "Reports", to: "/reports", icon: DataBarVertical24Regular, roles: ["admin", "legal_manager", "viewer"] },
-  { label: "Audit", to: "/audit", icon: ShieldTask24Regular, roles: ["admin", "legal_manager"] },
-  { label: "Rules & SLAs", to: "/rules", icon: ClipboardTaskListLtr24Regular, roles: ["admin", "legal_manager", "legal_rep", "requester", "viewer"] },
-  { label: "Notifications", to: "/notifications", icon: Alert24Regular, roles: ["admin", "legal_manager", "legal_rep", "requester", "viewer"] },
-  { label: "Users", to: "/users", icon: People24Regular, roles: ["admin", "legal_manager"] },
-  { label: "Master Data", to: "/master-data", icon: Settings24Regular, roles: ["admin"] },
-] as const;
 
 const pageTitles: Record<PageKey, [string, string]> = {
   dashboard: ["Legal operations overview", "Monitor case volume, ownership, and deadlines across the group."],
@@ -75,74 +51,22 @@ const pageTitles: Record<PageKey, [string, string]> = {
 };
 
 export function LcmsApp({ page }: { page: PageKey }) {
-  const { role, user, signOut, sidebarCollapsed, setSidebarCollapsed } = useLcms();
-  const [mobileNav, setMobileNav] = useState(false);
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  // Legacy page bodies only (replaced screen by screen); the AppShell owns navigation and chrome.
+  const { role, user } = useLcms();
   const [title, subtitle] = pageTitles[page];
-  const collapsed = sidebarCollapsed && !mobileNav;
   return (
-    <FluentProvider theme={webLightTheme}>
-      <div className={`min-h-[100dvh] bg-background text-foreground lg:grid ${collapsed ? "lg:grid-cols-[72px_minmax(0,1fr)]" : "lg:grid-cols-[248px_minmax(0,1fr)]"}`}>
-        <aside className={`${mobileNav ? "fixed inset-y-0 left-0 z-30 flex" : "hidden"} w-[248px] flex-col bg-sidebar text-sidebar-foreground lg:sticky lg:top-0 lg:flex lg:h-[100dvh] ${sidebarCollapsed ? "lg:w-[72px]" : "lg:w-[248px]"}`}>
-          <div className="flex h-[72px] items-center gap-3 border-b border-sidebar-border px-5">
-            {collapsed ? (
-              <div className="group relative mx-auto grid size-9 shrink-0 place-items-center">
-                <div className="grid size-9 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground transition-opacity group-hover:opacity-0"><Gavel24Regular /></div>
-                <Tooltip content="Open sidebar" relationship="label" positioning="after">
-                  <button type="button" aria-label="Open sidebar" onClick={() => setSidebarCollapsed(false)} className="absolute inset-0 grid place-items-center rounded-md bg-sidebar-hover text-sidebar-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                    <ChevronRight24Regular />
-                  </button>
-                </Tooltip>
-              </div>
-            ) : (
-              <>
-                <div className="grid size-9 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"><Gavel24Regular /></div>
-                <div className="min-w-0 flex-1"><strong className="font-display text-lg font-semibold">Algihaz Legal</strong><p className="text-xs text-sidebar-muted">Case management</p></div>
-                <Tooltip content="Collapse sidebar" relationship="label">
-                  <Button appearance="subtle" icon={<ChevronLeft24Regular />} aria-label="Collapse sidebar" onClick={() => setSidebarCollapsed(true)} className="hidden shrink-0 lg:inline-flex" />
-                </Tooltip>
-              </>
-            )}
-          </div>
-          <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main navigation">
-            {nav.filter((item) => item.roles.includes(role)).map((item) => {
-              const Icon = item.icon;
-              const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
-              const link = <Link key={item.to} to={item.to} onClick={() => setMobileNav(false)} className={`flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors ${collapsed ? "justify-center px-0" : ""} ${active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"}`}><Icon />{!collapsed && <span>{item.label}</span>}{!collapsed && item.label === "Notifications" && <span className="ml-auto rounded-full bg-notification px-1.5 py-0.5 font-mono text-[10px] text-notification-foreground">4</span>}</Link>;
-              return collapsed ? <Tooltip key={item.to} content={item.label} relationship="label" positioning="after">{link}</Tooltip> : link;
-            })}
-          </nav>
-          <div className="border-t border-sidebar-border p-3">
-            <div className={`flex items-center gap-3 rounded-md p-2 ${collapsed ? "flex-col" : ""}`}>
-              <div className="grid size-9 shrink-0 place-items-center rounded-full bg-sidebar-avatar text-sm font-semibold">{user.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</div>
-              {!collapsed && <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{user.name}</p><p className="truncate text-xs text-sidebar-muted">{user.designation}</p></div>}
-              <Tooltip content="Sign out" relationship="label"><Button appearance="subtle" icon={<SignOut24Regular />} aria-label="Sign out" onClick={signOut} /></Tooltip>
-            </div>
-          </div>
-        </aside>
-        {mobileNav && <button className="fixed inset-0 z-20 bg-overlay lg:hidden" aria-label="Close navigation" onClick={() => setMobileNav(false)} />}
-        <main className="min-w-0">
-          <header className="sticky top-0 z-10 flex h-[72px] items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur md:px-7">
-            <Button appearance="subtle" icon={<Navigation24Regular />} aria-label="Open navigation" className="lg:hidden" onClick={() => setMobileNav(true)} />
-            <div className="min-w-0 flex-1"><h1 className="truncate font-display text-2xl font-semibold">{title}</h1><p className="hidden truncate text-sm text-muted-foreground sm:block">{subtitle}</p></div>
-            {!hasRemoteApi() && <Badge appearance="tint" color="informative">Demo data</Badge>}
-            <Tooltip content="Notifications" relationship="label"><Link to="/notifications" className="relative grid size-9 place-items-center rounded-md hover:bg-muted"><Alert24Regular /><span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-notification" /></Link></Tooltip>
-          </header>
-          <div className="mx-auto max-w-[1500px] p-4 md:p-7">
-            {page === "dashboard" && <Dashboard role={role} />}
-            {page === "cases" && <Repository />}
-            {page === "new-request" && <NewRequest role={role} />}
-            {page === "case-detail" && <CaseDetail role={role} />}
-            {page === "reports" && <Reports />}
-            {page === "audit" && <Audit />}
-            {page === "rules" && <Rules role={role} />}
-            {page === "notifications" && <Notifications />}
-            {page === "users" && <Users role={role} currentUser={user.name} />}
-            {page === "master-data" && <MasterData />}
-          </div>
-        </main>
-      </div>
-      <Toaster richColors position="top-right" />
+    <FluentProvider theme={webLightTheme} style={{ background: "transparent" }}>
+      <PageHeader title={title} description={subtitle} />
+      {page === "dashboard" && <Dashboard role={role} />}
+      {page === "cases" && <Repository />}
+      {page === "new-request" && <NewRequest role={role} />}
+      {page === "case-detail" && <CaseDetail role={role} />}
+      {page === "reports" && <Reports />}
+      {page === "audit" && <Audit />}
+      {page === "rules" && <Rules role={role} />}
+      {page === "notifications" && <Notifications />}
+      {page === "users" && <Users role={role} currentUser={user.name} />}
+      {page === "master-data" && <MasterData />}
     </FluentProvider>
   );
 }
