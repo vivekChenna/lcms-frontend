@@ -5,7 +5,7 @@ import { loadSession, safeRedirect } from "@/lib/guards";
 
 export const Route = createFileRoute("/login")({
   validateSearch: z.object({
-    redirect: z.string().optional(),
+    redirect: z.string().optional().catch(undefined),
     notice: z.enum(["password-changed"]).optional().catch(undefined),
   }),
   beforeLoad: async ({ context, search }) => {

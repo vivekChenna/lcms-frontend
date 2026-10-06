@@ -31,6 +31,17 @@ describe("/login search", () => {
     // an unknown value is dropped, never an error page
     expect(validate.parse({ notice: "<script>" })).toEqual({ notice: undefined });
   });
+
+  it("keeps a valid redirect", () => {
+    expect(validate.parse({ redirect: "/cases?status=Closed" })).toEqual({
+      redirect: "/cases?status=Closed",
+    });
+  });
+
+  it.each([123, [1], true, ["x"], { a: 1 }])("ignores a non-string redirect (%j)", (value) => {
+    // the router parses ?redirect=123 into a number; this must not render the error page
+    expect(validate.parse({ redirect: value })).toEqual({ redirect: undefined });
+  });
 });
 
 describe("/login beforeLoad", () => {
