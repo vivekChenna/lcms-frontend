@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { LcmsApp } from "@/components/lcms-app";
+export const Route = createFileRoute("/cases/$caseId")({ head: () => ({ meta: [{ title: "Case Detail | Algihaz LCMS" }, { name: "description", content: "Review legal case details and workflow history." }, { property: "og:title", content: "Case Detail | Algihaz LCMS" }, { property: "og:description", content: "Review legal case details and workflow history." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: () => <LcmsApp page="case-detail" /> });

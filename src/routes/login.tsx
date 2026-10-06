@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { LoginPage } from "@/components/login-page";
+export const Route = createFileRoute("/login")({ head: () => ({ meta: [{ title: "Sign In | Algihaz LCMS" }, { name: "description", content: "Sign in to Algihaz Legal Case Management." }, { property: "og:title", content: "Sign In | Algihaz LCMS" }, { property: "og:description", content: "Sign in to Algihaz Legal Case Management." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: LoginPage });
