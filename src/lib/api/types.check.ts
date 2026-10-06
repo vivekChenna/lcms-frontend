@@ -33,7 +33,18 @@ import type {
 type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type Expect<T extends true> = T;
-type NotNever<T> = [T] extends [never] ? false : true;
+type IsAny<T> = 0 extends 1 & T ? true : false;
+type IsUnknown<T> = unknown extends T ? (IsAny<T> extends true ? false : true) : false;
+type IsNever<T> = [T] extends [never] ? true : false;
+// true only when T is not never, any or unknown
+type NotNever<T> =
+  IsAny<T> extends true
+    ? false
+    : IsUnknown<T> extends true
+      ? false
+      : IsNever<T> extends true
+        ? false
+        : true;
 
 export const _status: CaseDto["status"][] = [
   "Submitted",
@@ -52,8 +63,6 @@ export const _entName: CaseDto["entityName"] = null;
 export const _buName: CaseDto["businessUnitName"] = null;
 export const _repName: CaseDto["assignedLegalRepName"] = null;
 export const _value: CaseDto["estimatedValue"][] = [1, null];
-export const _role: Profile["role"] = "viewer";
-export const _loginRole: LoginResponse["user"]["role"] = "legal_rep";
 export const _query: CaseListQuery = {
   page: 1,
   pageSize: 20,
@@ -88,6 +97,23 @@ export const _dash = (d: DashboardDto) => [
 ];
 
 export type _Checks = [
+  Expect<NotNever<CaseDto>>,
+  Expect<NotNever<CaseListDto>>,
+  Expect<NotNever<DashboardDto>>,
+  Expect<NotNever<Profile>>,
+  Expect<NotNever<LoginResponse>>,
+  Expect<
+    Equal<
+      CaseDto["status"],
+      "Submitted" | "Assigned" | "In Progress" | "Waiting on Input" | "Closed"
+    >
+  >,
+  Expect<Equal<CaseDto["priority"], "P1" | "P2" | "P3" | "P4">>,
+  Expect<Equal<CaseDto["slaState"], "on_track" | "at_risk" | "breached" | "met">>,
+  Expect<Equal<CaseDto["estimatedValue"], number | null>>,
+  Expect<Equal<CaseDto["requesterName"], string | null>>,
+  Expect<Equal<Profile["role"], UserRole>>,
+  Expect<Equal<LoginResponse["user"]["role"], UserRole>>,
   Expect<Equal<UserRole, Profile["role"]>>,
   Expect<NotNever<UserDto>>,
   Expect<NotNever<UserListDto>>,
