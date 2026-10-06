@@ -38,9 +38,19 @@ export async function requireNav(
   return me!;
 }
 
-/** Only same-origin relative paths ("/x", not "//x", "/\x" or absolute URLs); anything else is "/". */
+/**
+ * Only same-origin relative paths ("/x", not "//x", "/\x", absolute URLs or anything with a
+ * control character, which URL parsing strips so "/\t/x" would become "//x"); anything else is "/".
+ */
 export function safeRedirect(target: string | undefined): string {
-  if (!target || !target.startsWith("/") || target.startsWith("//") || target.includes("\\")) {
+  if (
+    !target ||
+    !target.startsWith("/") ||
+    target.startsWith("//") ||
+    target.includes("\\") ||
+    // eslint-disable-next-line no-control-regex
+    /[\x00-\x1f\x7f]/.test(target)
+  ) {
     return "/";
   }
   return target;

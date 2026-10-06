@@ -6,8 +6,13 @@ import { loadSession, safeRedirect } from "@/lib/guards";
 export const Route = createFileRoute("/login")({
   validateSearch: z.object({ redirect: z.string().optional() }),
   beforeLoad: async ({ context, search }) => {
-    if (await loadSession(context.queryClient))
-      throw redirect({ href: safeRedirect(search.redirect) });
+    let me = null;
+    try {
+      me = await loadSession(context.queryClient);
+    } catch {
+      // the server is down or failing: show the form anyway; signing in reports the problem
+    }
+    if (me) throw redirect({ href: safeRedirect(search.redirect) });
   },
   head: () => ({
     meta: [

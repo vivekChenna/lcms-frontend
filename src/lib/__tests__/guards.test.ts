@@ -2,7 +2,14 @@ import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Profile, UserRole } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/errors";
-import { guardDecision, loadSession, safeRedirect, sessionExpiredHandler } from "../guards";
+import { isRedirect } from "@tanstack/react-router";
+import {
+  guardDecision,
+  loadSession,
+  requireNav,
+  safeRedirect,
+  sessionExpiredHandler,
+} from "../guards";
 
 const profile = (role: UserRole) => ({ id: "u1", fullName: "Test User", role }) as Profile;
 
@@ -65,8 +72,47 @@ describe("safeRedirect", () => {
     "evil.com",
     "javascript:alert(1)",
     " /cases",
+    "/\t/evil.com",
+    "/\n/evil.com",
+    "/\r/evil.com",
+    "/cases\u0000",
+    "/\u007f/evil.com",
   ])("rejects %j", (value) => {
     expect(safeRedirect(value)).toBe("/");
+  });
+});
+
+describe("requireNav", () => {
+  const withMe = (me: Profile | null) => {
+    const qc = new QueryClient();
+    if (me) qc.setQueryData(["me"], me);
+    else fetchMock.mockResolvedValue(json(401, { error: { code: "UNAUTHORIZED", message: "no" } }));
+    return qc;
+  };
+  const thrown = (p: Promise<unknown>) =>
+    p.then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+
+  it("redirects to /login remembering the current href when signed out", async () => {
+    const err = await thrown(requireNav(withMe(null), { href: "/audit?page=2" }, "audit"));
+    expect(isRedirect(err)).toBe(true);
+    expect((err as Response & { options: object }).options).toMatchObject({
+      to: "/login",
+      search: { redirect: "/audit?page=2" },
+    });
+  });
+
+  it("redirects home when the role may not see the route", async () => {
+    const err = await thrown(requireNav(withMe(profile("viewer")), { href: "/audit" }, "audit"));
+    expect(isRedirect(err)).toBe(true);
+    expect((err as Response & { options: object }).options).toMatchObject({ to: "/" });
+  });
+
+  it("returns the profile for an allowed role", async () => {
+    const me = profile("admin");
+    await expect(requireNav(withMe(me), { href: "/audit" }, "audit")).resolves.toEqual(me);
   });
 });
 

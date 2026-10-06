@@ -19,14 +19,6 @@ export interface LegalCase {
   escalated?: boolean;
 }
 
-export const demoUsers: Record<UserRole, { name: string; designation: string }> = {
-  admin: { name: "Omar Al-Harbi", designation: "Systems Administrator" },
-  legal_manager: { name: "Noura Al-Salem", designation: "General Counsel" },
-  legal_rep: { name: "Faisal Al-Qahtani", designation: "Senior Legal Counsel" },
-  requester: { name: "Maha Al-Rashid", designation: "Procurement Manager" },
-  viewer: { name: "Khalid Al-Mutairi", designation: "Executive Auditor" },
-};
-
 export const cases: LegalCase[] = [
   { id: "LC-2026-184", title: "Eastern Region fleet supply agreement", category: "Internal", type: "Contract Review", entity: "Algihaz Holding", department: "Procurement", assignee: "Faisal Al-Qahtani", designation: "Senior Legal Counsel", status: "In Progress", priority: "High", target: "30 Sep 2026", sla: "At risk", escalated: true },
   { id: "LC-2026-183", title: "Vendor compliance assessment", category: "Internal", type: "Compliance", entity: "Saudi Gulf", department: "Operations", assignee: "Reem Al-Dossary", designation: "Legal Counsel", status: "Waiting on Input", priority: "Medium", target: "02 Oct 2026", sla: "On track" },
