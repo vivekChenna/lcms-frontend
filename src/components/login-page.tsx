@@ -1,19 +1,119 @@
-import { Button, Field, FluentProvider, Input, webLightTheme } from "@fluentui/react-components";
-import { Eye24Regular, EyeOff24Regular, Gavel24Regular, LockClosed24Regular, Mail24Regular } from "@fluentui/react-icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff, Gavel, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate } from "@tanstack/react-router";
-import { useLcms } from "@/lib/lcms-context";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ApiError } from "@/lib/api/errors";
+import { useLogin } from "@/lib/auth";
+import { safeRedirect } from "@/lib/guards";
 
-const loginSchema = z.object({ email: z.string().email("Enter a valid email address."), password: z.string().min(8, "Password must be at least 8 characters.") });
+const loginSchema = z.object({
+  email: z.string().email("Enter a valid email address."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
+});
 type LoginValues = z.infer<typeof loginSchema>;
 
-export function LoginPage() {
+function loginErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    return err.status === 429 ? "Too many attempts, try again shortly" : err.message;
+  }
+  return "Could not reach the server. Check your connection and try again.";
+}
+
+export function LoginPage({ redirect }: { redirect?: string | undefined }) {
   const navigate = useNavigate();
-  const { setSignedIn } = useLcms();
+  const login = useLogin();
   const [showPassword, setShowPassword] = useState(false);
-  const form = useForm<LoginValues>({ resolver: zodResolver(loginSchema), mode: "onBlur", defaultValues: { email: "", password: "" } });
-  return <FluentProvider theme={webLightTheme}><main className="grid min-h-[100dvh] bg-background lg:grid-cols-[1.15fr_0.85fr]"><section className="hidden bg-login-panel p-14 text-login-foreground lg:flex lg:flex-col"><div className="flex items-center gap-3"><div className="grid size-11 place-items-center rounded-md bg-login-mark"><Gavel24Regular /></div><div><p className="font-display text-xl font-semibold">Algihaz Legal</p><p className="text-sm text-login-muted">Case Management System</p></div></div><div className="my-auto max-w-xl"><p className="font-display text-4xl font-semibold leading-tight">Clear legal workflows for every business unit.</p><p className="mt-5 max-w-lg text-lg leading-7 text-login-muted">Submit, assign, resolve, and audit legal matters in one controlled workspace.</p></div><p className="text-sm text-login-muted">Internal use only</p></section><section className="flex items-center justify-center p-6"><form onSubmit={form.handleSubmit(() => { setSignedIn(true); navigate({ to: "/" }); })} className="w-full max-w-md"><div className="mb-10 lg:hidden"><div className="grid size-11 place-items-center rounded-md bg-primary text-primary-foreground"><Gavel24Regular /></div></div><h1 className="font-display text-3xl font-semibold">Sign in to LCMS</h1><p className="mt-2 text-sm text-muted-foreground">Use your Algihaz credentials to continue.</p><div className="mt-8 space-y-5"><Field label="Work email" validationMessage={form.formState.errors.email?.message}><Input contentBefore={<Mail24Regular />} autoComplete="email" {...form.register("email")} /></Field><Field label="Password" validationMessage={form.formState.errors.password?.message}><Input contentBefore={<LockClosed24Regular />} contentAfter={<Button appearance="transparent" size="small" icon={showPassword ? <EyeOff24Regular /> : <Eye24Regular />} aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((value) => !value)} />} type={showPassword ? "text" : "password"} autoComplete="current-password" {...form.register("password")} /></Field><Button appearance="primary" type="submit" size="large" className="w-full">Sign in</Button></div></form></section></main></FluentProvider>;
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    mode: "onBlur",
+    defaultValues: { email: "", password: "" },
+  });
+  const { errors } = form.formState;
+
+  const onSubmit = form.handleSubmit((values) =>
+    login.mutate(values, { onSuccess: () => void navigate({ href: safeRedirect(redirect) }) }),
+  );
+
+  return (
+    <main className="flex min-h-dvh items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <div className="mb-2 grid size-11 place-items-center rounded-md bg-primary text-primary-foreground">
+            <Gavel className="size-6" aria-hidden />
+          </div>
+          <CardTitle className="text-2xl">Sign in to LCMS</CardTitle>
+          <CardDescription>Use your Algihaz credentials to continue.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} noValidate className="space-y-5">
+            {login.isError && (
+              <p
+                role="alert"
+                className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+              >
+                {loginErrorMessage(login.error)}
+              </p>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="email">Work email</Label>
+              <Input
+                id="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                className="h-11 text-base md:text-base"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                {...form.register("email")}
+              />
+              {errors.email && (
+                <p id="email-error" className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  className="h-11 pr-12 text-base md:text-base"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? "password-error" : undefined}
+                  {...form.register("password")}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 size-11"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+                </Button>
+              </div>
+              {errors.password && (
+                <p id="password-error" className="text-sm text-destructive">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+            <Button type="submit" className="h-11 w-full" disabled={login.isPending}>
+              {login.isPending && <Loader2 className="animate-spin" aria-hidden />}
+              Sign in
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
+  );
 }

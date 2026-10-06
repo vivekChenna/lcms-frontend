@@ -1,3 +1,28 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { z } from "zod";
 import { LoginPage } from "@/components/login-page";
-export const Route = createFileRoute("/login")({ head: () => ({ meta: [{ title: "Sign In | Algihaz LCMS" }, { name: "description", content: "Sign in to Algihaz Legal Case Management." }, { property: "og:title", content: "Sign In | Algihaz LCMS" }, { property: "og:description", content: "Sign in to Algihaz Legal Case Management." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: LoginPage });
+import { loadSession, safeRedirect } from "@/lib/guards";
+
+export const Route = createFileRoute("/login")({
+  validateSearch: z.object({ redirect: z.string().optional() }),
+  beforeLoad: async ({ context, search }) => {
+    if (await loadSession(context.queryClient))
+      throw redirect({ href: safeRedirect(search.redirect) });
+  },
+  head: () => ({
+    meta: [
+      { title: "Sign In | Algihaz LCMS" },
+      { name: "description", content: "Sign in to Algihaz Legal Case Management." },
+      { property: "og:title", content: "Sign In | Algihaz LCMS" },
+      { property: "og:description", content: "Sign in to Algihaz Legal Case Management." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: LoginRoute,
+});
+
+function LoginRoute() {
+  const { redirect: to } = Route.useSearch();
+  return <LoginPage redirect={to} />;
+}

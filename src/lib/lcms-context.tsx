@@ -1,13 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useLogout, useMe } from "./auth";
 import type { UserRole } from "./lcms-api";
-import { demoUsers } from "./lcms-data";
 
+// Legacy shell context (removed in B20). Role and user come from the real session (/auth/me);
+// mounted only under the authenticated layout, so `me` is already cached.
 type LcmsContextValue = {
   role: UserRole;
-  setRole: (role: UserRole) => void;
   user: { name: string; designation: string };
   signedIn: boolean;
-  setSignedIn: (value: boolean) => void;
+  signOut: () => void;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (value: boolean) => void;
 };
@@ -15,13 +16,11 @@ type LcmsContextValue = {
 const LcmsContext = createContext<LcmsContextValue | null>(null);
 
 export function LcmsProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<UserRole>("legal_manager");
-  const [signedIn, setSignedIn] = useState(true);
+  const me = useMe();
+  const logout = useLogout();
   const [sidebarCollapsed, setSidebarCollapsedState] = useState(false);
 
   useEffect(() => {
-    const stored = window.sessionStorage.getItem("lcms-role") as UserRole | null;
-    if (stored && stored in demoUsers) setRole(stored);
     setSidebarCollapsedState(window.sessionStorage.getItem("lcms-sidebar-collapsed") === "true");
   }, []);
 
@@ -30,7 +29,21 @@ export function LcmsProvider({ children }: { children: ReactNode }) {
     window.sessionStorage.setItem("lcms-sidebar-collapsed", String(next));
   };
 
-  const value = useMemo(() => ({ role, setRole: (next: UserRole) => { setRole(next); window.sessionStorage.setItem("lcms-role", next); }, user: demoUsers[role], signedIn, setSignedIn, sidebarCollapsed, setSidebarCollapsed }), [role, signedIn, sidebarCollapsed]);
+  const role: UserRole = me?.role ?? "viewer";
+  const name = me?.fullName ?? "";
+  const designation = me?.designation ?? "";
+  const signOut = logout.mutate;
+  const value = useMemo(
+    () => ({
+      role,
+      user: { name, designation },
+      signedIn: true,
+      signOut: () => signOut(),
+      sidebarCollapsed,
+      setSidebarCollapsed,
+    }),
+    [role, name, designation, signOut, sidebarCollapsed],
+  );
   return <LcmsContext.Provider value={value}>{children}</LcmsContext.Provider>;
 }
 

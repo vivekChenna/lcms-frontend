@@ -75,7 +75,7 @@ const pageTitles: Record<PageKey, [string, string]> = {
 };
 
 export function LcmsApp({ page }: { page: PageKey }) {
-  const { role, setRole, user, setSignedIn, sidebarCollapsed, setSidebarCollapsed } = useLcms();
+  const { role, user, signOut, sidebarCollapsed, setSidebarCollapsed } = useLcms();
   const [mobileNav, setMobileNav] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [title, subtitle] = pageTitles[page];
@@ -116,7 +116,7 @@ export function LcmsApp({ page }: { page: PageKey }) {
             <div className={`flex items-center gap-3 rounded-md p-2 ${collapsed ? "flex-col" : ""}`}>
               <div className="grid size-9 shrink-0 place-items-center rounded-full bg-sidebar-avatar text-sm font-semibold">{user.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</div>
               {!collapsed && <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{user.name}</p><p className="truncate text-xs text-sidebar-muted">{user.designation}</p></div>}
-              <Tooltip content="Sign out" relationship="label"><Button appearance="subtle" icon={<SignOut24Regular />} aria-label="Sign out" onClick={() => setSignedIn(false)} /></Tooltip>
+              <Tooltip content="Sign out" relationship="label"><Button appearance="subtle" icon={<SignOut24Regular />} aria-label="Sign out" onClick={signOut} /></Tooltip>
             </div>
           </div>
         </aside>
@@ -126,9 +126,6 @@ export function LcmsApp({ page }: { page: PageKey }) {
             <Button appearance="subtle" icon={<Navigation24Regular />} aria-label="Open navigation" className="lg:hidden" onClick={() => setMobileNav(true)} />
             <div className="min-w-0 flex-1"><h1 className="truncate font-display text-2xl font-semibold">{title}</h1><p className="hidden truncate text-sm text-muted-foreground sm:block">{subtitle}</p></div>
             {!hasRemoteApi() && <Badge appearance="tint" color="informative">Demo data</Badge>}
-            <Dropdown aria-label="Preview role" value={roleLabels[role]} selectedOptions={[role]} onOptionSelect={(_, data) => setRole(data.optionValue as UserRole)} className="hidden w-44 md:block">
-              {Object.entries(roleLabels).map(([value, label]) => <Option key={value} value={value}>{label}</Option>)}
-            </Dropdown>
             <Tooltip content="Notifications" relationship="label"><Link to="/notifications" className="relative grid size-9 place-items-center rounded-md hover:bg-muted"><Alert24Regular /><span className="absolute right-0.5 top-0.5 size-2 rounded-full bg-notification" /></Link></Tooltip>
           </header>
           <div className="mx-auto max-w-[1500px] p-4 md:p-7">

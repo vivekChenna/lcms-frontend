@@ -1,0 +1,4 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { LcmsApp } from "@/components/lcms-app";
+import { requireNav } from "@/lib/guards";
+export const Route = createFileRoute("/_authed/master-data")({ beforeLoad: ({ context, location }) => requireNav(context.queryClient, location, "master-data"), head: () => ({ meta: [{ title: "Master Data | Algihaz LCMS" }, { name: "description", content: "Manage legal case reference data." }, { property: "og:title", content: "Master Data | Algihaz LCMS" }, { property: "og:description", content: "Manage legal case reference data." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: () => <LcmsApp page="master-data" /> });

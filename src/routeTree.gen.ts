@@ -9,31 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuditRouteImport } from './routes/audit'
-import { Route as CasesRouteImport } from './routes/cases'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as MasterDataRouteImport } from './routes/master-data'
-import { Route as NewRequestRouteImport } from './routes/new-request'
-import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as RulesRouteImport } from './routes/rules'
-import { Route as UsersRouteImport } from './routes/users'
-import { Route as CasesCaseIdRouteImport } from './routes/cases.$caseId'
+import { Route as AuthedIndexRouteImport } from './routes/_authed.index'
+import { Route as AuthedAuditRouteImport } from './routes/_authed.audit'
+import { Route as AuthedMasterDataRouteImport } from './routes/_authed.master-data'
+import { Route as AuthedNewRequestRouteImport } from './routes/_authed.new-request'
+import { Route as AuthedNotificationsRouteImport } from './routes/_authed.notifications'
+import { Route as AuthedReportsRouteImport } from './routes/_authed.reports'
+import { Route as AuthedRulesRouteImport } from './routes/_authed.rules'
+import { Route as AuthedUsersRouteImport } from './routes/_authed.users'
+import { Route as AuthedCasesIndexRouteImport } from './routes/_authed.cases.index'
+import { Route as AuthedCasesCaseIdRouteImport } from './routes/_authed.cases.$caseId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuditRoute = AuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CasesRoute = CasesRouteImport.update({
-  id: '/cases',
-  path: '/cases',
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -41,89 +31,104 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MasterDataRoute = MasterDataRouteImport.update({
+const AuthedIndexRoute = AuthedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAuditRoute = AuthedAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedMasterDataRoute = AuthedMasterDataRouteImport.update({
   id: '/master-data',
   path: '/master-data',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
-const NewRequestRoute = NewRequestRouteImport.update({
+const AuthedNewRequestRoute = AuthedNewRequestRouteImport.update({
   id: '/new-request',
   path: '/new-request',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
-const NotificationsRoute = NotificationsRouteImport.update({
+const AuthedNotificationsRoute = AuthedNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
-const ReportsRoute = ReportsRouteImport.update({
+const AuthedReportsRoute = AuthedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
-const RulesRoute = RulesRouteImport.update({
+const AuthedRulesRoute = AuthedRulesRouteImport.update({
   id: '/rules',
   path: '/rules',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
-const UsersRoute = UsersRouteImport.update({
+const AuthedUsersRoute = AuthedUsersRouteImport.update({
   id: '/users',
   path: '/users',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
-const CasesCaseIdRoute = CasesCaseIdRouteImport.update({
-  id: '/$caseId',
-  path: '/$caseId',
-  getParentRoute: () => CasesRoute,
+const AuthedCasesIndexRoute = AuthedCasesIndexRouteImport.update({
+  id: '/cases/',
+  path: '/cases/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCasesCaseIdRoute = AuthedCasesCaseIdRouteImport.update({
+  id: '/cases/$caseId',
+  path: '/cases/$caseId',
+  getParentRoute: () => AuthedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/audit': typeof AuditRoute
-  '/cases': typeof CasesRouteWithChildren
+  '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
-  '/master-data': typeof MasterDataRoute
-  '/new-request': typeof NewRequestRoute
-  '/notifications': typeof NotificationsRoute
-  '/reports': typeof ReportsRoute
-  '/rules': typeof RulesRoute
-  '/users': typeof UsersRoute
-  '/cases/$caseId': typeof CasesCaseIdRoute
+  '/audit': typeof AuthedAuditRoute
+  '/master-data': typeof AuthedMasterDataRoute
+  '/new-request': typeof AuthedNewRequestRoute
+  '/notifications': typeof AuthedNotificationsRoute
+  '/reports': typeof AuthedReportsRoute
+  '/rules': typeof AuthedRulesRoute
+  '/users': typeof AuthedUsersRoute
+  '/cases/$caseId': typeof AuthedCasesCaseIdRoute
+  '/cases/': typeof AuthedCasesIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/audit': typeof AuditRoute
-  '/cases': typeof CasesRouteWithChildren
   '/login': typeof LoginRoute
-  '/master-data': typeof MasterDataRoute
-  '/new-request': typeof NewRequestRoute
-  '/notifications': typeof NotificationsRoute
-  '/reports': typeof ReportsRoute
-  '/rules': typeof RulesRoute
-  '/users': typeof UsersRoute
-  '/cases/$caseId': typeof CasesCaseIdRoute
+  '/audit': typeof AuthedAuditRoute
+  '/master-data': typeof AuthedMasterDataRoute
+  '/new-request': typeof AuthedNewRequestRoute
+  '/notifications': typeof AuthedNotificationsRoute
+  '/reports': typeof AuthedReportsRoute
+  '/rules': typeof AuthedRulesRoute
+  '/users': typeof AuthedUsersRoute
+  '/': typeof AuthedIndexRoute
+  '/cases/$caseId': typeof AuthedCasesCaseIdRoute
+  '/cases': typeof AuthedCasesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/audit': typeof AuditRoute
-  '/cases': typeof CasesRouteWithChildren
+  '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
-  '/master-data': typeof MasterDataRoute
-  '/new-request': typeof NewRequestRoute
-  '/notifications': typeof NotificationsRoute
-  '/reports': typeof ReportsRoute
-  '/rules': typeof RulesRoute
-  '/users': typeof UsersRoute
-  '/cases/$caseId': typeof CasesCaseIdRoute
+  '/_authed/audit': typeof AuthedAuditRoute
+  '/_authed/master-data': typeof AuthedMasterDataRoute
+  '/_authed/new-request': typeof AuthedNewRequestRoute
+  '/_authed/notifications': typeof AuthedNotificationsRoute
+  '/_authed/reports': typeof AuthedReportsRoute
+  '/_authed/rules': typeof AuthedRulesRoute
+  '/_authed/users': typeof AuthedUsersRoute
+  '/_authed/': typeof AuthedIndexRoute
+  '/_authed/cases/$caseId': typeof AuthedCasesCaseIdRoute
+  '/_authed/cases/': typeof AuthedCasesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/audit'
-    | '/cases'
     | '/login'
+    | '/audit'
     | '/master-data'
     | '/new-request'
     | '/notifications'
@@ -131,68 +136,48 @@ export interface FileRouteTypes {
     | '/rules'
     | '/users'
     | '/cases/$caseId'
+    | '/cases/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/audit'
-    | '/cases'
     | '/login'
+    | '/audit'
     | '/master-data'
     | '/new-request'
     | '/notifications'
     | '/reports'
     | '/rules'
     | '/users'
+    | '/'
     | '/cases/$caseId'
+    | '/cases'
   id:
     | '__root__'
-    | '/'
-    | '/audit'
-    | '/cases'
+    | '/_authed'
     | '/login'
-    | '/master-data'
-    | '/new-request'
-    | '/notifications'
-    | '/reports'
-    | '/rules'
-    | '/users'
-    | '/cases/$caseId'
+    | '/_authed/audit'
+    | '/_authed/master-data'
+    | '/_authed/new-request'
+    | '/_authed/notifications'
+    | '/_authed/reports'
+    | '/_authed/rules'
+    | '/_authed/users'
+    | '/_authed/'
+    | '/_authed/cases/$caseId'
+    | '/_authed/cases/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AuditRoute: typeof AuditRoute
-  CasesRoute: typeof CasesRouteWithChildren
+  AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
-  MasterDataRoute: typeof MasterDataRoute
-  NewRequestRoute: typeof NewRequestRoute
-  NotificationsRoute: typeof NotificationsRoute
-  ReportsRoute: typeof ReportsRoute
-  RulesRoute: typeof RulesRoute
-  UsersRoute: typeof UsersRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_authed': {
+      id: '/_authed'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/audit': {
-      id: '/audit'
-      path: '/audit'
-      fullPath: '/audit'
-      preLoaderRoute: typeof AuditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cases': {
-      id: '/cases'
-      path: '/cases'
-      fullPath: '/cases'
-      preLoaderRoute: typeof CasesRouteImport
+      preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -202,79 +187,111 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/master-data': {
-      id: '/master-data'
+    '/_authed/': {
+      id: '/_authed/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/audit': {
+      id: '/_authed/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuthedAuditRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/master-data': {
+      id: '/_authed/master-data'
       path: '/master-data'
       fullPath: '/master-data'
-      preLoaderRoute: typeof MasterDataRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedMasterDataRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/new-request': {
-      id: '/new-request'
+    '/_authed/new-request': {
+      id: '/_authed/new-request'
       path: '/new-request'
       fullPath: '/new-request'
-      preLoaderRoute: typeof NewRequestRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedNewRequestRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/notifications': {
-      id: '/notifications'
+    '/_authed/notifications': {
+      id: '/_authed/notifications'
       path: '/notifications'
       fullPath: '/notifications'
-      preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedNotificationsRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/reports': {
-      id: '/reports'
+    '/_authed/reports': {
+      id: '/_authed/reports'
       path: '/reports'
       fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedReportsRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/rules': {
-      id: '/rules'
+    '/_authed/rules': {
+      id: '/_authed/rules'
       path: '/rules'
       fullPath: '/rules'
-      preLoaderRoute: typeof RulesRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedRulesRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/users': {
-      id: '/users'
+    '/_authed/users': {
+      id: '/_authed/users'
       path: '/users'
       fullPath: '/users'
-      preLoaderRoute: typeof UsersRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedUsersRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/cases/$caseId': {
-      id: '/cases/$caseId'
-      path: '/$caseId'
+    '/_authed/cases/': {
+      id: '/_authed/cases/'
+      path: '/cases'
+      fullPath: '/cases/'
+      preLoaderRoute: typeof AuthedCasesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/cases/$caseId': {
+      id: '/_authed/cases/$caseId'
+      path: '/cases/$caseId'
       fullPath: '/cases/$caseId'
-      preLoaderRoute: typeof CasesCaseIdRouteImport
-      parentRoute: typeof CasesRoute
+      preLoaderRoute: typeof AuthedCasesCaseIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
   }
 }
 
-interface CasesRouteChildren {
-  CasesCaseIdRoute: typeof CasesCaseIdRoute
+interface AuthedRouteChildren {
+  AuthedAuditRoute: typeof AuthedAuditRoute
+  AuthedMasterDataRoute: typeof AuthedMasterDataRoute
+  AuthedNewRequestRoute: typeof AuthedNewRequestRoute
+  AuthedNotificationsRoute: typeof AuthedNotificationsRoute
+  AuthedReportsRoute: typeof AuthedReportsRoute
+  AuthedRulesRoute: typeof AuthedRulesRoute
+  AuthedUsersRoute: typeof AuthedUsersRoute
+  AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedCasesCaseIdRoute: typeof AuthedCasesCaseIdRoute
+  AuthedCasesIndexRoute: typeof AuthedCasesIndexRoute
 }
 
-const CasesRouteChildren: CasesRouteChildren = {
-  CasesCaseIdRoute: CasesCaseIdRoute,
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAuditRoute: AuthedAuditRoute,
+  AuthedMasterDataRoute: AuthedMasterDataRoute,
+  AuthedNewRequestRoute: AuthedNewRequestRoute,
+  AuthedNotificationsRoute: AuthedNotificationsRoute,
+  AuthedReportsRoute: AuthedReportsRoute,
+  AuthedRulesRoute: AuthedRulesRoute,
+  AuthedUsersRoute: AuthedUsersRoute,
+  AuthedIndexRoute: AuthedIndexRoute,
+  AuthedCasesCaseIdRoute: AuthedCasesCaseIdRoute,
+  AuthedCasesIndexRoute: AuthedCasesIndexRoute,
 }
 
-const CasesRouteWithChildren = CasesRoute._addFileChildren(CasesRouteChildren)
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AuditRoute: AuditRoute,
-  CasesRoute: CasesRouteWithChildren,
+  AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
-  MasterDataRoute: MasterDataRoute,
-  NewRequestRoute: NewRequestRoute,
-  NotificationsRoute: NotificationsRoute,
-  ReportsRoute: ReportsRoute,
-  RulesRoute: RulesRoute,
-  UsersRoute: UsersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
