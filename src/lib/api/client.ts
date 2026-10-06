@@ -22,6 +22,11 @@ function refreshSession(): Promise<boolean> {
   })
     .then((r) => r.ok)
     .catch(() => false)
+    .then((ok) => {
+      // once per failed refresh cycle, however many requests were waiting on it
+      if (!ok) onSessionExpired?.();
+      return ok;
+    })
     .finally(() => {
       refreshing = null;
     });
@@ -30,6 +35,9 @@ function refreshSession(): Promise<boolean> {
 
 const NO_RETRY = ["/auth/login", "/auth/refresh", "/auth/logout"];
 
+// `path` must start with "/" (no absolute URLs). `json` wins over `body`.
+// A 401 retry re-sends `init`, so bodies must be replayable (string, FormData, Blob,
+// URLSearchParams), never a stream.
 export async function apiFetch(path: string, init: Init = {}, retried = false): Promise<Response> {
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
@@ -51,7 +59,6 @@ export async function apiFetch(path: string, init: Init = {}, retried = false): 
   const res = await fetch(`${BASE}${path}`, req);
   if (res.status === 401 && !retried && !NO_RETRY.some((p) => path.startsWith(p))) {
     if (await refreshSession()) return apiFetch(path, init, true);
-    onSessionExpired?.();
   }
   return res;
 }
@@ -73,6 +80,20 @@ export async function apiJson<T>(path: string, init: Init = {}): Promise<T> {
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
+// RFC 6266: prefer filename* (UTF-8, percent-encoded); a plain filename is used verbatim.
+function filenameFrom(disposition: string): string | undefined {
+  const star = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(disposition)?.[1];
+  if (star) {
+    try {
+      return decodeURIComponent(star.trim());
+    } catch {
+      // malformed encoding: fall through to the plain filename
+    }
+  }
+  const m = /filename\s*=\s*"([^"]*)"|filename\s*=\s*([^;]+)/i.exec(disposition);
+  return (m?.[1] ?? m?.[2])?.trim() || undefined;
+}
+
 export async function apiDownload(
   path: string,
   fallbackName: string,
@@ -80,17 +101,17 @@ export async function apiDownload(
   const res = await apiFetch(path);
   if (!res.ok) throw await toError(res);
   const disposition = res.headers.get("Content-Disposition") ?? "";
-  const name = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1];
+  const name = filenameFrom(disposition);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement("a"), {
     href: url,
-    download: name ? decodeURIComponent(name) : fallbackName,
+    download: name ?? fallbackName,
   });
   document.body.append(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
   const total = res.headers.get("X-Export-Total");
   const truncated = res.headers.get("X-Export-Truncated") === "true";
   return total ? { total: Number(total), truncated } : { truncated };

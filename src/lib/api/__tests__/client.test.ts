@@ -185,47 +185,138 @@ describe("apiJson errors", () => {
   });
 });
 
+describe("session expiry signalling", () => {
+  it("fires once for two concurrent requests whose shared refresh fails, and again on a later cycle", async () => {
+    const expired = vi.fn();
+    setSessionExpiredHandler(expired);
+    fetchMock.mockImplementation(async (url: string) => {
+      if (strip(url) === "/auth/refresh") {
+        await new Promise((r) => setTimeout(r, 10));
+        return json(401, {});
+      }
+      return json(401, {});
+    });
+    await Promise.all([apiFetch("/a"), apiFetch("/b")]);
+    expect(calls("/auth/refresh")).toHaveLength(1);
+    expect(expired).toHaveBeenCalledTimes(1);
+    await apiFetch("/a");
+    expect(expired).toHaveBeenCalledTimes(2);
+  });
+
+  it("never fires when the refresh succeeds", async () => {
+    const expired = vi.fn();
+    setSessionExpiredHandler(expired);
+    fetchMock
+      .mockResolvedValueOnce(json(401, {}))
+      .mockResolvedValueOnce(json(200, {}))
+      .mockResolvedValueOnce(json(200, {}));
+    await apiFetch("/cases");
+    expect(expired).not.toHaveBeenCalled();
+  });
+});
+
+describe("apiFetch headers", () => {
+  it("keeps caller headers and does not override an explicit Content-Type", async () => {
+    fetchMock.mockResolvedValue(json(200, {}));
+    await apiFetch("/x", {
+      method: "POST",
+      json: { a: 1 },
+      headers: { "X-Custom": "1", "Content-Type": "application/merge-patch+json" },
+    });
+    const h = new Headers(at(0).headers);
+    expect(h.get("X-Custom")).toBe("1");
+    expect(h.get("Content-Type")).toBe("application/merge-patch+json");
+  });
+});
+
 describe("apiDownload", () => {
-  function spyClick() {
-    const state: { clicked?: HTMLAnchorElement } = {};
-    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+  const origCreate = URL.createObjectURL;
+  const origRevoke = URL.revokeObjectURL;
+  let revoke: ReturnType<typeof vi.fn>;
+  let state: { clicked?: HTMLAnchorElement; attachedAtClick?: boolean };
+  let click: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    revoke = vi.fn();
+    URL.createObjectURL = () => "blob:x";
+    URL.revokeObjectURL = revoke as unknown as typeof URL.revokeObjectURL;
+    state = {};
+    click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
       this: HTMLAnchorElement,
     ) {
       state.clicked = this;
+      state.attachedAtClick = document.body.contains(this);
     });
-    return { state, click };
-  }
+  });
+  afterEach(() => {
+    click.mockRestore();
+    URL.createObjectURL = origCreate;
+    URL.revokeObjectURL = origRevoke;
+    vi.useRealTimers();
+  });
 
-  it("(i) clicks an anchor with the Content-Disposition filename and reports export headers", async () => {
+  const respond = (disposition?: string, extra: Record<string, string> = {}) =>
     fetchMock.mockResolvedValue(
       new Response("a,b", {
         status: 200,
-        headers: {
-          "Content-Disposition": 'attachment; filename="cases.csv"',
-          "X-Export-Total": "5",
-          "X-Export-Truncated": "true",
-        },
+        headers: { ...(disposition ? { "Content-Disposition": disposition } : {}), ...extra },
       }),
     );
-    const revoke = vi.fn();
-    Object.assign(URL, { createObjectURL: () => "blob:x", revokeObjectURL: revoke });
-    const { state, click } = spyClick();
+
+  it("(i) clicks an anchor with the filename and reports export headers; revokes later; removes anchor", async () => {
+    vi.useFakeTimers();
+    respond('attachment; filename="cases.csv"', {
+      "X-Export-Total": "5",
+      "X-Export-Truncated": "true",
+    });
     const result = await apiDownload("/reports/export", "fallback.csv");
     expect(result).toEqual({ total: 5, truncated: true });
     expect(click).toHaveBeenCalledTimes(1);
     expect(state.clicked?.download).toBe("cases.csv");
+    expect(state.attachedAtClick).toBe(true);
+    expect(document.body.contains(state.clicked!)).toBe(false);
     expect(at(0).credentials).toBe("include");
+    expect(revoke).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1000);
     expect(revoke).toHaveBeenCalledWith("blob:x");
-    click.mockRestore();
   });
 
-  it("uses the fallback name and reports not truncated without headers", async () => {
-    fetchMock.mockResolvedValue(new Response("x", { status: 200 }));
-    Object.assign(URL, { createObjectURL: () => "blob:y", revokeObjectURL: () => undefined });
-    const { state, click } = spyClick();
-    const result = await apiDownload("/documents/1/download", "doc.pdf");
+  it("prefers filename* (UTF-8) over the ascii fallback, as the backend sends", async () => {
+    respond(
+      `attachment; filename="Report - .pdf"; filename*=UTF-8''${encodeURIComponent("Rapport é 日本.pdf")}`,
+    );
+    await apiDownload("/d", "fallback.pdf");
+    expect(state.clicked?.download).toBe("Rapport é 日本.pdf");
+  });
+
+  it("uses a quoted name verbatim, including % and ;", async () => {
+    respond('attachment; filename="report 100%.pdf"');
+    await apiDownload("/d", "fallback.pdf");
+    expect(state.clicked?.download).toBe("report 100%.pdf");
+    respond('attachment; filename="a;b.pdf"');
+    await apiDownload("/d", "fallback.pdf");
+    expect(state.clicked?.download).toBe("a;b.pdf");
+  });
+
+  it("falls back to the quoted name when filename* is malformed", async () => {
+    respond(`attachment; filename="safe.pdf"; filename*=UTF-8''%E0%A4%A`);
+    await apiDownload("/d", "fallback.pdf");
+    expect(state.clicked?.download).toBe("safe.pdf");
+  });
+
+  it("uses the fallback name when there is no header", async () => {
+    respond();
+    const result = await apiDownload("/documents/1/download", "doc 100%.pdf");
     expect(result).toEqual({ truncated: false });
-    expect(state.clicked?.download).toBe("doc.pdf");
-    click.mockRestore();
+    expect(state.clicked?.download).toBe("doc 100%.pdf");
+  });
+
+  it("throws ApiError from the JSON error body and does not click", async () => {
+    fetchMock.mockResolvedValue(json(404, { error: { code: "NOT_FOUND", message: "gone" } }));
+    const err = (await apiDownload("/d", "x.pdf").catch((e: unknown) => e)) as ApiError;
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(404);
+    expect(err.code).toBe("NOT_FOUND");
+    expect(click).not.toHaveBeenCalled();
   });
 });
