@@ -9,7 +9,7 @@ import { CaseHeader } from "./case-header";
 import { CommentsTab } from "./comments-tab";
 import { DocumentsTab } from "./documents/documents-tab";
 import { OverviewTab } from "./overview-tab";
-import { RequestsTab } from "./requests-tab";
+import { RequestsTab } from "./requests/requests-tab";
 import { useCase } from "./use-case";
 
 type TabKey = "overview" | "documents" | "requests" | "comments" | "audit";
@@ -82,7 +82,7 @@ export function CaseDetailPage() {
           <DocumentsTab caseId={caseId} me={me} />
         </TabsContent>
         <TabsContent value="requests">
-          <RequestsTab />
+          <RequestsTab caseItem={caseItem} me={me} />
         </TabsContent>
         <TabsContent value="comments">
           <CommentsTab />

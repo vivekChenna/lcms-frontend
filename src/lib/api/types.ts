@@ -44,6 +44,7 @@ export type CommentListDto = ApiResponse<"/cases/{id}/comments", "get">;
 export type DocumentListDto = ApiResponse<"/cases/{id}/documents", "get">;
 export type DocumentDto = DocumentListDto[number];
 export type InfoRequestListDto = ApiResponse<"/cases/{id}/information-requests", "get">;
+export type InfoRequestDto = InfoRequestListDto[number];
 export type AuditListDto = ApiResponse<"/audit", "get">;
 
 export type SlaComplianceReportDto = ApiResponse<"/reports/sla-compliance", "get">;
