@@ -35,3 +35,7 @@ dist-ssr
 .env
 playwright-report/
 test-results/
+
+# e2e output
+e2e/screenshots/
+test-results/
