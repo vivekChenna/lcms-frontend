@@ -7,3 +7,14 @@ if (!Element.prototype.hasPointerCapture) Element.prototype.hasPointerCapture = 
 if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
 // jsdom's window.scrollTo only logs "Not implemented"; make it a silent no-op.
 window.scrollTo = (() => {}) as typeof window.scrollTo;
+
+// jsdom has no ResizeObserver; recharts' ResponsiveContainer needs one to measure its container.
+if (!("ResizeObserver" in window)) {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).ResizeObserver = ResizeObserverStub;
+}
