@@ -132,6 +132,38 @@ describe("NewRequestPage", () => {
     expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
   });
 
+  it("a backend error with no field details is still shown to the user (toast), not silently swallowed", async () => {
+    fetchMock.mockImplementation(
+      withLookupDefaults((url) => {
+        if (url.includes("/cases") && !url.includes("documents")) {
+          return json(
+            {
+              error: {
+                code: "VALIDATION_ERROR",
+                message: "Requesters may only submit cases in the Internal category (VC-03)",
+              },
+            },
+            400,
+          );
+        }
+        return undefined;
+      }),
+    );
+    const { toast } = await import("sonner");
+    renderPage({ role: "requester" });
+    await fillStep1();
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await userEvent.click(screen.getByLabelText(/confirm the information/i));
+    await userEvent.click(screen.getByRole("button", { name: /submit request/i }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Requesters may only submit cases in the Internal category (VC-03)",
+      ),
+    );
+  });
+
   it("submits and navigates to the new case on success", async () => {
     fetchMock.mockImplementation(
       withLookupDefaults((url) => {

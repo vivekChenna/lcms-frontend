@@ -2,9 +2,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useBlocker } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm, type FieldPath } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/common/page-header";
-import { fieldErrors } from "@/lib/api/errors";
+import { ApiError, fieldErrors } from "@/lib/api/errors";
 import { useMe } from "@/lib/auth";
 import { DetailsStep } from "./steps/details";
 import { PartiesStep } from "./steps/parties";
@@ -100,7 +101,16 @@ export function NewRequestPage() {
             );
             if (idx >= 0 && idx < firstStep) firstStep = idx;
           }
-          setStep(Object.keys(errors).length > 0 ? firstStep : 0);
+          if (Object.keys(errors).length > 0) {
+            setStep(firstStep);
+          } else {
+            // No field-specific details (e.g. a cross-field business rule like VC-03) - there is
+            // nothing to attach the message to, so it must surface as a toast or it's lost.
+            toast.error(
+              err instanceof ApiError ? err.message : "The request could not be completed.",
+            );
+            setStep(0);
+          }
         },
       },
     );
