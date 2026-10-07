@@ -180,14 +180,15 @@ function EnumFilter<T extends string>({
   labelFor?: (v: T) => string;
   onChange: (v: T | undefined) => void;
 }) {
+  const id = `filter-${label.toLowerCase().replace(/\s+/g, "-")}`;
   return (
     <div>
-      <Label>{label}</Label>
+      <Label htmlFor={id}>{label}</Label>
       <Select
         value={value ?? ALL}
         onValueChange={(v) => onChange(v === ALL ? undefined : (v as T))}
       >
-        <SelectTrigger className="mt-1 h-11 lg:h-9">
+        <SelectTrigger id={id} className="mt-1 h-11 lg:h-9">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -214,11 +215,12 @@ function NameFilter({
   items: { id: string; name: string }[] | undefined;
   onChange: (v: string | undefined) => void;
 }) {
+  const id = `filter-${label.toLowerCase().replace(/\s+/g, "-")}`;
   return (
     <div>
-      <Label>{label}</Label>
+      <Label htmlFor={id}>{label}</Label>
       <Select value={value ?? ALL} onValueChange={(v) => onChange(v === ALL ? undefined : v)}>
-        <SelectTrigger className="mt-1 h-11 lg:h-9">
+        <SelectTrigger id={id} className="mt-1 h-11 lg:h-9">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

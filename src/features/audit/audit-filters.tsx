@@ -74,12 +74,12 @@ export function AuditFiltersBar({ value, onChange, onClear }: Props) {
         </div>
 
         <div>
-          <Label>Actor</Label>
+          <Label htmlFor="audit-actor">Actor</Label>
           <Select
             value={value.actorId ?? ALL}
             onValueChange={(v) => onChange({ actorId: v === ALL ? undefined : v })}
           >
-            <SelectTrigger className="mt-1 h-11 lg:h-9">
+            <SelectTrigger id="audit-actor" className="mt-1 h-11 lg:h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

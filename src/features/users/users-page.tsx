@@ -172,12 +172,12 @@ export function UsersPage() {
             />
           </div>
           <div>
-            <Label>Role</Label>
+            <Label htmlFor="users-role">Role</Label>
             <Select
               value={search.role ?? ALL}
               onValueChange={(v) => setSearch({ role: v === ALL ? undefined : (v as UserRole) })}
             >
-              <SelectTrigger className="mt-1 h-11 lg:h-9">
+              <SelectTrigger id="users-role" className="mt-1 h-11 lg:h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -191,12 +191,12 @@ export function UsersPage() {
             </Select>
           </div>
           <div>
-            <Label>Status</Label>
+            <Label htmlFor="users-status">Status</Label>
             <Select
               value={search.isActive === undefined ? ALL : String(search.isActive)}
               onValueChange={(v) => setSearch({ isActive: v === ALL ? undefined : v === "true" })}
             >
-              <SelectTrigger className="mt-1 h-11 lg:h-9">
+              <SelectTrigger id="users-status" className="mt-1 h-11 lg:h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
