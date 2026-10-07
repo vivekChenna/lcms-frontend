@@ -42,6 +42,7 @@ export type NotificationListDto = ApiResponse<"/notifications", "get">;
 export type CaseAuditDto = ApiResponse<"/cases/{id}/audit", "get">;
 export type CommentListDto = ApiResponse<"/cases/{id}/comments", "get">;
 export type DocumentListDto = ApiResponse<"/cases/{id}/documents", "get">;
+export type DocumentDto = DocumentListDto[number];
 export type InfoRequestListDto = ApiResponse<"/cases/{id}/information-requests", "get">;
 export type AuditListDto = ApiResponse<"/audit", "get">;
 

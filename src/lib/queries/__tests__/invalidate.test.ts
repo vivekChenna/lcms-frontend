@@ -21,16 +21,17 @@ describe("invalidateCase", () => {
 });
 
 describe("invalidateCaseSubresources", () => {
-  it("adds comments, documents and information requests to the case keys", () => {
+  it("adds comments, documents, document versions and information requests to the case keys", () => {
     const qc = new QueryClient();
     const spy = vi.spyOn(qc, "invalidateQueries");
     invalidateCaseSubresources(qc, "c1");
     const keys = keysOf(spy);
-    expect(keys).toHaveLength(8);
+    expect(keys).toHaveLength(9);
     expect(keys).toEqual(
       expect.arrayContaining([
         ["comments", "c1"],
         ["documents", "c1"],
+        ["document-versions"],
         ["info-requests", "c1"],
         ["case", "c1"],
         ["cases"],

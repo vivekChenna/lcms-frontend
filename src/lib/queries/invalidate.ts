@@ -21,6 +21,7 @@ export function invalidateCaseSubresources(qc: QueryClient, caseId: string) {
   return Promise.all([
     qc.invalidateQueries({ queryKey: qk.comments(caseId) }),
     qc.invalidateQueries({ queryKey: qk.documents(caseId) }),
+    qc.invalidateQueries({ queryKey: ["document-versions"] }),
     qc.invalidateQueries({ queryKey: qk.infoRequests(caseId) }),
     invalidateCase(qc, caseId),
   ]);

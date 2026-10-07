@@ -7,7 +7,7 @@ import { useMe } from "@/lib/auth";
 import { AuditTab } from "./audit-tab";
 import { CaseHeader } from "./case-header";
 import { CommentsTab } from "./comments-tab";
-import { DocumentsTab } from "./documents-tab";
+import { DocumentsTab } from "./documents/documents-tab";
 import { OverviewTab } from "./overview-tab";
 import { RequestsTab } from "./requests-tab";
 import { useCase } from "./use-case";
@@ -79,7 +79,7 @@ export function CaseDetailPage() {
           <OverviewTab caseItem={caseItem} />
         </TabsContent>
         <TabsContent value="documents">
-          <DocumentsTab />
+          <DocumentsTab caseId={caseId} me={me} />
         </TabsContent>
         <TabsContent value="requests">
           <RequestsTab />
