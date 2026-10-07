@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiJson } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
+import type { ApiBody, CaseDto, Profile } from "@/lib/api/types";
+import { can } from "@/lib/permissions";
 import { invalidateCase } from "@/lib/queries/invalidate";
 
 function onErrorToast(err: unknown) {
@@ -50,4 +52,96 @@ export function useAssignCase(caseId: string) {
     },
     onError: onErrorToast,
   });
+}
+
+type EscalateBody = ApiBody<"/cases/{id}/escalate", "patch">;
+
+/** Escalate or clear escalation; PATCH .../escalate, body { isEscalated, reason? }. */
+export function useEscalateCase(caseId: string) {
+  const qc = useQueryClient();
+  return useMutation<unknown, ApiError, EscalateBody>({
+    mutationFn: (body: EscalateBody) =>
+      apiJson<unknown>(`/cases/${caseId}/escalate`, { method: "PATCH", json: body }),
+    onSuccess: async (_data, body) => {
+      await invalidateCase(qc, caseId);
+      toast.success(body.isEscalated ? "Case escalated" : "Escalation cleared");
+    },
+    onError: onErrorToast,
+  });
+}
+
+type CloseBody = ApiBody<"/cases/{id}/close", "patch">;
+
+/** Close a case; PATCH .../close, body { confirm: true, closureSummary, closureOutcomeId }. */
+export function useCloseCase(caseId: string) {
+  const qc = useQueryClient();
+  return useMutation<unknown, ApiError, CloseBody>({
+    mutationFn: (body: CloseBody) =>
+      apiJson<unknown>(`/cases/${caseId}/close`, { method: "PATCH", json: body }),
+    onSuccess: async () => {
+      await invalidateCase(qc, caseId);
+      toast.success("Case closed");
+    },
+    onError: onErrorToast,
+  });
+}
+
+/** Change priority; PATCH .../priority, body { priority }. */
+export function useChangePriority(caseId: string) {
+  const qc = useQueryClient();
+  return useMutation<unknown, ApiError, CaseDto["priority"]>({
+    mutationFn: (priority: CaseDto["priority"]) =>
+      apiJson<unknown>(`/cases/${caseId}/priority`, { method: "PATCH", json: { priority } }),
+    onSuccess: async () => {
+      await invalidateCase(qc, caseId);
+      toast.success("Priority updated");
+    },
+    onError: onErrorToast,
+  });
+}
+
+type UpdateBody = ApiBody<"/cases/{id}", "patch">;
+
+/** Edit case fields; PATCH /cases/{id}, partial body (an explicit null clears a field). */
+export function useUpdateCase(caseId: string) {
+  const qc = useQueryClient();
+  return useMutation<unknown, ApiError, UpdateBody>({
+    mutationFn: (body: UpdateBody) =>
+      apiJson<unknown>(`/cases/${caseId}`, { method: "PATCH", json: body }),
+    onSuccess: async () => {
+      await invalidateCase(qc, caseId);
+      toast.success("Case updated");
+    },
+    onError: onErrorToast,
+  });
+}
+
+export type CaseAction =
+  "accept" | "reject" | "assign" | "escalate" | "close" | "priority" | "edit";
+
+/**
+ * Which workflow actions `me` may take on `caseItem` right now, in a fixed display order.
+ * Mirrors the backend's requireRole gates (see `can` in lib/permissions) plus the
+ * case-specific rules the backend also enforces: accept/reject only the assignee (a manager can
+ * act on any rep's case); edit, for a requester, only their own case.
+ */
+export function actionsFor(me: Profile, caseItem: CaseDto): CaseAction[] {
+  const notClosed = caseItem.status !== "Closed";
+  const canAcceptOrReject =
+    can.acceptOrReject(me.role) &&
+    caseItem.status === "Assigned" &&
+    (me.role === "legal_manager" || caseItem.assignedLegalRepId === me.id);
+  const canEdit =
+    can.editCase(me.role) &&
+    notClosed &&
+    (me.role !== "requester" || caseItem.requesterId === me.id);
+
+  const actions: CaseAction[] = [];
+  if (canAcceptOrReject) actions.push("accept", "reject");
+  if (can.assign(me.role) && notClosed) actions.push("assign");
+  if (can.escalate(me.role) && notClosed) actions.push("escalate");
+  if (can.close(me.role) && notClosed) actions.push("close");
+  if (can.changePriority(me.role) && notClosed) actions.push("priority");
+  if (canEdit) actions.push("edit");
+  return actions;
 }
