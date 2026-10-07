@@ -66,3 +66,4 @@ export type EntityDto = EntityListDto[number];
 export type BusinessUnitDto = BusinessUnitListDto[number];
 export type ClosureOutcomeDto = ClosureOutcomeListDto[number];
 export type RoutingRuleListDto = ApiResponse<"/routing-rules", "get">;
+export type RoutingRuleDto = RoutingRuleListDto[number];
