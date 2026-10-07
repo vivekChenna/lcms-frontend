@@ -4,9 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorState } from "@/components/common/error-state";
 import { ApiError } from "@/lib/api/errors";
 import { useMe } from "@/lib/auth";
-import { AuditTab } from "./audit-tab";
+import { AuditTab } from "./audit/audit-tab";
 import { CaseHeader } from "./case-header";
-import { CommentsTab } from "./comments-tab";
+import { CommentsTab } from "./comments/comments-tab";
 import { DocumentsTab } from "./documents/documents-tab";
 import { OverviewTab } from "./overview-tab";
 import { RequestsTab } from "./requests/requests-tab";
@@ -85,10 +85,10 @@ export function CaseDetailPage() {
           <RequestsTab caseItem={caseItem} me={me} />
         </TabsContent>
         <TabsContent value="comments">
-          <CommentsTab />
+          <CommentsTab caseItem={caseItem} me={me} />
         </TabsContent>
         <TabsContent value="audit">
-          <AuditTab />
+          <AuditTab caseId={caseId} />
         </TabsContent>
       </Tabs>
     </div>
