@@ -1,24 +1,42 @@
-# Aesthetic Engine
+# Algihaz LCMS — frontend
 
-/skill:design-taste-frontend
+Legal Case Management System web client: React 19, TanStack Router + Query, shadcn/ui,
+Tailwind v4, built with Vite as a static single-page app (`dist/index.html` + assets).
 
-This project was built with [Lovable](https://lovable.dev).
+## Run it locally
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/0fd213b2-118f-4d6b-be14-e43bec24057b).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Prerequisites: Node.js 20+, and the LCMS backend running on `http://localhost:4000`
+(see the backend repo's `docs/integration-runbook.md` for the docker stack, migrations and
+`pnpm seed:demo`).
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
 npm i
-npm run dev
+cp .env.example .env     # VITE_API_BASE_URL=http://localhost:4000
+npm run dev              # http://localhost:5173
 ```
+
+The backend's `CORS_ORIGINS` must list the origin you open the app on (5173 by default),
+because authentication uses HttpOnly cookies sent with `credentials: 'include'`.
+
+Demo accounts (password `Password123!` for all): `vivekadmin@`, `viveklegalmanager@`,
+`viveklegalrep@`, `viveklegalrep2@`, `vivek@` (requester), `vivekviewer@` — all `@gmail.com`.
+
+## Scripts
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Vite dev server |
+| `npm run build` | Production build into `dist/` (static; serve any path as `index.html`) |
+| `npm run preview` | Serve the built `dist/` locally |
+| `npm test` | Vitest unit/component suite |
+| `npm run lint` | ESLint + Prettier |
+| `npx tsc --noEmit` | Typecheck |
+| `npm run api:types` | Regenerate `src/lib/api/schema.d.ts` from the running backend's OpenAPI |
+
+## Deploying
+
+`npm run build` emits plain static files. Build with `VITE_API_BASE_URL` pointing at the API
+origin, host the contents of `dist/` on any static host (history-API fallback to `index.html`
+for deep links), and add the app's origin to the backend's `CORS_ORIGINS`.
+
+Decisions and baselines are recorded in `docs/decisions.md`.

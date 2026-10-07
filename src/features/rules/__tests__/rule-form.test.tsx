@@ -21,12 +21,29 @@ describe("RuleForm", () => {
   it("omits unset match criteria entirely (not as null) - the backend only treats a missing key as a wildcard", async () => {
     fetchMock.mockImplementation(async (url: string) => {
       if (url.includes("/case-categories")) return json([]);
-      if (url.includes("/case-types")) return json([{ id: "ct-1", categoryId: "cat-1", name: "A Case Type" }]);
+      if (url.includes("/case-types"))
+        return json([{ id: "ct-1", categoryId: "cat-1", name: "A Case Type" }]);
       if (url.includes("/entities")) return json([]);
       if (url.includes("/business-units")) return json([]);
       if (url.includes("/departments")) return json([]);
-      if (url.includes("/users?")) return json({ items: [{ id: "rep-1", fullName: "Rex Rep" }], total: 1, page: 1, pageSize: 100 });
-      if (url.endsWith("/routing-rules")) return json({ id: "r1", matchCriteria: { caseTypeId: "ct-1" }, targetLegalRepId: "rep-1", priorityOrder: 0, isActive: true }, 201);
+      if (url.includes("/users?"))
+        return json({
+          items: [{ id: "rep-1", fullName: "Rex Rep" }],
+          total: 1,
+          page: 1,
+          pageSize: 100,
+        });
+      if (url.endsWith("/routing-rules"))
+        return json(
+          {
+            id: "r1",
+            matchCriteria: { caseTypeId: "ct-1" },
+            targetLegalRepId: "rep-1",
+            priorityOrder: 0,
+            isActive: true,
+          },
+          201,
+        );
       return json({});
     });
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
