@@ -17,8 +17,21 @@ const me = (role: UserRole) =>
     role,
   }) as Profile;
 
+const notificationsPage = () =>
+  new Response(JSON.stringify({ items: [], total: 0, page: 1, pageSize: 20, unreadCount: 0 }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+
 beforeEach(() => {
   fetchMock.mockReset();
+  // The topbar's NotificationBell polls /notifications on mount in every test here; give it a
+  // harmless default response so tests unrelated to notifications don't have to know about it.
+  fetchMock.mockImplementation(async (url: string) =>
+    String(url).includes("/notifications")
+      ? notificationsPage()
+      : new Response(null, { status: 204 }),
+  );
   vi.stubGlobal("fetch", fetchMock);
   window.localStorage.clear();
 });
@@ -114,11 +127,12 @@ describe("AppShell", () => {
     expect(await screen.findByText("page body")).toBeInTheDocument();
   });
 
-  it("has a notification bell linking to /notifications", async () => {
+  it("has a notification bell that opens a popover with a link to /notifications", async () => {
     setViewport(390);
-    setup("viewer");
-    const bell = await screen.findByRole("link", { name: /open notifications/i });
-    expect(bell).toHaveAttribute("href", "/notifications");
+    const { ue } = setup("viewer");
+    await ue.click(await screen.findByRole("button", { name: /notifications/i }));
+    const link = await screen.findByRole("link", { name: /view all/i });
+    expect(link).toHaveAttribute("href", "/notifications");
   });
 
   it("user menu shows who is signed in and signs out", async () => {
@@ -132,7 +146,7 @@ describe("AppShell", () => {
     expect(menu).toHaveTextContent("Viewer");
     await ue.click(within(menu).getByRole("menuitem", { name: /sign out/i }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
-    expect(fetchMock.mock.calls[0]![0]).toMatch(/\/auth\/logout$/);
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).match(/\/auth\/logout$/))).toBe(true);
     expect(queryClient.getQueryData(["me"])).toBeUndefined();
   });
 

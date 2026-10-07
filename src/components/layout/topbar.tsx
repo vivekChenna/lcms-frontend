@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import type { Profile } from "@/lib/api/types";
 import { UserMenu } from "./user-menu";
 
@@ -27,15 +27,7 @@ export function Topbar({ title, me, onOpenNav }: Props) {
       >
         {title}
       </span>
-      {/* The unread count is wired in B16. */}
-      <Link
-        to="/notifications"
-        aria-label="Open notifications"
-        title="Notifications"
-        className="grid size-11 shrink-0 place-items-center rounded-md hover:bg-muted lg:size-9"
-      >
-        <Bell className="size-5" />
-      </Link>
+      <NotificationBell />
       <UserMenu me={me} />
     </header>
   );
