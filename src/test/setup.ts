@@ -18,3 +18,9 @@ if (!("ResizeObserver" in window)) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).ResizeObserver = ResizeObserverStub;
 }
+
+// jsdom has no URL.createObjectURL/revokeObjectURL; apiDownload (file/export downloads) needs
+// them to turn a Blob into a clickable link. A fixed stub string is enough for tests that only
+// assert the download happened, not the blob's bytes.
+if (!URL.createObjectURL) URL.createObjectURL = () => "blob:stub";
+if (!URL.revokeObjectURL) URL.revokeObjectURL = () => {};
