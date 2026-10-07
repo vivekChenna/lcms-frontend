@@ -9,6 +9,7 @@ import {
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
+import { NetworkBanner } from "../components/common/network-banner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -80,7 +81,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Internal legal case management for Algihaz Holding." },
       { name: "author", content: "Algihaz Holding" },
       { property: "og:title", content: "Algihaz Legal Case Management" },
-      { property: "og:description", content: "Internal legal case management for Algihaz Holding." },
+      {
+        property: "og:description",
+        content: "Internal legal case management for Algihaz Holding.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
@@ -88,7 +92,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+      },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
@@ -103,6 +110,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {createPortal(<HeadContent />, document.head)}
+      <NetworkBanner />
       <Outlet />
     </QueryClientProvider>
   );

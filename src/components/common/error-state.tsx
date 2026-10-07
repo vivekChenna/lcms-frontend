@@ -1,15 +1,10 @@
 import { AlertTriangle, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/api/errors";
-
-// fetch() rejects with a TypeError whose message depends on the browser (Chrome, Firefox, Safari).
-const NETWORK = /Failed to fetch|NetworkError|Load failed/i;
+import { ApiError, isNetworkError } from "@/lib/api/errors";
 
 function messageFor(error: unknown): string {
   if (!(error instanceof ApiError)) {
-    return error instanceof TypeError && NETWORK.test(error.message)
-      ? "Can't reach the server"
-      : "Something went wrong";
+    return isNetworkError(error) ? "Can't reach the server" : "Something went wrong";
   }
   if (error.isForbidden) return "You don't have access to this";
   if (error.isNotFound) return "Not found";
