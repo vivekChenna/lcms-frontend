@@ -79,6 +79,23 @@ describe("LoginPage", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("asks for a password but does not apply the new-password length rule to sign-in", async () => {
+    fetchMock.mockResolvedValue(
+      json(401, { error: { code: "UNAUTHORIZED", message: "Invalid email or password" } }),
+    );
+    const { ue } = setup();
+    await ue.type(screen.getByLabelText(/email/i), "v@x.com");
+    await ue.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByText("Enter your password.")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    // a short password is the server's call to reject, not the form's
+    await ue.type(screen.getByLabelText(/^password$/i), "abc");
+    await ue.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid email or password");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("on success clears the cache, stores the session user and navigates to the redirect", async () => {
     fetchMock.mockResolvedValue(json(200, { user, accessToken: "a", refreshToken: "r" }));
     const { queryClient, ue } = setup("/cases?page=2");

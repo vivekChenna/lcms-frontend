@@ -7,6 +7,9 @@ import type { UserRole } from "@/lib/api/types";
 import { can } from "@/lib/permissions";
 import { usePostComment } from "./use-comments";
 
+/** The backend rejects a comment body longer than this. */
+export const COMMENT_MAX = 10_000;
+
 /** Requesters never see the internal-note toggle, on top of the backend hiding internal
  * comments from them entirely - belt and suspenders, not a substitute for the server check. */
 export function CommentForm({ caseId, role }: { caseId: string; role: UserRole }) {
@@ -36,6 +39,7 @@ export function CommentForm({ caseId, role }: { caseId: string; role: UserRole }
         id="comment-body"
         className="mt-1"
         rows={3}
+        maxLength={COMMENT_MAX}
         value={body}
         onChange={(e) => setBody(e.target.value)}
       />

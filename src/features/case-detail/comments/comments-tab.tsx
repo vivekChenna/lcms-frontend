@@ -8,7 +8,7 @@ import { ErrorState } from "@/components/common/error-state";
 import { MessageSquare } from "lucide-react";
 import type { CaseDto, Profile } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
-import { CommentForm } from "./comment-form";
+import { COMMENT_MAX, CommentForm } from "./comment-form";
 import { type CommentDto, useComments, useDeleteComment, useEditComment } from "./use-comments";
 
 function CommentRow({
@@ -46,7 +46,12 @@ function CommentRow({
 
       {editing ? (
         <div className="mt-2">
-          <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} />
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={3}
+            maxLength={COMMENT_MAX}
+          />
           <div className="mt-2 flex gap-2">
             <Button type="button" size="sm" disabled={edit.isPending} onClick={save}>
               Save

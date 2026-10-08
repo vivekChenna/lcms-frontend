@@ -105,6 +105,20 @@ function renderTab(role: UserRole, comments: unknown[] = [], meId = "rep-1") {
 }
 
 describe("CommentsTab", () => {
+  it("stops the comment box at the backend's 10,000-character limit", async () => {
+    renderTab("requester", [], "requester-1");
+    const box = await screen.findByLabelText(/add a comment/i);
+    expect(box).toHaveAttribute("maxlength", "10000");
+  });
+
+  it("limits an edited comment to 10,000 characters too", async () => {
+    renderTab("legal_rep", [commentRow()], "rep-1");
+    await screen.findByText("Please review the attached contract.");
+    await userEvent.click(screen.getByRole("button", { name: /^edit$/i }));
+    const editBox = screen.getAllByRole("textbox").find((el) => el.id !== "comment-body");
+    expect(editBox).toHaveAttribute("maxlength", "10000");
+  });
+
   it("shows no internal checkbox for a requester", async () => {
     renderTab("requester", [], "requester-1");
     await screen.findByLabelText(/add a comment/i);
