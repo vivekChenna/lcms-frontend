@@ -1,26 +1,85 @@
+import type { CSSProperties } from "react";
 import { Link } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { Clock, FolderOpen, Hourglass, TriangleAlert, UserX, type LucideIcon } from "lucide-react";
 import type { DashboardDto } from "@/lib/api/types";
 import { isLegal } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { casesSearch } from "./use-dashboard";
 
+type Role = Parameters<typeof isLegal>[0];
 type TileKey = keyof DashboardDto["tiles"];
-type TileDef = { key: TileKey; label: string; tone?: "danger" };
+type PrimaryDef = { key: TileKey; label: string; hint: string; icon: LucideIcon; danger?: boolean };
 
-const COMMON_TILES: TileDef[] = [
-  { key: "total", label: "Total" },
-  { key: "open", label: "Open" },
-  { key: "awaitingAcceptance", label: "Awaiting acceptance" },
-  { key: "waitingOnInput", label: "Waiting on input" },
-  { key: "overdue", label: "Overdue", tone: "danger" },
-  { key: "onTime", label: "On time" },
-  { key: "closed", label: "Closed" },
+const LABEL: Record<TileKey, string> = {
+  total: "Total",
+  open: "Open",
+  awaitingAcceptance: "Awaiting acceptance",
+  waitingOnInput: "Waiting on input",
+  overdue: "Overdue",
+  onTime: "On time",
+  closed: "Closed",
+  assignedToMe: "Assigned to me",
+  unassigned: "Unassigned",
+};
+
+const OVERDUE: PrimaryDef = {
+  key: "overdue",
+  label: LABEL.overdue,
+  hint: "Past the resolution deadline",
+  icon: TriangleAlert,
+  danger: true,
+};
+
+// What each audience should act on first. Legal staff triage; everyone else follows their requests.
+const PRIMARY_LEGAL: PrimaryDef[] = [
+  OVERDUE,
+  {
+    key: "unassigned",
+    label: LABEL.unassigned,
+    hint: "Waiting for a representative",
+    icon: UserX,
+  },
+  {
+    key: "awaitingAcceptance",
+    label: LABEL.awaitingAcceptance,
+    hint: "Assigned, not accepted yet",
+    icon: Hourglass,
+  },
+];
+const PRIMARY_OTHER: PrimaryDef[] = [
+  OVERDUE,
+  { key: "open", label: LABEL.open, hint: "Cases still being worked", icon: FolderOpen },
+  {
+    key: "waitingOnInput",
+    label: LABEL.waitingOnInput,
+    hint: "Waiting for a response",
+    icon: Clock,
+  },
 ];
 
-const LEGAL_TILES: TileDef[] = [
-  { key: "assignedToMe", label: "Assigned to me" },
-  { key: "unassigned", label: "Unassigned" },
+const ALL_COMMON: TileKey[] = [
+  "total",
+  "open",
+  "awaitingAcceptance",
+  "waitingOnInput",
+  "overdue",
+  "onTime",
+  "closed",
 ];
+const ALL_LEGAL: TileKey[] = [...ALL_COMMON, "assignedToMe", "unassigned"];
+
+// The dashboard's one orchestrated moment: the three tiles that need action ease in, in order,
+// when the page first loads. It does not replay when the data refreshes.
+const ENTRANCE = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
+const ENTRANCE_ITEM = {
+  hidden: { opacity: 0, y: 6 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" as const } },
+};
+
+function tileKeys(role: Role): TileKey[] {
+  return isLegal(role) ? ALL_LEGAL : ALL_COMMON;
+}
 
 export function TileSkeleton() {
   return (
@@ -31,38 +90,96 @@ export function TileSkeleton() {
   );
 }
 
-export function TilesSkeletonGrid({ role }: { role: Parameters<typeof isLegal>[0] }) {
-  const count = isLegal(role) ? COMMON_TILES.length + LEGAL_TILES.length : COMMON_TILES.length;
+export function TilesSkeletonGrid({ role }: { role: Role }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {Array.from({ length: count }, (_, i) => (
-        <TileSkeleton key={i} />
-      ))}
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        {Array.from({ length: 3 }, (_, i) => (
+          <TileSkeleton key={i} />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: tileKeys(role).length - 3 }, (_, i) => (
+          <TileSkeleton key={i} />
+        ))}
+      </div>
     </div>
   );
 }
 
-export function Tiles({ data, role }: { data: DashboardDto; role: Parameters<typeof isLegal>[0] }) {
-  const defs = isLegal(role) ? [...COMMON_TILES, ...LEGAL_TILES] : COMMON_TILES;
+export function Tiles({ data, role }: { data: DashboardDto; role: Role }) {
+  const primary = isLegal(role) ? PRIMARY_LEGAL : PRIMARY_OTHER;
+  const primaryKeys = new Set(primary.map((p) => p.key));
+  const secondary = tileKeys(role).filter((k) => !primaryKeys.has(k));
+  const to = (key: TileKey) => casesSearch(data.filters[key]) as never;
+
   return (
-    <div
-      data-testid="dashboard-tiles"
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-    >
-      {defs.map(({ key, label, tone }) => (
-        <Link
-          key={key}
-          to="/cases"
-          search={casesSearch(data.filters[key]) as never}
-          className={cn(
-            "min-h-11 min-w-0 rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-muted/50 focus-visible:outline-2",
-            tone === "danger" && data.tiles[key] > 0 && "border-danger/30 bg-danger/5",
-          )}
+    <div data-testid="dashboard-tiles" className="space-y-4">
+      <motion.div
+        className="grid gap-3 sm:grid-cols-3"
+        variants={ENTRANCE}
+        initial="hidden"
+        animate="show"
+      >
+        {primary.map(({ key, label, hint, icon: Icon, danger }) => {
+          const value = data.tiles[key];
+          const alarm = danger && value > 0;
+          return (
+            <motion.div key={key} variants={ENTRANCE_ITEM} className="min-w-0">
+              <Link
+                to="/cases"
+                search={to(key)}
+                className={cn(
+                  "group flex h-full min-h-11 min-w-0 items-start gap-4 rounded-xl border bg-card p-5 transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-ring",
+                  alarm && "border-danger/30 bg-danger/5 hover:bg-danger/10",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground",
+                    alarm && "bg-danger/10 text-danger",
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium">{label}</span>
+                  <span
+                    className={cn(
+                      "block text-3xl font-semibold leading-tight tabular-nums",
+                      alarm && "text-danger",
+                    )}
+                  >
+                    {value}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">{hint}</span>
+                </span>
+              </Link>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+
+      {/* Offsetting the grid by 1px and clipping hides the outer edges of the per-cell borders, so
+          dividers only appear between cells and unused cells in the last row stay blank. */}
+      <div className="overflow-hidden rounded-xl border bg-card">
+        <div
+          className="-ml-px -mt-px grid grid-cols-2 sm:grid-cols-3 lg:[grid-template-columns:repeat(var(--n),minmax(0,1fr))]"
+          style={{ "--n": secondary.length } as CSSProperties}
         >
-          <p className="truncate text-sm text-muted-foreground">{label}</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">{data.tiles[key]}</p>
-        </Link>
-      ))}
+          {secondary.map((key) => (
+            <Link
+              key={key}
+              to="/cases"
+              search={to(key)}
+              className="min-h-11 min-w-0 border-l border-t px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            >
+              <p className="truncate text-sm text-muted-foreground">{LABEL[key]}</p>
+              <p className="text-xl font-semibold tabular-nums">{data.tiles[key]}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

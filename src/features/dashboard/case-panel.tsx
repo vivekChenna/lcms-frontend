@@ -57,7 +57,7 @@ export function MyAssignedCases({ items }: { items: PanelItem[] }) {
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-medium">My assigned cases</h2>
+      <h2 className="mb-3 text-base font-semibold">My assigned cases</h2>
       <ResponsiveTable
         columns={columns}
         rows={items}
