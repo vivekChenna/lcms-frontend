@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
@@ -91,13 +92,7 @@ export function RaiseDialog({ caseItem, open, onOpenChange }: Props) {
       <Label htmlFor="ir-due-date" className="mt-4 block">
         Due date (optional)
       </Label>
-      <Input
-        id="ir-due-date"
-        type="date"
-        className="mt-1 h-11 lg:h-9"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-      />
+      <DatePicker id="ir-due-date" value={dueDate} onChange={setDueDate} />
 
       {raise.isError && (
         <p role="alert" className="mt-2 text-sm text-danger">

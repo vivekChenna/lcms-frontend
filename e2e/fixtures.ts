@@ -14,7 +14,17 @@ export const PASSWORD = "Password123!";
 
 /** Nav labels each seeded role should see (the permission matrix in src/lib/permissions.ts). */
 export const NAV: Record<Who, string[]> = {
-  admin: ["Dashboard", "Cases", "New Request", "Reports", "Audit", "Users", "Master Data", "Routing Rules", "Notifications"],
+  admin: [
+    "Dashboard",
+    "Cases",
+    "New Request",
+    "Reports",
+    "Audit",
+    "Users",
+    "Master Data",
+    "Routing Rules",
+    "Notifications",
+  ],
   manager: ["Dashboard", "Cases", "Reports", "Audit", "Users", "Routing Rules", "Notifications"],
   rep1: ["Dashboard", "Cases", "New Request", "Notifications"],
   rep2: ["Dashboard", "Cases", "New Request", "Notifications"],
@@ -43,6 +53,19 @@ export async function loginAs(page: Page, who: Who): Promise<void> {
     await page.waitForTimeout(12_000);
   }
   await expect(page).toHaveURL(/\/$/);
+}
+
+/** Chooses a date ("YYYY-MM-DD") in a DatePicker by driving its calendar like a person would. */
+export async function pickDate(page: Page, label: RegExp, iso: string): Promise<void> {
+  const [year, month, day] = iso.split("-").map(Number) as [number, number, number];
+  await page.getByLabel(label).click();
+  const calendar = page.getByRole("dialog");
+  await calendar.getByRole("combobox", { name: /year/i }).selectOption(String(year));
+  await calendar.getByRole("combobox", { name: /month/i }).selectOption(String(month - 1));
+  const monthName = new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long" });
+  await calendar
+    .getByRole("button", { name: new RegExp(`${monthName} ${day}(st|nd|rd|th), ${year}`) })
+    .click();
 }
 
 /** Submits a case as the signed-in requester through the real form; returns its detail URL path. */

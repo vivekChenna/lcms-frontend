@@ -1,5 +1,6 @@
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -149,20 +150,30 @@ export function PartiesStep({ form, me }: Props) {
           </div>
           <div>
             <Label htmlFor="rf-incident-date">Incident date</Label>
-            <Input
-              id="rf-incident-date"
-              type="date"
-              className="mt-1 h-11 lg:h-9"
-              {...register("incidentDate")}
+            <Controller
+              control={control}
+              name="incidentDate"
+              render={({ field }) => (
+                <DatePicker
+                  id="rf-incident-date"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                />
+              )}
             />
           </div>
           <div>
             <Label htmlFor="rf-business-deadline">Business deadline</Label>
-            <Input
-              id="rf-business-deadline"
-              type="date"
-              className="mt-1 h-11 lg:h-9"
-              {...register("businessDeadline")}
+            <Controller
+              control={control}
+              name="businessDeadline"
+              render={({ field }) => (
+                <DatePicker
+                  id="rf-business-deadline"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                />
+              )}
             />
           </div>
           <div className="sm:col-span-2">

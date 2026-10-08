@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -107,22 +107,20 @@ export function ReportFilters({ value, onChange, onClear }: Props) {
 
         <div>
           <Label htmlFor="report-from">Created from</Label>
-          <Input
+          <DatePicker
             id="report-from"
-            type="date"
-            className="mt-1 h-11 lg:h-9"
             value={value.createdFrom ?? ""}
-            onChange={(e) => onChange({ createdFrom: e.target.value || undefined })}
+            onChange={(v) => onChange({ createdFrom: v || undefined })}
+            aria-invalid={invalidRange || undefined}
           />
         </div>
         <div>
           <Label htmlFor="report-to">Created to</Label>
-          <Input
+          <DatePicker
             id="report-to"
-            type="date"
-            className="mt-1 h-11 lg:h-9"
             value={value.createdTo ?? ""}
-            onChange={(e) => onChange({ createdTo: e.target.value || undefined })}
+            onChange={(v) => onChange({ createdTo: v || undefined })}
+            aria-invalid={invalidRange || undefined}
           />
         </div>
         {invalidRange && (

@@ -4,6 +4,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -310,20 +311,30 @@ export function EditCaseDialog({ caseItem, open, onOpenChange }: Props) {
         </div>
         <div>
           <Label htmlFor="ec-incident-date">Incident date</Label>
-          <Input
-            id="ec-incident-date"
-            type="date"
-            className="mt-1 h-11 lg:h-9"
-            {...register("incidentDate")}
+          <Controller
+            control={control}
+            name="incidentDate"
+            render={({ field }) => (
+              <DatePicker
+                id="ec-incident-date"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+              />
+            )}
           />
         </div>
         <div>
           <Label htmlFor="ec-business-deadline">Business deadline</Label>
-          <Input
-            id="ec-business-deadline"
-            type="date"
-            className="mt-1 h-11 lg:h-9"
-            {...register("businessDeadline")}
+          <Controller
+            control={control}
+            name="businessDeadline"
+            render={({ field }) => (
+              <DatePicker
+                id="ec-business-deadline"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+              />
+            )}
           />
         </div>
         <div className="sm:col-span-2">
