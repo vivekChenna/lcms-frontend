@@ -1,4 +1,3 @@
-import { PasswordInput } from "@/components/ui/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -33,7 +32,6 @@ const baseFields = {
 const createSchema = z.object({
   ...baseFields,
   email: z.string().trim().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 const editSchema = z.object(baseFields);
@@ -47,7 +45,6 @@ function toFormValues(user: UserDto | null): CreateInput {
   return {
     fullName: user?.fullName ?? "",
     email: "",
-    password: "",
     designation: user?.designation ?? "",
     phone: user?.phone ?? "",
     departmentId: user?.departmentId ?? "",
@@ -58,7 +55,7 @@ function toFormValues(user: UserDto | null): CreateInput {
 
 type Props = { user: UserDto | null; open: boolean; onOpenChange: (open: boolean) => void };
 
-/** `user: null` creates a new account; otherwise edits it (email/password are not editable here
+/** `user: null` creates a new account; otherwise edits it (email is not editable here
  * - the backend's PATCH /users/{id} body has no fields for them). */
 export function UserFormDialog({ user, open, onOpenChange }: Props) {
   const isCreate = user === null;
@@ -94,7 +91,6 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
         {
           fullName: createValues.fullName.trim(),
           email: createValues.email.trim(),
-          password: createValues.password,
           ...(trim(createValues.designation)
             ? { designation: trim(createValues.designation)! }
             : {}),
@@ -165,19 +161,10 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
                 </p>
               )}
             </div>
-            <div>
-              <Label htmlFor="uf-password">Password</Label>
-              <PasswordInput
-                id="uf-password"
-                className="mt-1 h-11 lg:h-9"
-                {...register("password")}
-              />
-              {errors.password && (
-                <p role="alert" className="mt-1 text-sm text-danger">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
+            <p className="text-sm text-muted-foreground sm:col-span-2">
+              They will get an email with a link to choose their own password. You never see or set
+              it.
+            </p>
           </>
         )}
 

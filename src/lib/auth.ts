@@ -30,7 +30,7 @@ export function useLogin() {
 }
 
 /** One-time message the login page shows after a forced sign-out. */
-export type LoginNotice = "password-changed";
+export type LoginNotice = "password-changed" | "password-set";
 
 export function useLogout() {
   const queryClient = useQueryClient();
@@ -42,6 +42,22 @@ export function useLogout() {
       queryClient.clear();
       void navigate({ to: "/login", search: vars?.notice ? { notice: vars.notice } : {} });
     },
+  });
+}
+
+/** Public: spend the emailed one-time token to choose a password. */
+export function useSetPassword() {
+  return useMutation({
+    mutationFn: (body: ApiBody<"/auth/set-password", "post">) =>
+      apiJson<unknown>("/auth/set-password", { method: "POST", json: body }),
+  });
+}
+
+/** Public: ask for a link. The server answers the same way whether or not the account exists. */
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (body: ApiBody<"/auth/forgot-password", "post">) =>
+      apiJson<unknown>("/auth/forgot-password", { method: "POST", json: body }),
   });
 }
 

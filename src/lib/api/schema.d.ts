@@ -63,6 +63,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/set-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        token: string;
+                        newPassword: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/refresh": {
         parameters: {
             query?: never;
@@ -441,6 +521,7 @@ export interface paths {
                                 entityId: string | null;
                                 businessUnitId: string | null;
                                 isActive: boolean;
+                                isInvited: boolean;
                                 /** @enum {string} */
                                 role: "admin" | "legal_manager" | "legal_rep" | "requester" | "viewer";
                                 createdAt: string;
@@ -468,7 +549,6 @@ export interface paths {
                         fullName: string;
                         /** Format: email */
                         email: string;
-                        password: string;
                         designation?: string;
                         phone?: string;
                         /** Format: uuid */
@@ -497,10 +577,12 @@ export interface paths {
                             entityId: string | null;
                             businessUnitId: string | null;
                             isActive: boolean;
+                            isInvited: boolean;
                             /** @enum {string} */
                             role: "admin" | "legal_manager" | "legal_rep" | "requester" | "viewer";
                             createdAt: string;
                             updatedAt: string;
+                            inviteEmailSent: boolean;
                         };
                     };
                 };
@@ -546,6 +628,7 @@ export interface paths {
                             entityId: string | null;
                             businessUnitId: string | null;
                             isActive: boolean;
+                            isInvited: boolean;
                             /** @enum {string} */
                             role: "admin" | "legal_manager" | "legal_rep" | "requester" | "viewer";
                             createdAt: string;
@@ -598,6 +681,7 @@ export interface paths {
                             entityId: string | null;
                             businessUnitId: string | null;
                             isActive: boolean;
+                            isInvited: boolean;
                             /** @enum {string} */
                             role: "admin" | "legal_manager" | "legal_rep" | "requester" | "viewer";
                             createdAt: string;
@@ -656,6 +740,7 @@ export interface paths {
                             entityId: string | null;
                             businessUnitId: string | null;
                             isActive: boolean;
+                            isInvited: boolean;
                             /** @enum {string} */
                             role: "admin" | "legal_manager" | "legal_rep" | "requester" | "viewer";
                             createdAt: string;
@@ -707,6 +792,7 @@ export interface paths {
                             entityId: string | null;
                             businessUnitId: string | null;
                             isActive: boolean;
+                            isInvited: boolean;
                             /** @enum {string} */
                             role: "admin" | "legal_manager" | "legal_rep" | "requester" | "viewer";
                             createdAt: string;
@@ -758,6 +844,7 @@ export interface paths {
                             entityId: string | null;
                             businessUnitId: string | null;
                             isActive: boolean;
+                            isInvited: boolean;
                             /** @enum {string} */
                             role: "admin" | "legal_manager" | "legal_rep" | "requester" | "viewer";
                             createdAt: string;
@@ -769,7 +856,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/users/{id}/reset-password": {
+    "/users/{id}/send-password-link": {
         parameters: {
             query?: never;
             header?: never;
@@ -778,11 +865,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: {
+        post: {
             parameters: {
                 query?: never;
                 header?: never;
@@ -791,23 +874,26 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        newPassword: string;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Default Response */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            emailSent: true;
+                        };
+                    };
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/departments": {

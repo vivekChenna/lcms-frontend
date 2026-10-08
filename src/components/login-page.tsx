@@ -1,6 +1,6 @@
 import { PasswordInput } from "@/components/ui/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Gavel, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -28,6 +28,7 @@ function loginErrorMessage(err: unknown): string {
 
 const NOTICES: Record<LoginNotice, string> = {
   "password-changed": "Password changed. Sign in with your new password.",
+  "password-set": "Password set. Sign in with your new password.",
 };
 
 export function LoginPage({
@@ -111,6 +112,12 @@ export function LoginPage({
                   {errors.password.message}
                 </p>
               )}
+              <Link
+                to="/forgot-password"
+                className="-my-2 inline-block py-3 text-sm text-primary underline-offset-2 hover:underline"
+              >
+                Forgot password?
+              </Link>
             </div>
             <Button type="submit" className="h-11 w-full" disabled={login.isPending}>
               {login.isPending && <Loader2 className="animate-spin" aria-hidden />}

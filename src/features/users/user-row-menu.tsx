@@ -15,12 +15,12 @@ type Props = {
   isSelf: boolean;
   onEdit: () => void;
   onRole: () => void;
-  onReset: () => void;
+  onSendLink: () => void;
   onToggleActive: () => void;
 };
 
 /** One "⋯" menu per user row instead of four loose text buttons. */
-export function UserRowMenu({ user, isSelf, onEdit, onRole, onReset, onToggleActive }: Props) {
+export function UserRowMenu({ user, isSelf, onEdit, onRole, onSendLink, onToggleActive }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -41,9 +41,11 @@ export function UserRowMenu({ user, isSelf, onEdit, onRole, onReset, onToggleAct
         <DropdownMenuItem onSelect={onRole}>
           <ShieldCheck aria-hidden /> Change role
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onReset}>
-          <KeyRound aria-hidden /> Reset password
-        </DropdownMenuItem>
+        {user.isActive && (
+          <DropdownMenuItem onSelect={onSendLink}>
+            <KeyRound aria-hidden /> {user.isInvited ? "Resend invite" : "Send password reset link"}
+          </DropdownMenuItem>
+        )}
         {!isSelf && (
           <>
             <DropdownMenuSeparator />

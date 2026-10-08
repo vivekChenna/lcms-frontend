@@ -33,7 +33,14 @@ function refreshSession(): Promise<boolean> {
   return refreshing;
 }
 
-const NO_RETRY = ["/auth/login", "/auth/refresh", "/auth/logout"];
+// public account routes: a 401 here is never an expired session, so never trigger a refresh
+const NO_RETRY = [
+  "/auth/login",
+  "/auth/refresh",
+  "/auth/logout",
+  "/auth/set-password",
+  "/auth/forgot-password",
+];
 
 // `path` must start with "/" (no absolute URLs). `json` wins over `body`.
 // A 401 retry re-sends `init`, so bodies must be replayable (string, FormData, Blob,

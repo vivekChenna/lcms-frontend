@@ -27,13 +27,25 @@ import { nameOf, useBusinessUnits, useDepartments, useEntities } from "@/lib/que
 import { ROLE_LABEL } from "@/lib/labels";
 import { can } from "@/lib/permissions";
 import { UserRowMenu } from "./user-row-menu";
-import { ResetPasswordDialog } from "./reset-password-dialog";
+import { SendLinkDialog } from "./send-link-dialog";
 import { RoleDialog } from "./role-dialog";
 import { UserFormDialog } from "./user-form-dialog";
 import { useSetActive, useUsers, type UsersFilters } from "./use-users";
 
 const ALL = "__all__";
 const ROLES: UserRole[] = ["admin", "legal_manager", "legal_rep", "requester", "viewer"];
+
+/** Active, Inactive, or Invited (added by an admin, has not chosen a password yet). */
+function StatusBadge({ user }: { user: UserDto }) {
+  if (!user.isActive) return <Badge variant="secondary">Inactive</Badge>;
+  if (user.isInvited)
+    return (
+      <Badge variant="outline" className="border-warning/40 bg-warning/15 text-warning-foreground">
+        Invited
+      </Badge>
+    );
+  return <Badge variant="outline">Active</Badge>;
+}
 
 type Search = {
   search?: string | undefined;
@@ -72,7 +84,7 @@ export function UsersPage() {
 
   const [formUser, setFormUser] = useState<UserDto | null | undefined>(undefined);
   const [roleTarget, setRoleTarget] = useState<UserDto | null>(null);
-  const [resetTarget, setResetTarget] = useState<UserDto | null>(null);
+  const [linkTarget, setLinkTarget] = useState<UserDto | null>(null);
   const [activeTarget, setActiveTarget] = useState<{ user: UserDto; next: boolean } | null>(null);
 
   const canEdit = !!me && can.editUsers(me.role);
@@ -95,7 +107,7 @@ export function UsersPage() {
       isSelf={u.id === me?.id}
       onEdit={() => setFormUser(u)}
       onRole={() => setRoleTarget(u)}
-      onReset={() => setResetTarget(u)}
+      onSendLink={() => setLinkTarget(u)}
       onToggleActive={() => setActiveTarget({ user: u, next: !u.isActive })}
     />
   );
@@ -145,11 +157,7 @@ export function UsersPage() {
     {
       key: "status",
       header: "Status",
-      cell: (u) => (
-        <Badge variant={u.isActive ? "outline" : "secondary"}>
-          {u.isActive ? "Active" : "Inactive"}
-        </Badge>
-      ),
+      cell: (u) => <StatusBadge user={u} />,
     },
     ...(canEdit
       ? [
@@ -250,9 +258,7 @@ export function UsersPage() {
                       <p className="truncate text-sm text-muted-foreground">{u.email}</p>
                       <div className="flex flex-wrap items-center gap-2 pt-1">
                         <Badge variant="outline">{ROLE_LABEL[u.role]}</Badge>
-                        <Badge variant={u.isActive ? "outline" : "secondary"}>
-                          {u.isActive ? "Active" : "Inactive"}
-                        </Badge>
+                        <StatusBadge user={u} />
                       </div>
                       {organisation(u).length > 0 && (
                         <p className="truncate text-xs text-muted-foreground">
@@ -290,11 +296,11 @@ export function UsersPage() {
           onOpenChange={(open) => !open && setRoleTarget(null)}
         />
       )}
-      {resetTarget && (
-        <ResetPasswordDialog
-          user={resetTarget}
-          open={!!resetTarget}
-          onOpenChange={(open) => !open && setResetTarget(null)}
+      {linkTarget && (
+        <SendLinkDialog
+          user={linkTarget}
+          open={!!linkTarget}
+          onOpenChange={(open) => !open && setLinkTarget(null)}
         />
       )}
       <ConfirmDialog

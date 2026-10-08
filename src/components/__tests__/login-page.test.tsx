@@ -5,7 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginPage } from "../login-page";
 
 const navigate = vi.fn();
-vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => navigate,
+  // a plain anchor is enough: these tests only look at where the link points
+  Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) => (
+    <a href={to} {...rest}>
+      {children}
+    </a>
+  ),
+}));
 
 const fetchMock = vi.fn();
 const json = (status: number, body: unknown) =>
@@ -22,7 +30,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function setup(redirect?: string, notice?: "password-changed") {
+function setup(redirect?: string, notice?: "password-changed" | "password-set") {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   queryClient.setQueryData(["cases"], { stale: "from another user" });
   render(
@@ -44,6 +52,21 @@ describe("LoginPage", () => {
     setup(undefined, "password-changed");
     expect(screen.getByRole("status")).toHaveTextContent(
       "Password changed. Sign in with your new password.",
+    );
+  });
+
+  it("confirms a freshly chosen password when asked", () => {
+    setup(undefined, "password-set");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Password set. Sign in with your new password.",
+    );
+  });
+
+  it("links to the forgotten-password page", () => {
+    setup();
+    expect(screen.getByRole("link", { name: /forgot password\?/i })).toHaveAttribute(
+      "href",
+      "/forgot-password",
     );
   });
 

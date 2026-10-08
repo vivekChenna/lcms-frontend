@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { toast } from "sonner";
 import { apiJson } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
-import type { ApiBody, UserDto, UserListDto, UserRole } from "@/lib/api/types";
+import type { ApiBody, ApiResponse, UserDto, UserListDto, UserRole } from "@/lib/api/types";
 import { qk } from "@/lib/queries/keys";
 
 export type UsersFilters = {
@@ -41,11 +41,17 @@ type CreateBody = ApiBody<"/users", "post">;
 
 export function useCreateUser() {
   const qc = useQueryClient();
-  return useMutation<UserDto, ApiError, CreateBody>({
-    mutationFn: (body: CreateBody) => apiJson<UserDto>("/users", { method: "POST", json: body }),
-    onSuccess: async () => {
+  return useMutation<ApiResponse<"/users", "post", 201>, ApiError, CreateBody>({
+    mutationFn: (body: CreateBody) =>
+      apiJson<ApiResponse<"/users", "post", 201>>("/users", { method: "POST", json: body }),
+    onSuccess: async (created) => {
       await invalidateUsers(qc);
-      toast.success("User created");
+      // the user exists either way; the toast says whether the email that lets them in went out
+      if (created.inviteEmailSent) toast.success(`Invitation sent to ${created.email}`);
+      else
+        toast.warning(
+          "User created, but the invitation email could not be sent. Use \u201CResend invite\u201D on their row.",
+        );
     },
     onError: onErrorToast,
   });
@@ -94,14 +100,17 @@ export function useSetActive(userId: string) {
   });
 }
 
-export function useResetPassword(userId: string) {
-  return useMutation<unknown, ApiError, string>({
-    mutationFn: (newPassword: string) =>
-      apiJson<unknown>(`/users/${userId}/reset-password`, {
-        method: "PATCH",
-        json: { newPassword },
-      }),
-    onSuccess: () => toast.success("Password reset"),
+/** Email the user a link to choose a password (their invitation, or a reset). */
+export function useSendPasswordLink(user: Pick<UserDto, "id" | "email" | "isInvited">) {
+  const qc = useQueryClient();
+  return useMutation<unknown, ApiError, void>({
+    mutationFn: () => apiJson<unknown>(`/users/${user.id}/send-password-link`, { method: "POST" }),
+    onSuccess: async () => {
+      await invalidateUsers(qc);
+      toast.success(
+        user.isInvited ? `Invitation sent to ${user.email}` : `Password link sent to ${user.email}`,
+      );
+    },
     onError: onErrorToast,
   });
 }
