@@ -33,19 +33,25 @@ function Item({ row, resource }: { row: Row; resource: SimpleResource }) {
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Input
             autoFocus
-            className="h-9"
+            className="h-11 lg:h-9"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && save()}
           />
-          <Button type="button" size="icon" variant="ghost" className="size-8" onClick={save}>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="size-11 lg:size-8"
+            onClick={save}
+          >
             <Check className="size-4" />
           </Button>
           <Button
             type="button"
             size="icon"
             variant="ghost"
-            className="size-8"
+            className="size-11 lg:size-8"
             onClick={() => {
               setName(row.name);
               setEditing(false);
@@ -63,7 +69,7 @@ function Item({ row, resource }: { row: Row; resource: SimpleResource }) {
             type="button"
             size="icon"
             variant="ghost"
-            className="size-8"
+            className="size-11 lg:size-8"
             onClick={() => setEditing(true)}
           >
             <Pencil className="size-4" />
@@ -111,7 +117,7 @@ export function SimpleResourceTable({ resource, label, pluralLabel, rows }: Prop
     <div>
       <div className="mb-3 flex gap-2">
         <Input
-          className="h-10"
+          className="h-11 lg:h-10"
           placeholder={`New ${label.toLowerCase()} name`}
           value={name}
           onChange={(e) => setName(e.target.value)}

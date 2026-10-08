@@ -81,7 +81,11 @@ function OpenCaseloadByRep({ rows }: { rows: RepLoad[] }) {
         rowKey={(r) => r.legalRepId}
         renderCard={(r) => (
           <div className="flex items-center justify-between gap-2">
-            <Link to="/cases" search={repSearch(r)} className="min-w-0 truncate font-medium">
+            <Link
+              to="/cases"
+              search={repSearch(r)}
+              className="-my-3 block min-w-0 truncate py-3 font-medium"
+            >
               {r.fullName}
             </Link>
             <span className="shrink-0 text-sm text-muted-foreground">
@@ -116,7 +120,7 @@ function UnassignedPanel({ count, items }: ManagerPanels["unassigned"]) {
       header: <span className="sr-only">Assign</span>,
       className: "w-px text-right",
       cell: (r) => (
-        <Button type="button" size="sm" className="h-10 lg:h-9" onClick={() => setAssignId(r.id)}>
+        <Button type="button" size="sm" className="h-11 lg:h-9" onClick={() => setAssignId(r.id)}>
           Assign
         </Button>
       ),
@@ -139,7 +143,7 @@ function UnassignedPanel({ count, items }: ManagerPanels["unassigned"]) {
               <Button
                 type="button"
                 size="sm"
-                className="h-10 lg:h-9"
+                className="h-11 lg:h-9"
                 onClick={() => setAssignId(r.id)}
               >
                 Assign

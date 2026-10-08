@@ -57,7 +57,7 @@ export function RepWorkloadChart({ data }: { data: RepWorkloadReportDto }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <table className="mt-4 w-full text-sm">
+      <table data-chart-table className="mt-4 w-full text-sm">
         <caption className="sr-only">Legal rep workload</caption>
         <thead>
           <tr className="border-b text-left text-muted-foreground">

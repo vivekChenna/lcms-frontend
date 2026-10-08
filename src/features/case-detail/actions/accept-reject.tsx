@@ -32,7 +32,7 @@ export function AcceptRejectActions({ caseId }: { caseId: string }) {
       <Button
         type="button"
         size="sm"
-        className="h-10 lg:h-9"
+        className="h-11 lg:h-9"
         disabled={accept.isPending}
         onClick={() => accept.mutate()}
       >
@@ -42,7 +42,7 @@ export function AcceptRejectActions({ caseId }: { caseId: string }) {
         type="button"
         variant="outline"
         size="sm"
-        className="h-10 lg:h-9"
+        className="h-11 lg:h-9"
         onClick={openDialog}
       >
         Reject

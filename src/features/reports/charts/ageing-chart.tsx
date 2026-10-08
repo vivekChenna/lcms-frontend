@@ -27,7 +27,7 @@ export function AgeingChart({ data }: { data: AgeingReportDto }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <table className="mt-4 w-full text-sm">
+      <table data-chart-table className="mt-4 w-full text-sm">
         <caption className="sr-only">Case ageing by bucket (days)</caption>
         <thead>
           <tr className="border-b text-left text-muted-foreground">

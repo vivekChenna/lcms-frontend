@@ -28,7 +28,7 @@ export function UserRowMenu({ user, isSelf, onEdit, onRole, onReset, onToggleAct
           type="button"
           variant="outline"
           size="icon"
-          className="size-9"
+          className="size-11 lg:size-9"
           aria-label={`Actions for ${user.fullName}`}
         >
           <MoreHorizontal aria-hidden />

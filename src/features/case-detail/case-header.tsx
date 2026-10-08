@@ -28,7 +28,7 @@ export function CaseHeader({ caseItem, me }: Props) {
     <div className="mb-5">
       <Link
         to="/cases"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="-my-1 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground lg:min-h-0"
       >
         <ArrowLeft className="size-4" aria-hidden />
         Back to cases
@@ -53,7 +53,7 @@ export function CaseHeader({ caseItem, me }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-10 lg:h-9"
+              className="h-11 lg:h-9"
               onClick={() => setAssignOpen(true)}
             >
               {caseItem.assignedLegalRepId ? "Reassign" : "Assign"}
@@ -64,7 +64,7 @@ export function CaseHeader({ caseItem, me }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-10 lg:h-9"
+              className="h-11 lg:h-9"
               onClick={() => setEscalateOpen(true)}
             >
               {caseItem.isEscalated ? "Clear escalation" : "Escalate"}
@@ -75,7 +75,7 @@ export function CaseHeader({ caseItem, me }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-10 lg:h-9"
+              className="h-11 lg:h-9"
               onClick={() => setPriorityOpen(true)}
             >
               Change priority
@@ -86,7 +86,7 @@ export function CaseHeader({ caseItem, me }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-10 lg:h-9"
+              className="h-11 lg:h-9"
               onClick={() => setEditOpen(true)}
             >
               Edit
@@ -97,7 +97,7 @@ export function CaseHeader({ caseItem, me }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-10 lg:h-9"
+              className="h-11 lg:h-9"
               onClick={() => setCloseOpen(true)}
             >
               Close case

@@ -146,7 +146,7 @@ export function AuditPage() {
                   <Link
                     to="/cases/$caseId"
                     params={{ caseId: r.caseId }}
-                    className="underline-offset-2 hover:underline"
+                    className="-my-3 inline-block py-3 underline-offset-2 hover:underline"
                   >
                     {r.caseReference}
                   </Link>

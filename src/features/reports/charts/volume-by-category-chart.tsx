@@ -35,7 +35,7 @@ export function VolumeByCategoryChart({ data }: { data: VolumeByCategoryReportDt
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <table className="mt-4 w-full text-sm">
+      <table data-chart-table className="mt-4 w-full text-sm">
         <caption className="sr-only">Volume by category and case type</caption>
         <thead>
           <tr className="border-b text-left text-muted-foreground">
