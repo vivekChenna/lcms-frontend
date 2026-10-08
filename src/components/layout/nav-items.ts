@@ -46,6 +46,7 @@ export const navItemsFor = (role: UserRole) => NAV_ITEMS.filter((i) => canSee(ro
 
 /** Topbar title: the nav item owning the path ("/cases/abc" -> "Cases"). */
 export function titleFor(pathname: string): string {
+  if (pathname === "/profile") return "Profile";
   const item = NAV_ITEMS.find((i) =>
     i.to === "/" ? pathname === "/" : pathname === i.to || pathname.startsWith(`${i.to}/`),
   );

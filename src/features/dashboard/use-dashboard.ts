@@ -14,3 +14,6 @@ export function useDashboard() {
 export function casesSearch(filters: Record<string, string> | undefined) {
   return { ...filters };
 }
+
+/** Bring the case list into view; covers clicking a tile whose link points at where we already are. */
+export const scrollToResults = () => document.getElementById("results")?.scrollIntoView();

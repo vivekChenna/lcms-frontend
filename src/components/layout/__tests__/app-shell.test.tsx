@@ -168,12 +168,11 @@ describe("AppShell", () => {
     expect(queryClient.getQueryData(["me"])).toBeUndefined();
   });
 
-  it("user menu opens the change password dialog", async () => {
+  it("user menu links to the profile page", async () => {
     setViewport(1280);
-    const { ue } = setup("viewer");
+    const { ue, router } = setup("viewer");
     await ue.click(await screen.findByRole("button", { name: /account menu/i }));
-    await ue.click(await screen.findByRole("menuitem", { name: /change password/i }));
-    const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByLabelText(/current password/i)).toBeInTheDocument();
+    await ue.click(await screen.findByRole("menuitem", { name: /profile/i }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/profile"));
   });
 });

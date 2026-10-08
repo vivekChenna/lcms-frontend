@@ -18,6 +18,7 @@ import { Route as AuthedAuditRouteImport } from './routes/_authed.audit'
 import { Route as AuthedMasterDataRouteImport } from './routes/_authed.master-data'
 import { Route as AuthedNewRequestRouteImport } from './routes/_authed.new-request'
 import { Route as AuthedNotificationsRouteImport } from './routes/_authed.notifications'
+import { Route as AuthedProfileRouteImport } from './routes/_authed.profile'
 import { Route as AuthedReportsRouteImport } from './routes/_authed.reports'
 import { Route as AuthedRulesRouteImport } from './routes/_authed.rules'
 import { Route as AuthedUsersRouteImport } from './routes/_authed.users'
@@ -68,6 +69,11 @@ const AuthedNotificationsRoute = AuthedNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedProfileRoute = AuthedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedReportsRoute = AuthedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/master-data': typeof AuthedMasterDataRoute
   '/new-request': typeof AuthedNewRequestRoute
   '/notifications': typeof AuthedNotificationsRoute
+  '/profile': typeof AuthedProfileRoute
   '/reports': typeof AuthedReportsRoute
   '/rules': typeof AuthedRulesRoute
   '/users': typeof AuthedUsersRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/master-data': typeof AuthedMasterDataRoute
   '/new-request': typeof AuthedNewRequestRoute
   '/notifications': typeof AuthedNotificationsRoute
+  '/profile': typeof AuthedProfileRoute
   '/reports': typeof AuthedReportsRoute
   '/rules': typeof AuthedRulesRoute
   '/users': typeof AuthedUsersRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/_authed/master-data': typeof AuthedMasterDataRoute
   '/_authed/new-request': typeof AuthedNewRequestRoute
   '/_authed/notifications': typeof AuthedNotificationsRoute
+  '/_authed/profile': typeof AuthedProfileRoute
   '/_authed/reports': typeof AuthedReportsRoute
   '/_authed/rules': typeof AuthedRulesRoute
   '/_authed/users': typeof AuthedUsersRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/master-data'
     | '/new-request'
     | '/notifications'
+    | '/profile'
     | '/reports'
     | '/rules'
     | '/users'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/master-data'
     | '/new-request'
     | '/notifications'
+    | '/profile'
     | '/reports'
     | '/rules'
     | '/users'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/_authed/master-data'
     | '/_authed/new-request'
     | '/_authed/notifications'
+    | '/_authed/profile'
     | '/_authed/reports'
     | '/_authed/rules'
     | '/_authed/users'
@@ -262,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedNotificationsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/profile': {
+      id: '/_authed/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthedProfileRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/reports': {
       id: '/_authed/reports'
       path: '/reports'
@@ -305,6 +324,7 @@ interface AuthedRouteChildren {
   AuthedMasterDataRoute: typeof AuthedMasterDataRoute
   AuthedNewRequestRoute: typeof AuthedNewRequestRoute
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
+  AuthedProfileRoute: typeof AuthedProfileRoute
   AuthedReportsRoute: typeof AuthedReportsRoute
   AuthedRulesRoute: typeof AuthedRulesRoute
   AuthedUsersRoute: typeof AuthedUsersRoute
@@ -318,6 +338,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedMasterDataRoute: AuthedMasterDataRoute,
   AuthedNewRequestRoute: AuthedNewRequestRoute,
   AuthedNotificationsRoute: AuthedNotificationsRoute,
+  AuthedProfileRoute: AuthedProfileRoute,
   AuthedReportsRoute: AuthedReportsRoute,
   AuthedRulesRoute: AuthedRulesRoute,
   AuthedUsersRoute: AuthedUsersRoute,

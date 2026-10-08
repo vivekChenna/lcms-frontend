@@ -1,5 +1,5 @@
-import { KeyRound, LogOut } from "lucide-react";
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { LogOut, UserRound } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,6 @@ import {
 import type { Profile } from "@/lib/api/types";
 import { useLogout } from "@/lib/auth";
 import { ROLE_LABEL } from "@/lib/labels";
-import { ChangePasswordDialog } from "./change-password-dialog";
 
 const initials = (name: string) =>
   name
@@ -23,7 +22,6 @@ const initials = (name: string) =>
 
 export function UserMenu({ me }: { me: Profile }) {
   const logout = useLogout();
-  const [passwordOpen, setPasswordOpen] = useState(false);
 
   return (
     <>
@@ -51,9 +49,11 @@ export function UserMenu({ me }: { me: Profile }) {
             <p className="text-xs text-muted-foreground">{ROLE_LABEL[me.role]}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="min-h-11 lg:min-h-8" onSelect={() => setPasswordOpen(true)}>
-            <KeyRound />
-            Change password
+          <DropdownMenuItem asChild className="min-h-11 lg:min-h-8">
+            <Link to="/profile">
+              <UserRound />
+              Profile
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             className="min-h-11 lg:min-h-8"
@@ -65,7 +65,6 @@ export function UserMenu({ me }: { me: Profile }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
     </>
   );
 }

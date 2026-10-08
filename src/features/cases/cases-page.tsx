@@ -82,32 +82,36 @@ export function CasesPage() {
 
       {isError && <ErrorState error={error} onRetry={() => void refetch()} />}
 
-      <ResultsRegion label="cases" initialLoading={isPending} fetching={isFetching && !isPending}>
-        {data && (
-          <div className="space-y-4">
-            <CasesTable
-              rows={data.items}
-              empty={
-                <EmptyState
-                  icon={FolderOpen}
-                  title="No cases match these filters"
-                  action={
-                    <Button type="button" variant="outline" onClick={clear}>
-                      Clear filters
-                    </Button>
-                  }
-                />
-              }
-            />
-            <Pagination
-              page={data.page}
-              pageSize={data.pageSize}
-              total={data.total}
-              onPageChange={(page) => setSearch({ page }, false)}
-            />
-          </div>
-        )}
-      </ResultsRegion>
+      {/* the tiles and chart link here (#results), so a click lands on the list, not the top */}
+      {/* min height: even a one-row list leaves enough page below to scroll the list to the top */}
+      <div id="results" className="min-h-[70vh] scroll-mt-4">
+        <ResultsRegion label="cases" initialLoading={isPending} fetching={isFetching && !isPending}>
+          {data && (
+            <div className="space-y-4">
+              <CasesTable
+                rows={data.items}
+                empty={
+                  <EmptyState
+                    icon={FolderOpen}
+                    title="No cases match these filters"
+                    action={
+                      <Button type="button" variant="outline" onClick={clear}>
+                        Clear filters
+                      </Button>
+                    }
+                  />
+                }
+              />
+              <Pagination
+                page={data.page}
+                pageSize={data.pageSize}
+                total={data.total}
+                onPageChange={(page) => setSearch({ page }, false)}
+              />
+            </div>
+          )}
+        </ResultsRegion>
+      </div>
     </div>
   );
 }
