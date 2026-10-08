@@ -7,6 +7,20 @@
     <meta name="description" content="Internal legal case management for Algihaz Holding." />
     <meta name="author" content="Algihaz Holding" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <script>
+      // apply the saved theme before first paint so dark mode never flashes white
+      (function () {
+        try {
+          var t = localStorage.getItem("lcms-theme");
+          var dark =
+            t === "dark" ||
+            ((t === null || t === "system") &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
