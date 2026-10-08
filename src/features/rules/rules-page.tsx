@@ -99,7 +99,7 @@ export function RulesPage() {
             key: "actions",
             header: "",
             cell: (r: RoutingRuleDto) => (
-              <Button type="button" variant="ghost" size="sm" onClick={() => setFormRule(r)}>
+              <Button type="button" variant="outline" size="sm" onClick={() => setFormRule(r)}>
                 Edit
               </Button>
             ),

@@ -24,6 +24,7 @@ import type { UserDto, UserRole } from "@/lib/api/types";
 import { nameOf, useBusinessUnits, useDepartments, useEntities } from "@/lib/queries/lookups";
 import { ROLE_LABEL } from "@/lib/labels";
 import { can } from "@/lib/permissions";
+import { UserRowMenu } from "./user-row-menu";
 import { ResetPasswordDialog } from "./reset-password-dialog";
 import { RoleDialog } from "./role-dialog";
 import { UserFormDialog } from "./user-form-dialog";
@@ -83,21 +84,66 @@ export function UsersPage() {
   if (isPending) return null;
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
+  // department first, then "entity · business unit"; blanks dropped
+  const organisation = (u: UserDto) =>
+    [
+      nameOf(departments.data, u.departmentId),
+      nameOf(entities.data, u.entityId),
+      nameOf(businessUnits.data, u.businessUnitId),
+    ].filter((part) => part !== "—");
+
+  const rowMenu = (u: UserDto) => (
+    <UserRowMenu
+      user={u}
+      isSelf={u.id === me?.id}
+      onEdit={() => setFormUser(u)}
+      onRole={() => setRoleTarget(u)}
+      onReset={() => setResetTarget(u)}
+      onToggleActive={() => setActiveTarget({ user: u, next: !u.isActive })}
+    />
+  );
+
   const columns: Column<UserDto>[] = [
-    { key: "name", header: "Name", cell: (u) => u.fullName },
-    { key: "email", header: "Email", cell: (u) => u.email },
-    { key: "designation", header: "Designation", cell: (u) => u.designation ?? "—" },
-    { key: "role", header: "Role", cell: (u) => ROLE_LABEL[u.role] },
     {
-      key: "department",
-      header: "Department",
-      cell: (u) => nameOf(departments.data, u.departmentId),
+      key: "user",
+      header: "User",
+      truncate: "max-w-64",
+      title: (u) => `${u.fullName} · ${u.email}`,
+      cell: (u) => (
+        <>
+          <p className="truncate font-medium">{u.fullName}</p>
+          <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+        </>
+      ),
     },
-    { key: "entity", header: "Entity", cell: (u) => nameOf(entities.data, u.entityId) },
     {
-      key: "businessUnit",
-      header: "Business unit",
-      cell: (u) => nameOf(businessUnits.data, u.businessUnitId),
+      key: "role",
+      header: "Role",
+      cell: (u) => (
+        <>
+          <p>{ROLE_LABEL[u.role]}</p>
+          {u.designation && <p className="text-xs text-muted-foreground">{u.designation}</p>}
+        </>
+      ),
+    },
+    {
+      key: "organisation",
+      header: "Organisation",
+      truncate: "max-w-56",
+      title: (u) => organisation(u).join(" · ") || undefined,
+      cell: (u) => {
+        const [department, ...rest] = organisation(u);
+        return department ? (
+          <>
+            <p className="truncate">{department}</p>
+            {rest.length > 0 && (
+              <p className="truncate text-xs text-muted-foreground">{rest.join(" · ")}</p>
+            )}
+          </>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        );
+      },
     },
     {
       key: "status",
@@ -112,30 +158,10 @@ export function UsersPage() {
       ? [
           {
             key: "actions",
-            header: "",
-            cell: (u: UserDto) => (
-              <div className="flex flex-wrap gap-1">
-                <Button type="button" variant="ghost" size="sm" onClick={() => setFormUser(u)}>
-                  Edit
-                </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setRoleTarget(u)}>
-                  Role
-                </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setResetTarget(u)}>
-                  Reset password
-                </Button>
-                {u.id !== me?.id && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setActiveTarget({ user: u, next: !u.isActive })}
-                  >
-                    {u.isActive ? "Deactivate" : "Activate"}
-                  </Button>
-                )}
-              </div>
-            ),
+            header: <span className="sr-only">Actions</span>,
+            sticky: true,
+            className: "w-px text-right",
+            cell: (u: UserDto) => rowMenu(u),
           } as Column<UserDto>,
         ]
       : []),
@@ -218,53 +244,23 @@ export function UsersPage() {
             rows={data.items}
             rowKey={(u) => u.id}
             renderCard={(u) => (
-              <div className="space-y-1">
-                <p className="font-medium">{u.fullName}</p>
-                <p className="text-sm text-muted-foreground">{u.email}</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{ROLE_LABEL[u.role]}</Badge>
-                  <Badge variant={u.isActive ? "outline" : "secondary"}>
-                    {u.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                {canEdit && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFormUser(u)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRoleTarget(u)}
-                    >
-                      Role
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setResetTarget(u)}
-                    >
-                      Reset password
-                    </Button>
-                    {u.id !== me?.id && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setActiveTarget({ user: u, next: !u.isActive })}
-                      >
-                        {u.isActive ? "Deactivate" : "Activate"}
-                      </Button>
-                    )}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                  <p className="truncate font-medium">{u.fullName}</p>
+                  <p className="truncate text-sm text-muted-foreground">{u.email}</p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <Badge variant="outline">{ROLE_LABEL[u.role]}</Badge>
+                    <Badge variant={u.isActive ? "outline" : "secondary"}>
+                      {u.isActive ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
-                )}
+                  {organisation(u).length > 0 && (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {organisation(u).join(" · ")}
+                    </p>
+                  )}
+                </div>
+                {canEdit && <div className="shrink-0">{rowMenu(u)}</div>}
               </div>
             )}
           />

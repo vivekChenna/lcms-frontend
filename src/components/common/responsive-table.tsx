@@ -7,6 +7,14 @@ export type Column<T> = {
   header: ReactNode;
   cell: (row: T) => ReactNode;
   className?: string;
+  /**
+   * Max-width class (e.g. "max-w-56"). The cell stays on one line and ends in an ellipsis; give
+   * `title` so the full text is still reachable on hover.
+   */
+  truncate?: string;
+  title?: (row: T) => string | undefined;
+  /** Pin the column to the right edge while the table scrolls sideways (row actions). */
+  sticky?: boolean;
 };
 
 type Props<T> = {
@@ -83,7 +91,11 @@ export function ResponsiveTable<T>({
               <th
                 key={c.key}
                 scope="col"
-                className={cn("whitespace-nowrap px-4 py-3", c.className)}
+                className={cn(
+                  "whitespace-nowrap px-3 py-3",
+                  c.sticky && "sticky right-0 bg-muted",
+                  c.className,
+                )}
               >
                 {c.header}
               </th>
@@ -106,8 +118,21 @@ export function ResponsiveTable<T>({
                 : {})}
             >
               {columns.map((c) => (
-                <td key={c.key} className={cn("px-4 py-3 align-middle", c.className)}>
-                  {c.cell(row)}
+                <td
+                  key={c.key}
+                  className={cn(
+                    "whitespace-nowrap px-3 py-3 align-middle",
+                    c.sticky && "sticky right-0 bg-card",
+                    c.className,
+                  )}
+                >
+                  {c.truncate ? (
+                    <div className={cn("truncate", c.truncate)} title={c.title?.(row)}>
+                      {c.cell(row)}
+                    </div>
+                  ) : (
+                    c.cell(row)
+                  )}
                 </td>
               ))}
             </tr>

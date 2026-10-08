@@ -88,22 +88,49 @@ describe("UsersPage", () => {
         : undefined,
     );
     await screen.findByText("Rex Rep");
-    expect(screen.queryByRole("button", { name: /^edit$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /actions for/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /new user/i })).not.toBeInTheDocument();
   });
 
-  it("an admin sees the mutation buttons", async () => {
+  it("an admin gets one actions menu per row with every action in it", async () => {
     renderAt("admin", "admin-1", (url) =>
       url.endsWith("/users") || url.includes("/users?")
         ? json({ items: [userRow()], total: 1, page: 1, pageSize: 20 })
         : undefined,
     );
     await screen.findByText("Rex Rep");
-    expect(screen.getByRole("button", { name: /^edit$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /new user/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^edit$/i })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /actions for rex rep/i }));
+    for (const name of [/^edit$/i, /^change role$/i, /^reset password$/i, /^deactivate$/i]) {
+      expect(await screen.findByRole("menuitem", { name })).toBeInTheDocument();
+    }
   });
 
-  it("hides the Deactivate button for the signed-in admin's own row", async () => {
+  it("offers Activate instead of Deactivate for an inactive user", async () => {
+    renderAt("admin", "admin-1", (url) =>
+      url.endsWith("/users") || url.includes("/users?")
+        ? json({ items: [userRow({ isActive: false })], total: 1, page: 1, pageSize: 20 })
+        : undefined,
+    );
+    await screen.findByText("Rex Rep");
+    await userEvent.click(screen.getByRole("button", { name: /actions for rex rep/i }));
+    expect(await screen.findByRole("menuitem", { name: /^activate$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /^deactivate$/i })).not.toBeInTheDocument();
+  });
+
+  it("shows name and email together in one cell, with the role beneath no other column wrapping", async () => {
+    renderAt("admin", "admin-1", (url) =>
+      url.endsWith("/users") || url.includes("/users?")
+        ? json({ items: [userRow()], total: 1, page: 1, pageSize: 20 })
+        : undefined,
+    );
+    const name = await screen.findByText("Rex Rep");
+    expect(name.closest("td")).toContainElement(screen.getByText("rex@example.com"));
+    expect(screen.getAllByRole("columnheader").length).toBeLessThanOrEqual(5);
+  });
+
+  it("omits Deactivate from the signed-in admin's own menu", async () => {
     renderAt("admin", "admin-1", (url) =>
       url.endsWith("/users") || url.includes("/users?")
         ? json({
@@ -115,7 +142,9 @@ describe("UsersPage", () => {
         : undefined,
     );
     await screen.findByText("Ada Admin");
-    expect(screen.queryByRole("button", { name: /^deactivate$/i })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /actions for ada admin/i }));
+    expect(await screen.findByRole("menuitem", { name: /^edit$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /^deactivate$/i })).not.toBeInTheDocument();
   });
 
   it("a 409 duplicate email maps to the Email field", async () => {

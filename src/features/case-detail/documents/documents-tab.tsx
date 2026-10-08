@@ -73,13 +73,19 @@ function RowActions({ doc, me, caseId, onVersions, onDelete }: RowActionsProps) 
         <Download />
         Download
       </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => onVersions(doc)}>
+      <Button type="button" variant="outline" size="sm" onClick={() => onVersions(doc)}>
         <History />
         Versions
       </Button>
       <NewVersionButton caseId={caseId} documentId={doc.id} />
       {doc.uploaderId === me.id && (
-        <Button type="button" variant="ghost" size="sm" onClick={() => onDelete(doc)}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="text-danger"
+          onClick={() => onDelete(doc)}
+        >
           <Trash2 />
           Delete
         </Button>

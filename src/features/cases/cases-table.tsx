@@ -14,34 +14,56 @@ import type { CaseListDto } from "@/lib/api/types";
 type CaseRow = CaseListDto["items"][number];
 
 // The whole row opens the case (ResponsiveTable wraps the mobile card in a <button>), so the
-// reference is styled like a link but is plain text here, not a nested <a>.
-function RefCell({ row }: { row: CaseRow }) {
-  return <span className="font-medium underline-offset-2">{row.referenceNumber}</span>;
-}
-
-function TitleCell({ row }: { row: CaseRow }) {
+// reference is plain text here, not a nested <a>.
+function CaseCell({ row }: { row: CaseRow }) {
   return (
-    <div className="flex min-w-0 items-center gap-2">
-      <span className="min-w-0 truncate">{row.title}</span>
-      {row.isConfidential && <ConfidentialBadge />}
-      {row.isEscalated && <EscalatedBadge />}
-    </div>
+    <>
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="font-medium">{row.referenceNumber}</span>
+        {row.isConfidential && <ConfidentialBadge />}
+        {row.isEscalated && <EscalatedBadge />}
+      </div>
+      <p className="truncate text-muted-foreground">{row.title}</p>
+    </>
   );
 }
 
 const columns: Column<CaseRow>[] = [
-  { key: "ref", header: "Reference", cell: (r) => <RefCell row={r} /> },
-  { key: "title", header: "Title", cell: (r) => <TitleCell row={r} /> },
+  {
+    key: "case",
+    header: "Case",
+    truncate: "max-w-64 xl:max-w-72",
+    title: (r) => `${r.referenceNumber} — ${r.title}`,
+    cell: (r) => <CaseCell row={r} />,
+  },
   {
     key: "category",
-    header: "Category / type",
-    cell: (r) => `${r.categoryName ?? "—"} / ${r.caseTypeName ?? "—"}`,
+    header: "Category",
+    // the first column to go when space is tight; the row's title text still carries the category
+    className: "hidden 2xl:table-cell",
+    truncate: "max-w-40",
+    title: (r) => `${r.categoryName ?? "—"} / ${r.caseTypeName ?? "—"}`,
+    cell: (r) => (
+      <>
+        <p className="truncate">{r.categoryName ?? "—"}</p>
+        <p className="truncate text-xs text-muted-foreground">{r.caseTypeName ?? "—"}</p>
+      </>
+    ),
   },
-  { key: "requester", header: "Requester", cell: (r) => r.requesterName ?? "—" },
+  {
+    key: "requester",
+    header: "Requester",
+    truncate: "max-w-36",
+    title: (r) => r.requesterName ?? undefined,
+    cell: (r) => r.requesterName ?? "—",
+  },
   {
     key: "assigned",
     header: "Assigned to",
-    cell: (r) => r.assignedLegalRepName ?? "Unassigned",
+    truncate: "max-w-36",
+    title: (r) => r.assignedLegalRepName ?? undefined,
+    cell: (r) =>
+      r.assignedLegalRepName ?? <span className="text-muted-foreground">Unassigned</span>,
   },
   { key: "priority", header: "Priority", cell: (r) => <PriorityBadge priority={r.priority} /> },
   { key: "status", header: "Status", cell: (r) => <StatusBadge status={r.status} /> },

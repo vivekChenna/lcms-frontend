@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
-import { History } from "lucide-react";
+import { Eye, History } from "lucide-react";
 import { describe, type AuditRow } from "@/features/case-detail/audit/describe";
 import { formatDateTime } from "@/lib/format";
 import { AuditFiltersBar } from "./audit-filters";
@@ -54,10 +54,10 @@ export function AuditPage() {
       key: "actor",
       header: "Actor",
       cell: (r) => (
-        <span>
-          {r.actorName ?? "—"}
-          {r.actorRole && <span className="text-muted-foreground"> ({r.actorRole})</span>}
-        </span>
+        <>
+          <p>{r.actorName ?? "—"}</p>
+          {r.actorRole && <p className="text-xs text-muted-foreground">{r.actorRole}</p>}
+        </>
       ),
     },
     { key: "action", header: "Action", cell: (r) => r.action },
@@ -77,12 +77,21 @@ export function AuditPage() {
           "—"
         ),
     },
-    { key: "summary", header: "Summary", cell: (r) => summaryFor(r) },
+    {
+      key: "summary",
+      header: "Summary",
+      truncate: "max-w-80",
+      title: (r) => summaryFor(r),
+      cell: (r) => summaryFor(r),
+    },
     {
       key: "details",
-      header: "",
+      header: <span className="sr-only">Details</span>,
+      sticky: true,
+      className: "w-px text-right",
       cell: (r) => (
-        <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsRow(r)}>
+        <Button type="button" variant="outline" size="sm" onClick={() => setDetailsRow(r)}>
+          <Eye aria-hidden />
           Details
         </Button>
       ),
@@ -142,7 +151,8 @@ export function AuditPage() {
                     {r.caseReference}
                   </Link>
                 )}
-                <Button type="button" variant="ghost" size="sm" onClick={() => setDetailsRow(r)}>
+                <Button type="button" variant="outline" size="sm" onClick={() => setDetailsRow(r)}>
+                  <Eye aria-hidden />
                   Details
                 </Button>
               </div>

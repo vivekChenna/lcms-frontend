@@ -1,10 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { PASSWORD, loginAs } from "./fixtures";
 
-test("admin creates a user and a category + case type; deactivating the user signs them out", async ({ browser }) => {
+test("admin creates a user and a category + case type; deactivating the user signs them out", async ({
+  browser,
+}) => {
   test.setTimeout(180_000);
   const stamp = Date.now();
   const email = `e2e-user-${stamp}@example.com`;
+  const fullName = `E2E Throwaway ${stamp}`;
   const categoryName = `E2E Category ${stamp}`;
   const caseTypeName = `E2E Type ${stamp}`;
 
@@ -15,7 +18,7 @@ test("admin creates a user and a category + case type; deactivating the user sig
   // create the user
   await admin.goto("/users");
   await admin.getByRole("button", { name: /new user/i }).click();
-  await admin.getByLabel(/full name/i).fill("E2E Throwaway");
+  await admin.getByLabel(/full name/i).fill(fullName);
   await admin.getByLabel(/^email$/i).fill(email);
   await admin.getByLabel(/^password$/i).fill(PASSWORD);
   await admin.getByRole("button", { name: /^save$/i }).click();
@@ -53,9 +56,12 @@ test("admin creates a user and a category + case type; deactivating the user sig
   await expect(user).toHaveURL(/\/$/);
 
   await admin.goto("/users");
-  await admin.getByRole("row", { name: new RegExp(email) }).getByRole("button", { name: /^deactivate$/i }).click();
-  await admin.getByRole("button", { name: /^deactivate$/i }).last().click();
-  await expect(admin.getByRole("row", { name: new RegExp(email) }).getByText("Inactive")).toBeVisible();
+  await admin.getByRole("button", { name: `Actions for ${fullName}` }).click();
+  await admin.getByRole("menuitem", { name: /^deactivate$/i }).click();
+  await admin.getByRole("button", { name: /^deactivate$/i }).click();
+  await expect(
+    admin.getByRole("row", { name: new RegExp(email) }).getByText("Inactive"),
+  ).toBeVisible();
 
   await user.goto("/cases");
   await expect(user).toHaveURL(/\/login/);
