@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiJson } from "@/lib/api/client";
 import type { ApiError } from "@/lib/api/errors";
 import type { NotificationListDto } from "@/lib/api/types";
@@ -21,6 +21,7 @@ export function useNotifications(filters: {
   return useQuery({
     queryKey: qk.notifications(params),
     queryFn: () => apiJson<NotificationListDto>(`/notifications?${qs.toString()}`),
+    placeholderData: keepPreviousData,
   });
 }
 

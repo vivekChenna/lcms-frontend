@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiDownload, apiJson } from "@/lib/api/client";
 import type { ApiError } from "@/lib/api/errors";
@@ -33,6 +33,7 @@ function useReport<T>(name: string, filters: ReportsSearch) {
   return useQuery({
     queryKey: qk.reports(name, filters),
     queryFn: () => apiJson<T>(`/reports/${name}${qs(queryParams(filters))}`),
+    placeholderData: keepPreviousData,
     enabled,
   });
 }

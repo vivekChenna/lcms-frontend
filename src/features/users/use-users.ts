@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiJson } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
@@ -33,6 +33,7 @@ export function useUsers(filters: UsersFilters) {
   return useQuery({
     queryKey: qk.users(filters),
     queryFn: () => apiJson<UserListDto>(`/users?${qsParams.toString()}`),
+    placeholderData: keepPreviousData,
   });
 }
 

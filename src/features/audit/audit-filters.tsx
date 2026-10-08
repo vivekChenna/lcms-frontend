@@ -11,6 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FilterSheet } from "@/components/common/filter-sheet";
+import { SearchInput } from "@/components/common/search-input";
+import { useDebouncedField } from "@/hooks/use-debounced-field";
 import { apiJson } from "@/lib/api/client";
 import type { UserListDto } from "@/lib/api/types";
 import { dateRangeInvalid, type AuditFilters } from "./use-audit";
@@ -22,11 +24,20 @@ type Props = {
   value: AuditFilters;
   onChange: (patch: Partial<AuditFilters>) => void;
   onClear: () => void;
+  /** A filter request is in flight (shows the spinner in the Action box). */
+  loading?: boolean | undefined;
 };
 
 /** `actorId`/`caseId` are the ids the backend filters on; the pickers below resolve a readable
  * name/reference to the id, then carry only the id in the URL (and as the request filter). */
-export function AuditFiltersBar({ value, onChange, onClear }: Props) {
+export function AuditFiltersBar({ value, onChange, onClear, loading }: Props) {
+  // typing an action filters only after a pause, not once per keystroke
+  const {
+    text: actionText,
+    setText: setActionText,
+    waiting: actionWaiting,
+  } = useDebouncedField(value.action ?? "", (v) => onChange({ action: v || undefined }));
+
   const users = useQuery({
     queryKey: ["lookups", "all-users-for-audit"],
     queryFn: () => apiJson<UserListDto>("/users?pageSize=100"),
@@ -65,12 +76,13 @@ export function AuditFiltersBar({ value, onChange, onClear }: Props) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Label htmlFor="audit-action">Action</Label>
-          <Input
+          <SearchInput
             id="audit-action"
             className="mt-1 h-11 lg:h-9"
             placeholder="e.g. case.closed"
-            value={value.action ?? ""}
-            onChange={(e) => onChange({ action: e.target.value || undefined })}
+            value={actionText}
+            busy={actionWaiting || loading}
+            onChange={(e) => setActionText(e.target.value)}
           />
         </div>
 

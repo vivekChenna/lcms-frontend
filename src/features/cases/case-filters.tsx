@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -10,6 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FilterSheet } from "@/components/common/filter-sheet";
+import { SearchInput } from "@/components/common/search-input";
+import { useDebouncedField } from "@/hooks/use-debounced-field";
 import { useMe } from "@/lib/auth";
 import {
   useBusinessUnits,
@@ -32,22 +32,19 @@ type Props = {
   value: CasesSearch;
   onChange: (patch: Partial<CasesSearch>) => void;
   onClear: () => void;
+  /** A search or filter request is in flight (shows the spinner in the search box). */
+  loading?: boolean | undefined;
 };
 
-export function CaseFilters({ value, onChange, onClear }: Props) {
+export function CaseFilters({ value, onChange, onClear, loading }: Props) {
   const me = useMe();
-  const [search, setSearch] = useState(value.search ?? "");
-
-  // Debounce typing into a URL update; the effect below keeps the box in sync when the URL
-  // changes from elsewhere (back/forward, Clear filters).
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if ((value.search ?? "") !== search) onChange({ search: search || undefined });
-    }, 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
-  useEffect(() => setSearch(value.search ?? ""), [value.search]);
+  // Typing is debounced into a URL update; the box follows the URL when it changes from
+  // elsewhere (back/forward, Clear filters).
+  const {
+    text: search,
+    setText: setSearch,
+    waiting: searchWaiting,
+  } = useDebouncedField(value.search ?? "", (v) => onChange({ search: v || undefined }));
 
   const categories = useCategories();
   const caseTypes = useCaseTypes();
@@ -72,11 +69,12 @@ export function CaseFilters({ value, onChange, onClear }: Props) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="sm:col-span-2 lg:col-span-4">
           <Label htmlFor="case-search">Search</Label>
-          <Input
+          <SearchInput
             id="case-search"
             className="mt-1 h-11 lg:h-9"
             placeholder="Reference, title or description"
             value={search}
+            busy={searchWaiting || loading}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>

@@ -80,6 +80,43 @@ function renderAt(
   );
 }
 
+describe("UsersPage searching", () => {
+  it("shows a spinner, keeps the filters on screen, and sends one request per pause", async () => {
+    let release: (r: Response) => void = () => {};
+    const slow = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    const list = () => json({ items: [userRow()], total: 1, page: 1, pageSize: 20 });
+    renderAt("admin", "admin-1", (url) => {
+      if (url.includes("search=rex")) return slow as unknown as Response;
+      return url.endsWith("/users") || url.includes("/users?") ? list() : undefined;
+    });
+    await screen.findByText("Rex Rep");
+    const box = screen.getByLabelText("Search");
+
+    await userEvent.type(box, "rex");
+    // spinner from the first keystroke, same text box (not remounted), old results still visible
+    expect(await screen.findByRole("status", { name: /searching/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("Search")).toBe(box);
+    expect(screen.getByText("Rex Rep")).toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([u]) => String(u).includes("search=rex"))).toBe(true),
+    );
+    release(list());
+    await waitFor(() =>
+      expect(screen.queryByRole("status", { name: /searching/i })).not.toBeInTheDocument(),
+    );
+
+    // typed r, re, rex quickly: only the final text was ever requested
+    const searches = fetchMock.mock.calls
+      .map(([u]) => String(u))
+      .filter((u) => u.includes("search="));
+    expect(searches).toHaveLength(1);
+    expect(searches[0]).toContain("search=rex");
+  });
+});
+
 describe("UsersPage", () => {
   it("a legal_manager sees no mutation buttons", async () => {
     renderAt("legal_manager", "manager-1", (url) =>

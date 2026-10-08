@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiDownload, apiJson } from "@/lib/api/client";
 import type { ApiError } from "@/lib/api/errors";
@@ -36,6 +36,7 @@ export function useAudit(filters: AuditFilters, page: number) {
   return useQuery({
     queryKey: qk.audit(params),
     queryFn: () => apiJson<AuditListDto>(`/audit${qs(params)}`),
+    placeholderData: keepPreviousData,
     enabled: !dateRangeInvalid(filters),
   });
 }

@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
+import { ResultsRegion } from "@/components/common/results-region";
 import { CaseFilters } from "./case-filters";
 import { CasesTable } from "./cases-table";
 import { useCases, useExportCases } from "./use-cases";
@@ -13,7 +14,7 @@ import type { CasesSearch } from "./search-params";
 export function CasesPage() {
   const search = useSearch({ strict: false }) as CasesSearch;
   const navigate = useNavigate();
-  const { data, isPending, isError, error, refetch } = useCases(search);
+  const { data, isPending, isFetching, isError, error, refetch } = useCases(search);
   const exportCases = useExportCases(search);
 
   // `useSearch`/`useNavigate` are untyped without a `from`, which this reusable component (also
@@ -50,37 +51,42 @@ export function CasesPage() {
       />
 
       <div className="mb-4">
-        <CaseFilters value={search} onChange={(patch) => setSearch(patch)} onClear={clear} />
+        <CaseFilters
+          value={search}
+          onChange={(patch) => setSearch(patch)}
+          onClear={clear}
+          loading={isFetching && !isPending}
+        />
       </div>
 
       {isError && <ErrorState error={error} onRetry={() => void refetch()} />}
 
-      {data && (
-        <div className="space-y-4">
-          <CasesTable
-            rows={data.items}
-            empty={
-              <EmptyState
-                icon={FolderOpen}
-                title="No cases match these filters"
-                action={
-                  <Button type="button" variant="outline" onClick={clear}>
-                    Clear filters
-                  </Button>
-                }
-              />
-            }
-          />
-          <Pagination
-            page={data.page}
-            pageSize={data.pageSize}
-            total={data.total}
-            onPageChange={(page) => setSearch({ page }, false)}
-          />
-        </div>
-      )}
-
-      {isPending && !data && <p className="text-sm text-muted-foreground">Loading…</p>}
+      <ResultsRegion label="cases" initialLoading={isPending} fetching={isFetching && !isPending}>
+        {data && (
+          <div className="space-y-4">
+            <CasesTable
+              rows={data.items}
+              empty={
+                <EmptyState
+                  icon={FolderOpen}
+                  title="No cases match these filters"
+                  action={
+                    <Button type="button" variant="outline" onClick={clear}>
+                      Clear filters
+                    </Button>
+                  }
+                />
+              }
+            />
+            <Pagination
+              page={data.page}
+              pageSize={data.pageSize}
+              total={data.total}
+              onPageChange={(page) => setSearch({ page }, false)}
+            />
+          </div>
+        )}
+      </ResultsRegion>
     </div>
   );
 }

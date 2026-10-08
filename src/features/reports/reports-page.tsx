@@ -1,3 +1,4 @@
+import type { UseQueryResult } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Download } from "lucide-react";
 import type { ReactNode } from "react";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
+import { ResultsRegion } from "@/components/common/results-region";
 import { AgeingChart } from "./charts/ageing-chart";
 import { RepWorkloadChart } from "./charts/rep-workload-chart";
 import { SlaComplianceChart } from "./charts/sla-compliance-chart";
@@ -45,21 +47,34 @@ function ExportButton({ name, filters }: { name: string; filters: ReportsSearch 
   );
 }
 
-function ReportCard({
+/** One report: export button, a spinner on first load, "Updating" while filters re-run it, errors. */
+function ReportCard<T>({
   name,
+  label,
   filters,
-  children,
+  query,
+  render,
 }: {
   name: string;
+  label: string;
   filters: ReportsSearch;
-  children: ReactNode;
+  query: UseQueryResult<T, Error>;
+  render: (data: T) => ReactNode;
 }) {
+  // `isLoading` (not `isPending`): a report whose date range is invalid is disabled, not loading
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="mb-3 flex justify-end">
         <ExportButton name={name} filters={filters} />
       </div>
-      {children}
+      {query.isError && <ErrorState error={query.error} onRetry={() => void query.refetch()} />}
+      <ResultsRegion
+        label={label}
+        initialLoading={query.isLoading}
+        fetching={query.isFetching && !query.isLoading}
+      >
+        {query.data && render(query.data)}
+      </ResultsRegion>
     </div>
   );
 }
@@ -96,55 +111,49 @@ export function ReportsPage() {
         </TabsList>
 
         <TabsContent value="sla-compliance">
-          <ReportCard name="sla-compliance" filters={search}>
-            {sla.isPending && null}
-            {sla.isError && <ErrorState error={sla.error} onRetry={() => void sla.refetch()} />}
-            {sla.data && <SlaComplianceChart data={sla.data} />}
-          </ReportCard>
+          <ReportCard
+            name="sla-compliance"
+            label="SLA compliance"
+            filters={search}
+            query={sla}
+            render={(data) => <SlaComplianceChart data={data} />}
+          />
         </TabsContent>
         <TabsContent value="ageing">
-          <ReportCard name="ageing" filters={search}>
-            {ageing.isPending && null}
-            {ageing.isError && (
-              <ErrorState error={ageing.error} onRetry={() => void ageing.refetch()} />
-            )}
-            {ageing.data && <AgeingChart data={ageing.data} />}
-          </ReportCard>
+          <ReportCard
+            name="ageing"
+            label="ageing"
+            filters={search}
+            query={ageing}
+            render={(data) => <AgeingChart data={data} />}
+          />
         </TabsContent>
         <TabsContent value="volume-by-category">
-          <ReportCard name="volume-by-category" filters={search}>
-            {volumeByCategory.isPending && null}
-            {volumeByCategory.isError && (
-              <ErrorState
-                error={volumeByCategory.error}
-                onRetry={() => void volumeByCategory.refetch()}
-              />
-            )}
-            {volumeByCategory.data && <VolumeByCategoryChart data={volumeByCategory.data} />}
-          </ReportCard>
+          <ReportCard
+            name="volume-by-category"
+            label="volume by category"
+            filters={search}
+            query={volumeByCategory}
+            render={(data) => <VolumeByCategoryChart data={data} />}
+          />
         </TabsContent>
         <TabsContent value="volume-by-organisation">
-          <ReportCard name="volume-by-organisation" filters={search}>
-            {volumeByOrganisation.isPending && null}
-            {volumeByOrganisation.isError && (
-              <ErrorState
-                error={volumeByOrganisation.error}
-                onRetry={() => void volumeByOrganisation.refetch()}
-              />
-            )}
-            {volumeByOrganisation.data && (
-              <VolumeByOrganisationChart data={volumeByOrganisation.data} />
-            )}
-          </ReportCard>
+          <ReportCard
+            name="volume-by-organisation"
+            label="volume by organisation"
+            filters={search}
+            query={volumeByOrganisation}
+            render={(data) => <VolumeByOrganisationChart data={data} />}
+          />
         </TabsContent>
         <TabsContent value="rep-workload">
-          <ReportCard name="rep-workload" filters={search}>
-            {repWorkload.isPending && null}
-            {repWorkload.isError && (
-              <ErrorState error={repWorkload.error} onRetry={() => void repWorkload.refetch()} />
-            )}
-            {repWorkload.data && <RepWorkloadChart data={repWorkload.data} />}
-          </ReportCard>
+          <ReportCard
+            name="rep-workload"
+            label="rep workload"
+            filters={search}
+            query={repWorkload}
+            render={(data) => <RepWorkloadChart data={data} />}
+          />
         </TabsContent>
       </Tabs>
     </div>

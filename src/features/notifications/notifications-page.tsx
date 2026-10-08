@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
+import { ResultsRegion } from "@/components/common/results-region";
 import { NotificationItem } from "./notification-item";
 import { useMarkAllRead, useNotifications } from "./use-notifications";
 
@@ -18,7 +19,7 @@ export function NotificationsPage() {
 
   const filter = search.filter ?? "all";
   const page = search.page ?? 1;
-  const { data, isPending, isError, error, refetch } = useNotifications({
+  const { data, isPending, isFetching, isError, error, refetch } = useNotifications({
     page,
     isRead: filter === "unread" ? false : undefined,
   });
@@ -67,26 +68,31 @@ export function NotificationsPage() {
         </Button>
       </div>
 
-      {isPending && null}
       {isError && <ErrorState error={error} onRetry={() => void refetch()} />}
-      {data && data.items.length === 0 && (
-        <EmptyState icon={Bell} title="No notifications" description="You're all caught up." />
-      )}
-      {data && data.items.length > 0 && (
-        <div>
-          <div className="space-y-1 rounded-lg border bg-card p-2">
-            {data.items.map((n) => (
-              <NotificationItem key={n.id} notification={n} />
-            ))}
+      <ResultsRegion
+        label="notifications"
+        initialLoading={isPending && !isError}
+        fetching={isFetching && !isPending}
+      >
+        {data && data.items.length === 0 && (
+          <EmptyState icon={Bell} title="No notifications" description="You're all caught up." />
+        )}
+        {data && data.items.length > 0 && (
+          <div>
+            <div className="space-y-1 rounded-lg border bg-card p-2">
+              {data.items.map((n) => (
+                <NotificationItem key={n.id} notification={n} />
+              ))}
+            </div>
+            <Pagination
+              page={data.page}
+              pageSize={data.pageSize}
+              total={data.total}
+              onPageChange={setPage}
+            />
           </div>
-          <Pagination
-            page={data.page}
-            pageSize={data.pageSize}
-            total={data.total}
-            onPageChange={setPage}
-          />
-        </div>
-      )}
+        )}
+      </ResultsRegion>
     </div>
   );
 }

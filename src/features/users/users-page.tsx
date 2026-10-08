@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { UserPlus, Users as UsersIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,6 +18,9 @@ import { FilterSheet } from "@/components/common/filter-sheet";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
+import { ResultsRegion } from "@/components/common/results-region";
+import { SearchInput } from "@/components/common/search-input";
+import { useDebouncedField } from "@/hooks/use-debounced-field";
 import { useMe } from "@/lib/auth";
 import type { UserDto, UserRole } from "@/lib/api/types";
 import { nameOf, useBusinessUnits, useDepartments, useEntities } from "@/lib/queries/lookups";
@@ -48,16 +50,11 @@ export function UsersPage() {
   const entities = useEntities();
   const businessUnits = useBusinessUnits();
 
-  const [searchInput, setSearchInput] = useState(search.search ?? "");
-  useEffect(() => setSearchInput(search.search ?? ""), [search.search]);
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if ((search.search ?? "") !== searchInput)
-        void setSearch({ search: searchInput || undefined });
-    }, 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput]);
+  const {
+    text: searchInput,
+    setText: setSearchInput,
+    waiting: searchWaiting,
+  } = useDebouncedField(search.search ?? "", (value) => setSearch({ search: value || undefined }));
 
   const filters: UsersFilters = {
     search: search.search,
@@ -65,7 +62,7 @@ export function UsersPage() {
     isActive: search.isActive,
     page: search.page ?? 1,
   };
-  const { data, isPending, isError, error, refetch } = useUsers(filters);
+  const { data, isPending, isFetching, isError, error, refetch } = useUsers(filters);
 
   const setSearch = (patch: Partial<Search>) =>
     void navigate({ to: ".", search: { ...search, ...patch, page: 1 } as never });
@@ -81,8 +78,8 @@ export function UsersPage() {
   const canEdit = !!me && can.editUsers(me.role);
   const setActive = useSetActive(activeTarget?.user.id ?? "");
 
-  if (isPending) return null;
-  if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
+  // The page chrome (filters included) always renders; only the results wait for data.
+  if (isError && !data) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   // department first, then "entity · business unit"; blanks dropped
   const organisation = (u: UserDto) =>
@@ -189,11 +186,12 @@ export function UsersPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <Label htmlFor="users-search">Search</Label>
-            <Input
+            <SearchInput
               id="users-search"
               className="mt-1 h-11 lg:h-9"
               placeholder="Name or email"
               value={searchInput}
+              busy={searchWaiting || (isFetching && !isPending)}
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
@@ -236,41 +234,46 @@ export function UsersPage() {
       </FilterSheet>
 
       <div className="mt-4">
-        {data.items.length === 0 ? (
-          <EmptyState icon={UsersIcon} title="No users match these filters" />
-        ) : (
-          <ResponsiveTable
-            columns={columns}
-            rows={data.items}
-            rowKey={(u) => u.id}
-            renderCard={(u) => (
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1">
-                  <p className="truncate font-medium">{u.fullName}</p>
-                  <p className="truncate text-sm text-muted-foreground">{u.email}</p>
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <Badge variant="outline">{ROLE_LABEL[u.role]}</Badge>
-                    <Badge variant={u.isActive ? "outline" : "secondary"}>
-                      {u.isActive ? "Active" : "Inactive"}
-                    </Badge>
+        <ResultsRegion label="users" initialLoading={isPending} fetching={isFetching && !isPending}>
+          {data &&
+            (data.items.length === 0 ? (
+              <EmptyState icon={UsersIcon} title="No users match these filters" />
+            ) : (
+              <ResponsiveTable
+                columns={columns}
+                rows={data.items}
+                rowKey={(u) => u.id}
+                renderCard={(u) => (
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <p className="truncate font-medium">{u.fullName}</p>
+                      <p className="truncate text-sm text-muted-foreground">{u.email}</p>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <Badge variant="outline">{ROLE_LABEL[u.role]}</Badge>
+                        <Badge variant={u.isActive ? "outline" : "secondary"}>
+                          {u.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      {organisation(u).length > 0 && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {organisation(u).join(" · ")}
+                        </p>
+                      )}
+                    </div>
+                    {canEdit && <div className="shrink-0">{rowMenu(u)}</div>}
                   </div>
-                  {organisation(u).length > 0 && (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {organisation(u).join(" · ")}
-                    </p>
-                  )}
-                </div>
-                {canEdit && <div className="shrink-0">{rowMenu(u)}</div>}
-              </div>
-            )}
-          />
-        )}
-        <Pagination
-          page={data.page}
-          pageSize={data.pageSize}
-          total={data.total}
-          onPageChange={setPage}
-        />
+                )}
+              />
+            ))}
+          {data && (
+            <Pagination
+              page={data.page}
+              pageSize={data.pageSize}
+              total={data.total}
+              onPageChange={setPage}
+            />
+          )}
+        </ResultsRegion>
       </div>
 
       {formUser !== undefined && (
