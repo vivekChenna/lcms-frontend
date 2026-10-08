@@ -1,4 +1,5 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { PageTransition } from "@/components/common/page-transition";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireNav } from "@/lib/guards";
 
@@ -13,7 +14,9 @@ export const Route = createFileRoute("/_authed")({
 function AuthedLayout() {
   return (
     <AppShell>
-      <Outlet />
+      <PageTransition>
+        <Outlet />
+      </PageTransition>
     </AppShell>
   );
 }

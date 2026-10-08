@@ -118,6 +118,24 @@ describe("AppShell", () => {
     expect(await screen.findByRole("button", { name: /expand sidebar/i })).toBeInTheDocument();
   });
 
+  it("animates the collapse: the width ends at the rail, then the labels go icon-only", async () => {
+    setViewport(1280);
+    const { ue, container } = setup("admin");
+    await screen.findByText("page body");
+    const aside = container.querySelector("aside")!;
+    expect(aside.style.width).toContain("15rem");
+
+    await ue.click(await screen.findByRole("button", { name: /collapse sidebar/i }));
+    await waitFor(() => expect(aside.style.width).toContain("4.5rem"));
+    const label = within(aside).getByText("Dashboard");
+    await waitFor(() => expect(label.classList.contains("lg:sr-only")).toBe(true));
+
+    await ue.click(screen.getByRole("button", { name: /expand sidebar/i }));
+    // expanding brings the full look back at once, before the width finishes growing
+    expect(within(aside).getByText("Dashboard").classList.contains("lg:sr-only")).toBe(false);
+    await waitFor(() => expect(aside.style.width).toContain("15rem"));
+  });
+
   it("still renders when localStorage is unavailable", async () => {
     setViewport(1280);
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {

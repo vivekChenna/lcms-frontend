@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import { Gavel, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { UserRole } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,12 @@ type Props = {
   role: UserRole;
   /** Desktop only: icons-only rail at lg (the md range is always a rail). */
   collapsed?: boolean;
+  /**
+   * False while the width is still animating after a collapse: the labels fade out first and the
+   * icon-only look (labels hidden, icons centred) only takes over once this is true. Defaults to
+   * true, i.e. no animation in flight.
+   */
+  settled?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
   /** Called after a link is chosen (closes the mobile sheet). */
   onNavigate?: () => void;
@@ -18,14 +25,18 @@ type Props = {
 export function Sidebar({
   role,
   collapsed = false,
+  settled = true,
   onCollapsedChange,
   onNavigate,
   variant = "desktop",
 }: Props) {
   const desktop = variant === "desktop";
+  const rail = collapsed && settled;
   // In the rail the label stays in the DOM as the link's accessible name.
-  const hideLabel = desktop && cn("md:max-lg:sr-only", collapsed && "lg:sr-only");
-  const centre = desktop && cn("md:max-lg:justify-center", collapsed && "lg:justify-center");
+  const hideLabel = desktop && cn("md:max-lg:sr-only", rail && "lg:sr-only");
+  const centre = desktop && cn("md:max-lg:justify-center", rail && "lg:justify-center");
+  // labels fade with the width animation; the sheet and the md rail are unaffected
+  const labelFade = { opacity: desktop && collapsed ? 0 : 1 };
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-sidebar text-sidebar-foreground">
@@ -39,14 +50,19 @@ export function Sidebar({
         <span
           className={cn(
             "grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground",
-            desktop && collapsed && "lg:hidden",
+            desktop && rail && "lg:hidden",
           )}
         >
           <Gavel className="size-4" aria-hidden />
         </span>
-        <span className={cn("min-w-0 flex-1 truncate font-semibold", hideLabel)}>
+        <motion.span
+          initial={false}
+          animate={labelFade}
+          transition={{ duration: 0.16 }}
+          className={cn("min-w-0 flex-1 truncate font-semibold", hideLabel)}
+        >
           Algihaz Legal
-        </span>
+        </motion.span>
         {desktop && onCollapsedChange && (
           <button
             type="button"
@@ -81,7 +97,14 @@ export function Sidebar({
             }}
           >
             <Icon className="size-5 shrink-0" aria-hidden />
-            <span className={cn("truncate", hideLabel)}>{label}</span>
+            <motion.span
+              initial={false}
+              animate={labelFade}
+              transition={{ duration: 0.16 }}
+              className={cn("truncate", hideLabel)}
+            >
+              {label}
+            </motion.span>
           </Link>
         ))}
       </nav>

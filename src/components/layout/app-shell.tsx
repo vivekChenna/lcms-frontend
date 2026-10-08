@@ -1,14 +1,19 @@
 import { useRouterState } from "@tanstack/react-router";
+import { motion, useReducedMotion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { useMe } from "@/lib/auth";
-import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme";
+import { NavDrawer } from "./nav-drawer";
 import { titleFor } from "./nav-items";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 
 const STORAGE_KEY = "lcms-sidebar";
+// Widths include the left safe-area inset so a notched phone in landscape still clears the notch.
+const RAIL_WIDTH = "calc(4.5rem + env(safe-area-inset-left))";
+const FULL_WIDTH = "calc(15rem + env(safe-area-inset-left))";
 
 function readCollapsed(): boolean {
   try {
@@ -36,8 +41,15 @@ function writeCollapsed(collapsed: boolean) {
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const me = useMe();
+  const { theme } = useTheme();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  // `settled` trails `collapsed`: the icon-only look (labels out of sight, icons centred) only
+  // applies once the width animation has finished, so labels fade out instead of snapping away.
+  const [settled, setSettled] = useState(collapsed);
+  const breakpoint = useBreakpoint();
+  const wide = breakpoint === "lg" || breakpoint === "xl";
+  const reduceMotion = useReducedMotion();
   // The sheet belongs to the path it was opened on: any navigation (link, back, redirect) closes it.
   const [navOpenAt, setNavOpenAt] = useState<string | null>(null);
   const navOpen = navOpenAt === pathname;
@@ -48,38 +60,39 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const toggle = (next: boolean) => {
     setCollapsed(next);
+    if (!next) setSettled(false); // expanding: the full look returns at once, then the width grows
     writeCollapsed(next);
   };
 
   return (
     <div className="flex min-h-dvh bg-background text-foreground">
-      <aside
-        className={cn(
-          "sticky top-0 hidden h-dvh shrink-0 border-r border-sidebar-border bg-sidebar pl-[env(safe-area-inset-left)] md:block md:w-[calc(4.5rem+env(safe-area-inset-left))]",
-          collapsed
-            ? "lg:w-[calc(4.5rem+env(safe-area-inset-left))]"
-            : "lg:w-[calc(15rem+env(safe-area-inset-left))]",
-        )}
+      {/* From lg the width is animated inline; below lg the class width (the rail) applies. The key
+          remounts the element when crossing lg so a stale inline width never overrides the rail. */}
+      <motion.aside
+        key={wide ? "wide" : "narrow"}
+        initial={false}
+        animate={wide ? { width: collapsed ? RAIL_WIDTH : FULL_WIDTH } : {}}
+        transition={{ type: "tween", duration: reduceMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
+        onAnimationComplete={() => setSettled(collapsed)}
+        className="sticky top-0 hidden h-dvh shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar pl-[env(safe-area-inset-left)] md:block md:w-[calc(4.5rem+env(safe-area-inset-left))]"
       >
-        <Sidebar role={me.role} collapsed={collapsed} onCollapsedChange={toggle} />
-      </aside>
+        <Sidebar
+          role={me.role}
+          collapsed={collapsed}
+          settled={settled}
+          onCollapsedChange={toggle}
+        />
+      </motion.aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar title={titleFor(pathname)} me={me} onOpenNav={() => setNavOpen(true)} />
         <main className="mx-auto w-full min-w-0 max-w-[1500px] flex-1 pt-4 pr-[max(1rem,env(safe-area-inset-right))] pb-[calc(1rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] md:pt-6 md:pr-[max(1.5rem,env(safe-area-inset-right))] md:pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pl-6">
           {children}
         </main>
       </div>
-      <Sheet open={navOpen} onOpenChange={setNavOpen}>
-        <SheetContent
-          side="left"
-          aria-describedby={undefined}
-          className="w-[calc(18rem+env(safe-area-inset-left))] max-w-[85vw] border-sidebar-border bg-sidebar p-0 pl-[env(safe-area-inset-left)] text-sidebar-foreground [&>button]:right-1.5 [&>button]:top-1.5 [&>button]:grid [&>button]:size-11 [&>button]:place-items-center"
-        >
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <Sidebar role={me.role} variant="sheet" onNavigate={() => setNavOpen(false)} />
-        </SheetContent>
-      </Sheet>
-      <Toaster richColors position="top-right" />
+      <NavDrawer open={navOpen} onOpenChange={setNavOpen}>
+        <Sidebar role={me.role} variant="sheet" onNavigate={() => setNavOpen(false)} />
+      </NavDrawer>
+      <Toaster richColors position="top-right" theme={theme} />
     </div>
   );
 }
