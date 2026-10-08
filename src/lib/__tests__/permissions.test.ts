@@ -15,7 +15,7 @@ const EXPECTED: Record<NavKey, [boolean, boolean, boolean, boolean, boolean]> = 
   audit: [true, true, false, false, false],
   users: [true, true, false, false, false],
   "master-data": [true, false, false, false, false],
-  rules: [true, true, false, false, false],
+  rules: [true, true, true, true, true],
 };
 
 describe("canSee", () => {

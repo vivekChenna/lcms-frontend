@@ -37,3 +37,21 @@ says what was observed; anything not observed is listed under "Not verified" ins
   unit tests (for example the dashboard's Accept and Reject appear only on Assigned rows, and the users
   page hides every mutation control from a manager). The API rejections in rule 7 are the real enforcement.
 - **Production-like deployment** (separate domains, HTTPS, cookie settings). See `docs/runbook.md`.
+
+## UI requirements checked against the BRD document (2026-10-09)
+
+Checked after reading the BRD PDF directly (the first pass above was written from the design specs).
+
+| ID | Requirement | Result |
+|----|-------------|--------|
+| UI-07, DR-03 | Every dashboard tile and every chart bar is clickable and filters the case list | Pass. The status bar's segments and its legend entries link to the case list filtered by status; tiles already did. Verified in a browser: clicking "Submitted" narrows 8 cases to the 2 Submitted ones. |
+| UI-08 | The same tiles and status chart appear above the case repository and act as filters | Pass. Shown above the list on the Cases page; they navigate that same page with the filter applied. |
+| UI-18, PR-07 | Rules & SLAs readable by all roles, editable only by administrators, with an explicit read-only indication | Pass. Every role gets a "Rules & SLAs" page (SLA targets per case type, then routing rules) with the notice "This page is read-only. Only administrators can change rules and SLA targets." Admins see no notice and keep the edit controls. Viewers and requesters cannot look up representatives' names, so the "Assigned to" column is hidden for them. |
+
+## Known gaps against the BRD (not fixed)
+
+- **AC-03, SE-02:** access rules are enforced by the API server, not by database row-level security. No Postgres policies exist.
+- **UI-11:** no lifecycle progress tracker on the case record was found.
+- **UI-14:** attachments download, but no in-browser preview was found.
+- **UI-12:** a person's designation is not shown next to every name.
+- **AU-15 to AU-17:** the Baladi, Najiz and Oracle (Article 80) integration reviews are not done.

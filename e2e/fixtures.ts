@@ -23,14 +23,14 @@ export const NAV: Record<Who, string[]> = {
     "Audit",
     "Users",
     "Master Data",
-    "Routing Rules",
+    "Rules & SLAs",
     "Notifications",
   ],
-  manager: ["Dashboard", "Cases", "Reports", "Audit", "Users", "Routing Rules", "Notifications"],
-  rep1: ["Dashboard", "Cases", "New Request", "Notifications"],
-  rep2: ["Dashboard", "Cases", "New Request", "Notifications"],
-  requester: ["Dashboard", "Cases", "New Request", "Notifications"],
-  viewer: ["Dashboard", "Cases", "Reports", "Notifications"],
+  manager: ["Dashboard", "Cases", "Reports", "Audit", "Users", "Rules & SLAs", "Notifications"],
+  rep1: ["Dashboard", "Cases", "New Request", "Rules & SLAs", "Notifications"],
+  rep2: ["Dashboard", "Cases", "New Request", "Rules & SLAs", "Notifications"],
+  requester: ["Dashboard", "Cases", "New Request", "Rules & SLAs", "Notifications"],
+  viewer: ["Dashboard", "Cases", "Reports", "Rules & SLAs", "Notifications"],
 };
 
 /**

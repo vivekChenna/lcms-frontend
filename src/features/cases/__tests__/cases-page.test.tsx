@@ -7,11 +7,12 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { UserRole } from "@/lib/api/types";
 import { makeProfile } from "@/test/render";
+import { managerDashboard } from "@/features/dashboard/__tests__/fixtures";
 import { casesSearchSchema } from "../search-params";
 import { CasesPage } from "../cases-page";
 
@@ -99,6 +100,51 @@ const lastListUrl = () =>
   urls()
     .filter((u) => u.includes("/cases") && !u.includes("/export"))
     .at(-1);
+
+describe("CasesPage summary (BRD UI-08)", () => {
+  const handler = (url: string) =>
+    url.includes("/dashboard")
+      ? json(managerDashboard())
+      : json({ items: [caseRow()], total: 1, page: 1, pageSize: 20 });
+
+  it("shows the same tiles and status chart as the dashboard above the list", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    renderAt("legal_manager");
+    const tiles = await screen.findByTestId("dashboard-tiles");
+    expect(within(tiles).getByText("Overdue")).toBeInTheDocument();
+    const chart = screen.getByRole("region", { name: /cases by status/i });
+    const list = await screen.findByText("AGC-INT-000001");
+    // above the repository: the summary comes first in the page
+    expect(tiles.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(chart.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("the tiles and chart act as filters on this very list", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    const { router } = renderAt("legal_manager");
+    const chart = await screen.findByRole("region", { name: /cases by status/i });
+    // the legend entry (the bar segment carries the same link)
+    const legend = within(within(chart).getByRole("list", { name: /cases by status/i }));
+    await userEvent.click(legend.getByRole("link", { name: /^submitted/i }));
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ status: "Submitted" }),
+    );
+    await waitFor(() => expect(lastListUrl()).toContain("status=Submitted"));
+  });
+
+  it("leaves the list working when the summary cannot be loaded", async () => {
+    fetchMock.mockImplementation(
+      withLookupDefaults((url) =>
+        url.includes("/dashboard")
+          ? json({ error: { code: "INTERNAL", message: "boom" } }, 500)
+          : json({ items: [caseRow()], total: 1, page: 1, pageSize: 20 }),
+      ),
+    );
+    renderAt("legal_manager");
+    expect(await screen.findByText("AGC-INT-000001")).toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-tiles")).not.toBeInTheDocument();
+  });
+});
 
 describe("CasesPage", () => {
   it("requests the typed search and resets to page 1 after the debounce", async () => {

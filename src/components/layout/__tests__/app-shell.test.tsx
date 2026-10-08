@@ -71,7 +71,7 @@ describe("AppShell", () => {
     const links = within(sheet)
       .getAllByRole("link")
       .map((a) => a.textContent?.trim());
-    expect(links).toEqual(["Dashboard", "Cases", "Reports", "Notifications"]);
+    expect(links).toEqual(["Dashboard", "Cases", "Reports", "Rules & SLAs", "Notifications"]);
     await ue.click(within(sheet).getByRole("link", { name: "Reports" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(router.state.location.pathname).toBe("/reports");

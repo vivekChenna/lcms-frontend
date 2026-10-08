@@ -20,7 +20,8 @@ const NAV: Record<NavKey, readonly UserRole[]> = {
   audit: ["admin", "legal_manager"],
   users: ["admin", "legal_manager"],
   "master-data": ["admin"],
-  rules: ["admin", "legal_manager"],
+  // everyone can read the rules and SLA targets (BRD UI-18, PR-07); only admins edit them (can.editRules)
+  rules: ["admin", "legal_manager", "legal_rep", "requester", "viewer"],
   notifications: ["admin", "legal_manager", "legal_rep", "requester", "viewer"],
 };
 

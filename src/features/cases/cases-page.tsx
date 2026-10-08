@@ -5,6 +5,10 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
+import { StatusChart } from "@/features/dashboard/status-chart";
+import { Tiles } from "@/features/dashboard/tiles";
+import { useDashboard } from "@/features/dashboard/use-dashboard";
+import { useMe } from "@/lib/auth";
 import { ResultsRegion } from "@/components/common/results-region";
 import { CaseFilters } from "./case-filters";
 import { CasesTable } from "./cases-table";
@@ -16,6 +20,8 @@ export function CasesPage() {
   const navigate = useNavigate();
   const { data, isPending, isFetching, isError, error, refetch } = useCases(search);
   const exportCases = useExportCases(search);
+  const me = useMe();
+  const summary = useDashboard();
 
   // `useSearch`/`useNavigate` are untyped without a `from`, which this reusable component (also
   // rendered under a plain test router) does not hard-code; the route's own `validateSearch`
@@ -49,6 +55,15 @@ export function CasesPage() {
           </Button>
         }
       />
+
+      {/* BRD UI-08: the dashboard's tiles and status chart, acting as filters for this list. If the
+          summary fails to load the list still works, so its error is not shown here. */}
+      {me && summary.data?.tiles && (
+        <div className="mb-4 space-y-4">
+          <Tiles data={summary.data} role={me.role} />
+          <StatusChart byStatus={summary.data.byStatus ?? []} />
+        </div>
+      )}
 
       <div className="mb-4">
         <CaseFilters

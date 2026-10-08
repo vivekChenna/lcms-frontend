@@ -14,7 +14,7 @@ const ALL = [
   "Audit",
   "Users",
   "Master Data",
-  "Routing Rules",
+  "Rules & SLAs",
   "Notifications",
 ];
 
@@ -26,12 +26,12 @@ const expected: Record<UserRole, string[]> = {
     "Reports",
     "Audit",
     "Users",
-    "Routing Rules",
+    "Rules & SLAs",
     "Notifications",
   ],
-  legal_rep: ["Dashboard", "Cases", "New Request", "Notifications"],
-  requester: ["Dashboard", "Cases", "New Request", "Notifications"],
-  viewer: ["Dashboard", "Cases", "Reports", "Notifications"],
+  legal_rep: ["Dashboard", "Cases", "New Request", "Rules & SLAs", "Notifications"],
+  requester: ["Dashboard", "Cases", "New Request", "Rules & SLAs", "Notifications"],
+  viewer: ["Dashboard", "Cases", "Reports", "Rules & SLAs", "Notifications"],
 };
 
 async function navLabels() {
@@ -47,9 +47,15 @@ describe("Sidebar", () => {
     expect(await navLabels()).toEqual(labels);
   });
 
-  it("viewer sees Dashboard, Cases, Reports, Notifications only", async () => {
+  it("viewer sees Dashboard, Cases, Reports, Rules & SLAs, Notifications only", async () => {
     renderWithRouter(<Sidebar role="viewer" />);
-    expect(await navLabels()).toEqual(["Dashboard", "Cases", "Reports", "Notifications"]);
+    expect(await navLabels()).toEqual([
+      "Dashboard",
+      "Cases",
+      "Reports",
+      "Rules & SLAs",
+      "Notifications",
+    ]);
   });
 
   it("links point at the routes", async () => {
@@ -80,6 +86,12 @@ describe("Sidebar", () => {
 
   it("keeps the labels as accessible names when collapsed to a rail", async () => {
     renderWithRouter(<Sidebar role="viewer" collapsed />);
-    expect(await navLabels()).toEqual(["Dashboard", "Cases", "Reports", "Notifications"]);
+    expect(await navLabels()).toEqual([
+      "Dashboard",
+      "Cases",
+      "Reports",
+      "Rules & SLAs",
+      "Notifications",
+    ]);
   });
 });

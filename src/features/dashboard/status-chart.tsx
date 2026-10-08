@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { CaseStatus } from "@/lib/api/types";
 import { STATUS_ORDER, statusTone, type Tone } from "@/lib/labels";
@@ -13,9 +14,13 @@ const TONE_FILL: Record<Tone, string> = {
   danger: "bg-danger",
 };
 
+/** The case list filtered to one status (BRD UI-07: every chart bar applies its filter). */
+const toStatus = (status: CaseStatus) => ({ status }) as never;
+
 /**
  * Statuses are a real sequence (submitted through closed), so they are drawn as one segmented
- * pipeline rather than a bar chart: segment width is the share of all cases.
+ * pipeline rather than a bar chart: segment width is the share of all cases. Every segment and
+ * every legend entry opens the case list filtered to that status.
  */
 export function StatusChart({ byStatus }: Props) {
   // segments start at zero width and grow once on first paint
@@ -39,15 +44,19 @@ export function StatusChart({ byStatus }: Props) {
       {total === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">No cases yet.</p>
       ) : (
-        <div className="mt-4 flex h-3 gap-0.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+        <div className="mt-4 flex h-3 gap-0.5 overflow-hidden rounded-full bg-muted">
           {rows
             .filter((r) => r.count > 0)
             .map((r) => (
-              <div
+              <Link
                 key={r.status}
+                to="/cases"
+                search={toStatus(r.status)}
                 data-segment={r.status}
+                aria-label={`${r.status}: ${r.count} ${r.count === 1 ? "case" : "cases"}`}
+                title={`${r.status}: ${r.count}`}
                 className={cn(
-                  "transition-[width] duration-700 ease-out motion-reduce:transition-none",
+                  "block transition-[width,opacity] duration-700 ease-out hover:opacity-80 focus-visible:outline-2 focus-visible:outline-ring motion-reduce:transition-none",
                   TONE_FILL[statusTone(r.status)],
                 )}
                 style={{ width: grown ? `${(r.count / total) * 100}%` : "0%" }}
@@ -58,19 +67,25 @@ export function StatusChart({ byStatus }: Props) {
 
       <ul
         aria-label="Cases by status"
-        className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-5"
+        className="mt-3 grid grid-cols-2 gap-x-4 sm:grid-cols-3 lg:grid-cols-5"
       >
         {rows.map((r) => (
-          <li key={r.status} className="flex min-w-0 items-center gap-2 text-sm">
-            <span
-              className={cn(
-                "size-2.5 shrink-0 rounded-full",
-                r.count > 0 ? TONE_FILL[statusTone(r.status)] : "bg-border",
-              )}
-              aria-hidden
-            />
-            <span className="truncate text-muted-foreground">{r.status}</span>
-            <span className="font-medium tabular-nums">{r.count}</span>
+          <li key={r.status} className="min-w-0">
+            <Link
+              to="/cases"
+              search={toStatus(r.status)}
+              className="flex min-h-11 min-w-0 items-center gap-2 rounded-md px-1 text-sm transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              <span
+                className={cn(
+                  "size-2.5 shrink-0 rounded-full",
+                  r.count > 0 ? TONE_FILL[statusTone(r.status)] : "bg-border",
+                )}
+                aria-hidden
+              />
+              <span className="truncate text-muted-foreground">{r.status}</span>
+              <span className="font-medium tabular-nums">{r.count}</span>
+            </Link>
           </li>
         ))}
       </ul>

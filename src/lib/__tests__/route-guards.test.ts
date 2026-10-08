@@ -76,7 +76,8 @@ describe("route guards", () => {
   it.each(table)(
     "%s: a cached viewer is let in or sent home per the matrix",
     async (_, route, key) => {
-      const forbidden = key !== undefined && key !== "reports";
+      // a viewer may open reports and the read-only Rules & SLAs page (BRD UI-18), nothing else gated
+      const forbidden = key !== undefined && key !== "reports" && key !== "rules";
       const outcome = await run(route, "viewer").then(
         (v) => ({ ok: true as const, v }),
         (e: unknown) => ({ ok: false as const, e }),

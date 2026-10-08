@@ -31,9 +31,9 @@ const ROUTES: Record<Exclude<Who, "rep2">, string[]> = {
     "/notifications",
   ],
   manager: ["/", "/cases", "/reports", "/audit", "/users", "/rules", "/notifications"],
-  rep1: ["/", "/cases", "/new-request", "/notifications"],
-  requester: ["/", "/cases", "/new-request", "/notifications"],
-  viewer: ["/", "/cases", "/reports", "/notifications"],
+  rep1: ["/", "/cases", "/new-request", "/rules", "/notifications"],
+  requester: ["/", "/cases", "/new-request", "/rules", "/notifications"],
+  viewer: ["/", "/cases", "/reports", "/rules", "/notifications"],
 };
 
 /** Page must fit the viewport horizontally, render a main region, and show no crash screen. */

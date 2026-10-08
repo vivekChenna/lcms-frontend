@@ -37,7 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
   { key: "audit", label: "Audit", to: "/audit", icon: ScrollText },
   { key: "users", label: "Users", to: "/users", icon: Users },
   { key: "master-data", label: "Master Data", to: "/master-data", icon: Database },
-  { key: "rules", label: "Routing Rules", to: "/rules", icon: GitBranch },
+  { key: "rules", label: "Rules & SLAs", to: "/rules", icon: GitBranch },
   { key: "notifications", label: "Notifications", to: "/notifications", icon: Bell },
 ];
 

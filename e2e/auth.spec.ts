@@ -25,7 +25,7 @@ for (const who of Object.keys(NAV) as Who[]) {
       "Audit",
       "Users",
       "Master Data",
-      "Routing Rules",
+      "Rules & SLAs",
       "Notifications",
     ];
     for (const label of all.filter((l) => !NAV[who].includes(l))) {
