@@ -17,14 +17,26 @@ for (const who of Object.keys(NAV) as Who[]) {
     for (const label of NAV[who]) {
       await expect(nav.getByRole("link", { name: label, exact: true })).toBeVisible();
     }
-    const all = ["Dashboard", "Cases", "New Request", "Reports", "Audit", "Users", "Master Data", "Routing Rules", "Notifications"];
+    const all = [
+      "Dashboard",
+      "Cases",
+      "New Request",
+      "Reports",
+      "Audit",
+      "Users",
+      "Master Data",
+      "Routing Rules",
+      "Notifications",
+    ];
     for (const label of all.filter((l) => !NAV[who].includes(l))) {
       await expect(nav.getByRole("link", { name: label, exact: true })).toHaveCount(0);
     }
   });
 }
 
-test("a reload keeps the session; sign out clears it and /cases redirects to login", async ({ page }) => {
+test("a reload keeps the session; sign out clears it and /cases redirects to login", async ({
+  page,
+}) => {
   await loginAs(page, "requester");
   await page.reload();
   await expect(page).toHaveURL(/\/$/);
@@ -61,7 +73,10 @@ test("cookies are HttpOnly and no token is kept in web storage", async ({ page, 
   expect(storage.toLowerCase()).not.toContain("token");
 });
 
-test("an expired access cookie is recovered silently through the refresh cookie", async ({ page, context }) => {
+test("an expired access cookie is recovered silently through the refresh cookie", async ({
+  page,
+  context,
+}) => {
   await loginAs(page, "requester");
   // let the dashboard's first requests finish: a refresh aborted by the navigation below would rotate
   // the refresh token server-side without the browser storing it, and the backend's reuse detection
@@ -72,4 +87,3 @@ test("an expired access cookie is recovered silently through the refresh cookie"
   await expect(page).toHaveURL(/\/cases/);
   await expect(page.getByRole("button", { name: /account menu/i })).toBeVisible();
 });
-

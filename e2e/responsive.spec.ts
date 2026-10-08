@@ -19,7 +19,17 @@ const VIEWPORTS = [
 const SHOT_WIDTHS = new Set([375, 820, 1440]);
 
 const ROUTES: Record<Exclude<Who, "rep2">, string[]> = {
-  admin: ["/", "/cases", "/new-request", "/reports", "/audit", "/users", "/master-data", "/rules", "/notifications"],
+  admin: [
+    "/",
+    "/cases",
+    "/new-request",
+    "/reports",
+    "/audit",
+    "/users",
+    "/master-data",
+    "/rules",
+    "/notifications",
+  ],
   manager: ["/", "/cases", "/reports", "/audit", "/users", "/rules", "/notifications"],
   rep1: ["/", "/cases", "/new-request", "/notifications"],
   requester: ["/", "/cases", "/new-request", "/notifications"],
@@ -36,9 +46,10 @@ async function assertResponsive(page: Page, label: string): Promise<void> {
     scroll: document.documentElement.scrollWidth,
     inner: window.innerWidth,
   }));
-  expect(overflow.scroll, `${label}: horizontal overflow (${overflow.scroll} > ${overflow.inner})`).toBeLessThanOrEqual(
-    overflow.inner,
-  );
+  expect(
+    overflow.scroll,
+    `${label}: horizontal overflow (${overflow.scroll} > ${overflow.inner})`,
+  ).toBeLessThanOrEqual(overflow.inner);
 }
 
 for (const who of Object.keys(ROUTES) as (keyof typeof ROUTES)[]) {
@@ -72,8 +83,14 @@ for (const who of Object.keys(ROUTES) as (keyof typeof ROUTES)[]) {
         const label = `${who} ${route} @${vp ? `${vp.width}x${vp.height}` : "native"}`;
         await assertResponsive(page, label);
         if (native || SHOT_WIDTHS.has(width)) {
-          const slug = route === "/" ? "dashboard" : route.replace(/^\/|\/.*$/g, "") + (route.startsWith("/cases/") ? "-detail" : "");
-          await page.screenshot({ path: `e2e/screenshots/${who}-${slug}-${width}.png`, fullPage: true });
+          const slug =
+            route === "/"
+              ? "dashboard"
+              : route.replace(/^\/|\/.*$/g, "") + (route.startsWith("/cases/") ? "-detail" : "");
+          await page.screenshot({
+            path: `e2e/screenshots/${who}-${slug}-${width}.png`,
+            fullPage: true,
+          });
         }
       }
     }

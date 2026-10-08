@@ -13,11 +13,16 @@ async function assignTo(manager: Page, casePath: string, repName: string) {
   await manager.getByRole("button", { name: /^assign$/i }).click();
   await manager.getByLabel(/legal representative/i).click();
   await manager.getByRole("option", { name: repName, exact: true }).click();
-  await manager.getByRole("button", { name: /^assign$/i }).last().click();
+  await manager
+    .getByRole("button", { name: /^assign$/i })
+    .last()
+    .click();
   await expect(manager.getByText("Assigned", { exact: true }).first()).toBeVisible();
 }
 
-test("a confidential case is invisible to the viewer and visible to submitter, manager and rep", async ({ browser }) => {
+test("a confidential case is invisible to the viewer and visible to submitter, manager and rep", async ({
+  browser,
+}) => {
   test.setTimeout(180_000);
   const title = `E2E confidential ${Date.now()}`;
   const viewer = await as(browser, "viewer");
@@ -48,7 +53,9 @@ test("a confidential case is invisible to the viewer and visible to submitter, m
   for (const p of [viewer, requester, manager, rep]) await p.context().close();
 });
 
-test("internal notes and rejection reasons never reach the requester; the manager sees them", async ({ browser }) => {
+test("internal notes and rejection reasons never reach the requester; the manager sees them", async ({
+  browser,
+}) => {
   test.setTimeout(240_000);
   const requester = await as(browser, "requester");
   const manager = await as(browser, "manager");

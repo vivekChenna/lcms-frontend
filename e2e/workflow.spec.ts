@@ -8,7 +8,9 @@ async function as(browser: Browser, who: Who): Promise<Page> {
   return page;
 }
 
-test("BRD happy path: submit, assign, accept, request info, respond, comment, escalate, close", async ({ browser }) => {
+test("BRD happy path: submit, assign, accept, request info, respond, comment, escalate, close", async ({
+  browser,
+}) => {
   test.setTimeout(240_000);
   const title = `E2E workflow ${Date.now()}`;
 
@@ -16,7 +18,9 @@ test("BRD happy path: submit, assign, accept, request info, respond, comment, es
   const requester = await as(browser, "requester");
   await requester.goto("/new-request");
   await requester.getByLabel(/^title$/i).fill(title);
-  await requester.getByLabel(/description/i).fill("End-to-end workflow case with plenty of detail to pass validation.");
+  await requester
+    .getByLabel(/description/i)
+    .fill("End-to-end workflow case with plenty of detail to pass validation.");
   await requester.getByLabel(/^category$/i).click();
   await requester.getByRole("option", { name: "Internal", exact: true }).click();
   await requester.getByLabel(/case type/i).click();
@@ -42,7 +46,10 @@ test("BRD happy path: submit, assign, accept, request info, respond, comment, es
   await manager.getByRole("button", { name: /^assign$/i }).click();
   await manager.getByLabel(/legal representative/i).click();
   await manager.getByRole("option", { name: "Vivek Legal Rep", exact: true }).click();
-  await manager.getByRole("button", { name: /^assign$/i }).last().click();
+  await manager
+    .getByRole("button", { name: /^assign$/i })
+    .last()
+    .click();
   await expect(manager.getByText("Assigned", { exact: true }).first()).toBeVisible();
 
   // 3. rep1 accepts, raises an information request
@@ -54,7 +61,10 @@ test("BRD happy path: submit, assign, accept, request info, respond, comment, es
   await rep.getByRole("button", { name: /raise request/i }).click();
   await rep.getByLabel(/^subject$/i).fill("Need the signed agreement");
   await rep.getByLabel(/what do you need/i).fill("Please upload the fully signed agreement.");
-  await rep.getByRole("button", { name: /^raise request$/i }).last().click();
+  await rep
+    .getByRole("button", { name: /^raise request$/i })
+    .last()
+    .click();
   await expect(rep.getByText("Need the signed agreement")).toBeVisible();
 
   // 4. requester responds; the case returns to In Progress
@@ -81,7 +91,10 @@ test("BRD happy path: submit, assign, accept, request info, respond, comment, es
   await rep.goto(casePath);
   await rep.getByRole("button", { name: /^escalate$/i }).click();
   await rep.getByLabel(/reason/i).fill("Counterparty deadline is tomorrow");
-  await rep.getByRole("button", { name: /^escalate$/i }).last().click();
+  await rep
+    .getByRole("button", { name: /^escalate$/i })
+    .last()
+    .click();
   await expect(rep.getByText("Escalated", { exact: true }).first()).toBeVisible();
 
   await rep.getByRole("button", { name: /^close case$/i }).click();
@@ -89,7 +102,10 @@ test("BRD happy path: submit, assign, accept, request info, respond, comment, es
   await rep.getByRole("option").first().click();
   await rep.getByLabel(/summary/i).fill("Resolved with the signed agreement on file.");
   await rep.getByRole("checkbox").click();
-  await rep.getByRole("button", { name: /^close case$/i }).last().click();
+  await rep
+    .getByRole("button", { name: /^close case$/i })
+    .last()
+    .click();
   await expect(rep.getByText("Closed", { exact: true }).first()).toBeVisible();
   await expect(rep.getByText("Resolved with the signed agreement on file.")).toBeVisible();
 
