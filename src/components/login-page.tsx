@@ -1,12 +1,11 @@
 import { PasswordInput } from "@/components/ui/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff, Gavel, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthShell } from "@/features/auth/auth-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api/errors";
@@ -52,80 +51,74 @@ export function LoginPage({
   );
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="mb-2 grid size-11 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Gavel className="size-6" aria-hidden />
-          </div>
-          <CardTitle className="text-2xl">Sign in to LCMS</CardTitle>
-          <CardDescription>Use your Algihaz credentials to continue.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} noValidate className="space-y-5">
-            {notice && !login.isError && (
-              <p
-                role="status"
-                className="rounded-md border border-info-border bg-info p-3 text-sm text-info-foreground"
-              >
-                {NOTICES[notice]}
-              </p>
-            )}
-            {login.isError && (
-              <p
-                role="alert"
-                className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
-              >
-                {loginErrorMessage(login.error)}
-              </p>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Work email</Label>
-              <Input
-                id="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                className="h-11 text-base md:text-base"
-                aria-invalid={!!errors.email}
-                aria-describedby={errors.email ? "email-error" : undefined}
-                {...form.register("email")}
-              />
-              {errors.email && (
-                <p id="email-error" className="text-sm text-destructive">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <PasswordInput
-                id="password"
-                autoComplete="current-password"
-                className="h-11 text-base md:text-base"
-                aria-invalid={!!errors.password}
-                aria-describedby={errors.password ? "password-error" : undefined}
-                {...form.register("password")}
-              />
-              {errors.password && (
-                <p id="password-error" className="text-sm text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
-              <Link
-                to="/forgot-password"
-                className="-my-2 inline-block py-3 text-sm text-primary underline-offset-2 hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <Button type="submit" className="h-11 w-full" disabled={login.isPending}>
-              {login.isPending && <Loader2 className="animate-spin" aria-hidden />}
-              Sign in
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </main>
+    <AuthShell
+      title="Welcome back"
+      description="Sign in with your Algihaz credentials to continue."
+    >
+      <form onSubmit={onSubmit} noValidate className="space-y-5">
+        {notice && !login.isError && (
+          <p
+            role="status"
+            className="rounded-md border border-info-border bg-info p-3 text-sm text-info-foreground"
+          >
+            {NOTICES[notice]}
+          </p>
+        )}
+        {login.isError && (
+          <p
+            role="alert"
+            className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            {loginErrorMessage(login.error)}
+          </p>
+        )}
+        <div className="space-y-2">
+          <Label htmlFor="email">Work email</Label>
+          <Input
+            id="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="name@company.com"
+            className="h-12 text-base md:text-base lg:h-12 lg:text-base"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
+            {...form.register("email")}
+          />
+          {errors.email && (
+            <p id="email-error" className="text-sm text-destructive">
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            className="h-12 text-base md:text-base lg:h-12 lg:text-base"
+            aria-invalid={!!errors.password}
+            aria-describedby={errors.password ? "password-error" : undefined}
+            {...form.register("password")}
+          />
+          {errors.password && (
+            <p id="password-error" className="text-sm text-destructive">
+              {errors.password.message}
+            </p>
+          )}
+          <Link
+            to="/forgot-password"
+            className="-my-2 block py-3 text-right text-sm text-primary underline-offset-2 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
+        <Button type="submit" className="h-12 w-full text-base" disabled={login.isPending}>
+          {login.isPending ? <Loader2 className="animate-spin" aria-hidden /> : null}
+          Sign in
+          {!login.isPending && <ArrowRight aria-hidden />}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }
