@@ -82,16 +82,13 @@ describe("AuditDetails", () => {
     expect(screen.queryByRole("list", { name: /what changed/i })).not.toBeInTheDocument();
   });
 
-  it("keeps the raw data out of sight until 'Technical details' is opened", async () => {
+  it("never shows the raw record data, only the plain-language changes", async () => {
     renderWithProviders(<AuditDetails row={row as never} summary="assigned the case" />, {
       me: makeProfile({ role: "admin" }),
     });
-    const summary = await screen.findByText(/technical details/i);
-    const details = summary.closest("details") as HTMLDetailsElement;
-    expect(details.open).toBe(false);
-    await userEvent.click(summary);
-    expect(details.open).toBe(true);
-    expect(within(details).getByText(/"assignedLegalRepId": "rep-1"/)).toBeInTheDocument();
+    await screen.findByRole("list", { name: /what changed/i });
+    expect(screen.queryByText(/technical details/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/"assignedLegalRepId"/)).not.toBeInTheDocument();
   });
 
   it("says so when no field details were recorded", async () => {

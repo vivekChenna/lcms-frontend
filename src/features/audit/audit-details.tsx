@@ -70,7 +70,7 @@ function useNameResolver(): { resolve: NameResolver; ready: boolean } {
 
 /**
  * One audit entry in plain language: who, when, what, and the change itself as "Status: Submitted
- * to Assigned". The raw before/after data stays available under "Technical details" for support.
+ * to Assigned". The raw before/after data is deliberately not shown.
  */
 export function AuditDetails({ row, summary }: { row: AuditRow; summary: string }) {
   const { resolve, ready } = useNameResolver();
@@ -147,26 +147,6 @@ export function AuditDetails({ row, summary }: { row: AuditRow; summary: string 
           </ul>
         )}
       </section>
-
-      <details className="text-sm">
-        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-          Technical details
-        </summary>
-        <div className="mt-2 space-y-2">
-          <div>
-            <p className="text-xs text-muted-foreground">Before</p>
-            <pre className="mt-1 overflow-x-auto rounded-md bg-muted p-3 text-xs">
-              {JSON.stringify(row.beforeValue, null, 2) ?? "null"}
-            </pre>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">After</p>
-            <pre className="mt-1 overflow-x-auto rounded-md bg-muted p-3 text-xs">
-              {JSON.stringify(row.afterValue, null, 2) ?? "null"}
-            </pre>
-          </div>
-        </div>
-      </details>
     </div>
   );
 }

@@ -16,6 +16,13 @@ export function formatDateTime(iso: string | null): string {
   return iso ? format(parseISO(iso), "dd MMM yyyy, HH:mm") : DASH;
 }
 
+/** 1536 -> "1.5 KB". */
+export function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function formatMoney(n: number | null): string {
   return n === null ? DASH : `SAR ${money.format(n)}`;
 }

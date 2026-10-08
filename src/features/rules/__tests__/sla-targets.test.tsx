@@ -104,7 +104,11 @@ describe("Rules & SLAs page", () => {
       return json([]);
     });
     renderWithProviders(<RulesPage />, { me: makeProfile({ role: "viewer" }) });
-    expect(await screen.findByText(/category: internal/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        (_, el) => el?.tagName === "LI" && /Categorys*Internal/.test(el.textContent ?? ""),
+      ),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: /assigned to/i })).not.toBeInTheDocument();
   });
 });

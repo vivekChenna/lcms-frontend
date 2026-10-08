@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from "@testing-library/react";
+import { cleanup, screen, within, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { renderWithProviders } from "@/test/render";
@@ -37,7 +37,8 @@ describe("StatusChart", () => {
     const { container } = await renderChart(<StatusChart byStatus={byStatus} />);
     const segments = container.querySelectorAll("[data-segment]");
     expect(segments).toHaveLength(2);
-    expect((segments[0] as HTMLElement).style.width).toBe("75%");
+    // the bars grow in right after mount, so wait for the final widths rather than read them at once
+    await waitFor(() => expect((segments[0] as HTMLElement).style.width).toBe("75%"));
     expect((segments[1] as HTMLElement).style.width).toBe("25%");
   });
 

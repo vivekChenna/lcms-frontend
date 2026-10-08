@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { Pagination } from "@/components/common/pagination";
 import { formatDateTime } from "@/lib/format";
+import { roleLabel } from "@/lib/labels";
 import { describe } from "./describe";
 import { useCaseAudit } from "./use-case-audit";
 
@@ -32,7 +33,7 @@ export function AuditTab({ caseId }: { caseId: string }) {
             <p>
               <span className="font-medium">{row.actorName ?? "Someone"}</span>
               {row.actorRole && (
-                <span className="text-muted-foreground"> ({row.actorRole})</span>
+                <span className="text-muted-foreground"> ({roleLabel(row.actorRole)})</span>
               )}{" "}
               {describe(row)}
             </p>

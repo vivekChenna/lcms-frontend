@@ -20,9 +20,12 @@ const nameOf = (items: { id: string; name: string }[] | undefined, id: string) =
 export function ActiveFilters({
   value,
   onRemove,
+  exclude = [],
 }: {
   value: CasesSearch;
   onRemove: (patch: Partial<CasesSearch>) => void;
+  /** Chip keys not to show, for filters already visible as controls (e.g. "status"). */
+  exclude?: string[];
 }) {
   const me = useMe();
   const categories = useCategories();
@@ -94,11 +97,12 @@ export function ActiveFilters({
     });
   }
 
-  if (chips.length === 0) return null;
+  const shown = chips.filter((c) => !exclude.includes(c.key));
+  if (shown.length === 0) return null;
 
   return (
     <ul aria-label="Active filters" className="flex flex-wrap gap-2">
-      {chips.map((c) => (
+      {shown.map((c) => (
         <li key={c.key}>
           <button
             type="button"

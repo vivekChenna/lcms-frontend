@@ -140,14 +140,24 @@ describe("CasesPage summary (BRD UI-08)", () => {
     expect(within(tiles).queryByText("Past the resolution deadline")).not.toBeInTheDocument();
   });
 
-  it("shows each active filter as a chip that removes just that filter", async () => {
+  it("shows the hidden filters as chips that each remove just that filter", async () => {
     fetchMock.mockImplementation(withLookupDefaults(handler));
-    const { router } = renderAt("legal_manager", "?status=Submitted&priority=P1");
+    const { router } = renderAt("legal_manager", "?status=Submitted&open=%22true%22");
     const chips = await screen.findByRole("list", { name: /active filters/i });
-    expect(within(chips).getByText("Status: Submitted")).toBeInTheDocument();
-    await userEvent.click(within(chips).getByRole("button", { name: /remove filter status/i }));
-    await waitFor(() => expect(router.state.location.search).not.toHaveProperty("status"));
-    expect(router.state.location.search).toHaveProperty("priority", "P1");
+    // status is already a highlighted control in the toolbar, so it gets no chip
+    expect(within(chips).queryByText("Status: Submitted")).not.toBeInTheDocument();
+    await userEvent.click(within(chips).getByRole("button", { name: /remove filter open only/i }));
+    await waitFor(() => expect(router.state.location.search).not.toHaveProperty("open"));
+    expect(router.state.location.search).toHaveProperty("status", "Submitted");
+  });
+
+  it("highlights an active filter in the toolbar with its value", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    renderAt("legal_manager", "?status=Submitted");
+    expect(await screen.findByRole("combobox", { name: "Status" })).toHaveTextContent(
+      /Statuss*Submitted/,
+    );
+    expect(screen.getByRole("combobox", { name: "Priority" })).toHaveTextContent(/^Priority$/);
   });
 
   it("leaves the list working when the summary cannot be loaded", async () => {
@@ -186,7 +196,8 @@ describe("CasesPage", () => {
     renderAt("admin", "?page=3");
     await waitFor(() => expect(lastListUrl()).toContain("page=3"));
 
-    await userEvent.click(screen.getByRole("switch", { name: /open only/i }));
+    await userEvent.click(screen.getByRole("button", { name: /more filters/i }));
+    await userEvent.click(await screen.findByRole("switch", { name: /open cases only/i }));
 
     await waitFor(() => expect(lastListUrl()).toContain("open=true"));
     expect(lastListUrl()).toContain("page=1");

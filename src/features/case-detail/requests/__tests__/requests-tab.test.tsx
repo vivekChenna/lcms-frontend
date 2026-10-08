@@ -102,9 +102,11 @@ function renderTab(
   caseOverrides: Partial<CaseDto> = {},
   requests: unknown[] = [],
   meId = "rep-1",
+  documents: unknown[] = [],
 ) {
   fetchMock.mockImplementation(async (url: string) => {
     if (url.endsWith("/cases/c1/information-requests")) return json(requests);
+    if (url.endsWith("/cases/c1/documents")) return json(documents);
     return json({});
   });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -116,6 +118,39 @@ function renderTab(
 }
 
 describe("RequestsTab", () => {
+  it("lists what was attached to a request, with a download for each file", async () => {
+    const doc = {
+      id: "doc-1",
+      caseId: "c1",
+      informationRequestId: "ir-1",
+      filename: "signed-contract.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 2048,
+      category: "Other",
+      version: 1,
+      rootDocumentId: "doc-1",
+      previousVersionId: null,
+      uploaderId: "requester-1",
+      uploadedByName: "Ria Requester",
+      createdAt: "2026-10-09T01:00:00.000Z",
+    };
+    const other = { ...doc, id: "doc-2", informationRequestId: null, filename: "unrelated.txt" };
+    renderTab(
+      "legal_rep",
+      {},
+      [infoRequest({ status: "answered", responseText: "Attached." })],
+      "rep-1",
+      [doc, other],
+    );
+    expect(await screen.findByText("signed-contract.pdf")).toBeInTheDocument();
+    expect(screen.getByText(/2.0 KB · Ria Requester/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /download signed-contract.pdf/i }),
+    ).toBeInTheDocument();
+    // a case document that belongs to no request is not listed under the request
+    expect(screen.queryByText("unrelated.txt")).not.toBeInTheDocument();
+  });
+
   it("shows Raise request for the assigned legal_rep on an In Progress case", async () => {
     renderTab("legal_rep", {}, []);
     expect(await screen.findByRole("button", { name: /raise request/i })).toBeInTheDocument();
@@ -167,6 +202,63 @@ describe("RequestsTab", () => {
     expect(screen.queryByRole("button", { name: /^respond$/i })).not.toBeInTheDocument();
   });
 
+  it("uploads attachments while the request is still open, then sends the response", async () => {
+    const order: string[] = [];
+    renderTab("requester", {}, [infoRequest()], "requester-1");
+    await userEvent.click(await screen.findByRole("button", { name: /^respond$/i }));
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.includes("/information-requests/ir-1/attachments") && init?.method === "POST") {
+        order.push("attachment");
+        return json({ id: "doc-9" }, 201);
+      }
+      if (url.endsWith("/information-requests/ir-1/respond")) {
+        order.push("respond");
+        return json(infoRequest({ status: "answered", responseText: "Here it is" }));
+      }
+      if (url.endsWith("/cases/c1/documents")) return json([]);
+      if (url.endsWith("/cases/c1/information-requests")) return json([infoRequest()]);
+      return json({});
+    });
+
+    await userEvent.type(screen.getByLabelText(/your response/i), "Here it is");
+    await userEvent.upload(
+      screen.getByLabelText(/attach files/i),
+      new File(["x"], "proof.pdf", { type: "application/pdf" }),
+    );
+    expect(screen.getByText("proof.pdf")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /send response/i }));
+
+    // the backend only accepts attachments while the request is open, i.e. before the response
+    await waitFor(() => expect(order).toEqual(["attachment", "respond"]));
+  });
+
+  it("does not send the response when an attachment fails, and keeps the file to retry", async () => {
+    const order: string[] = [];
+    renderTab("requester", {}, [infoRequest()], "requester-1");
+    await userEvent.click(await screen.findByRole("button", { name: /^respond$/i }));
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.includes("/attachments") && init?.method === "POST") {
+        order.push("attachment");
+        return json({ error: { code: "VALIDATION", message: "File type not allowed" } }, 400);
+      }
+      if (url.endsWith("/respond")) order.push("respond");
+      if (url.endsWith("/cases/c1/documents")) return json([]);
+      if (url.endsWith("/cases/c1/information-requests")) return json([infoRequest()]);
+      return json({});
+    });
+
+    await userEvent.type(screen.getByLabelText(/your response/i), "Here it is");
+    await userEvent.upload(
+      screen.getByLabelText(/attach files/i),
+      new File(["x"], "proof.exe", { type: "application/octet-stream" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /send response/i }));
+
+    expect(await screen.findByText(/proof.exe.*File type not allowed/)).toBeInTheDocument();
+    expect(order).toEqual(["attachment"]);
+    expect(screen.getByText("proof.exe")).toBeInTheDocument();
+  });
+
   it("a backend 400 on respond shows the field message", async () => {
     renderTab("requester", {}, [infoRequest()], "requester-1");
     await userEvent.click(await screen.findByRole("button", { name: /^respond$/i }));
@@ -175,6 +267,8 @@ describe("RequestsTab", () => {
       if (url.includes("/respond")) {
         return json({ error: { code: "VALIDATION", message: "Response text is required" } }, 400);
       }
+      if (url.endsWith("/cases/c1/documents")) return json([]);
+      if (url.endsWith("/cases/c1/information-requests")) return json([infoRequest()]);
       return json({});
     });
 
@@ -193,6 +287,7 @@ describe("RequestsTab", () => {
       if (url.includes("/cases/c1/information-requests")) {
         return json(infoRequest(), 201);
       }
+      if (url.endsWith("/cases/c1/documents")) return json([]);
       return json({});
     });
 

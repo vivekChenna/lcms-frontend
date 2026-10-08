@@ -115,6 +115,24 @@ describe("LoginPage", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("does not scold an empty password just because the field was visited", async () => {
+    const { ue } = setup();
+    await ue.click(screen.getByLabelText(/^password$/i));
+    await ue.tab();
+    await ue.click(screen.getByLabelText(/^password$/i));
+    expect(screen.queryByText("Enter your password.")).not.toBeInTheDocument();
+  });
+
+  it("flags a malformed email as soon as the field is left, but not an empty one", async () => {
+    const { ue } = setup();
+    await ue.click(screen.getByLabelText(/email/i));
+    await ue.tab();
+    expect(screen.queryByText("Enter a valid email address.")).not.toBeInTheDocument();
+    await ue.type(screen.getByLabelText(/email/i), "not-an-email");
+    await ue.tab();
+    expect(await screen.findByText("Enter a valid email address.")).toBeInTheDocument();
+  });
+
   it("asks for a password but does not apply the new-password length rule to sign-in", async () => {
     fetchMock.mockResolvedValue(
       json(401, { error: { code: "UNAUTHORIZED", message: "Invalid email or password" } }),

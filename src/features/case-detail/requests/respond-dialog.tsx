@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
+import { SelectedFiles } from "@/components/common/selected-files";
 import type { InfoRequestDto } from "@/lib/api/types";
 import { useRespondInfoRequest } from "./use-info-requests";
 
@@ -22,7 +23,12 @@ export function RespondDialog({ request, open, onOpenChange }: Props) {
     setTouched(true);
     if (invalid) return;
     respond.mutate(
-      { requestId: request.id, responseText: responseText.trim(), files },
+      {
+        requestId: request.id,
+        responseText: responseText.trim(),
+        files,
+        onUploaded: (done) => setFiles((prev) => prev.filter((f) => f !== done)),
+      },
       {
         onSuccess: () => {
           setResponseText("");
@@ -78,29 +84,20 @@ export function RespondDialog({ request, open, onOpenChange }: Props) {
           className="sr-only"
           aria-label="Attach files"
           onChange={(e) => {
-            if (e.target.files) setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+            // copy before resetting the input: clearing it empties its file list
+            const picked = Array.from(e.target.files ?? []);
             e.target.value = "";
+            setFiles((prev) => [...prev, ...picked]);
           }}
         />
         <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
+          <Paperclip aria-hidden />
           Attach files
         </Button>
-        {files.length > 0 && (
-          <ul className="mt-2 space-y-1">
-            {files.map((f, i) => (
-              <li key={`${f.name}-${i}`} className="flex items-center justify-between text-sm">
-                <span className="min-w-0 truncate">{f.name}</span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${f.name}`}
-                  onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
-                >
-                  <X className="size-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        <SelectedFiles
+          files={files}
+          onRemove={(i) => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+        />
       </div>
 
       {respond.isError && (

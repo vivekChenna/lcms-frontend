@@ -20,7 +20,7 @@ import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import type { DocumentDto, Profile } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatSize } from "@/lib/format";
 import {
   downloadDocument,
   useDeleteDocument,
@@ -29,12 +29,6 @@ import {
 } from "./use-documents";
 import { UploadDialog } from "./upload-dialog";
 import { VersionsDialog } from "./versions-dialog";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 type RowActionsProps = {
   doc: DocumentDto;
@@ -120,16 +114,32 @@ export function DocumentsTab({ caseId, me }: { caseId: string; me: Profile }) {
   if (isPending) return null;
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
+  // Four columns so the table fits without sideways scrolling: the name carries its category and
+  // version, and the uploader carries the date.
   const columns: Column<DocumentDto>[] = [
     {
       key: "filename",
-      header: "Filename",
-      cell: (d) => <span className="break-words">{d.filename}</span>,
+      header: "Document",
+      className: "min-w-56 whitespace-normal",
+      cell: (d) => (
+        <div className="min-w-0">
+          <p className="break-words font-medium">{d.filename}</p>
+          <p className="text-xs text-muted-foreground">
+            {d.category} · version {d.version}
+          </p>
+        </div>
+      ),
     },
-    { key: "category", header: "Category", cell: (d) => d.category },
-    { key: "version", header: "Version", cell: (d) => d.version },
-    { key: "uploadedBy", header: "Uploaded by", cell: (d) => d.uploadedByName ?? "—" },
-    { key: "date", header: "Date", cell: (d) => formatDateTime(d.createdAt) },
+    {
+      key: "uploadedBy",
+      header: "Uploaded by",
+      cell: (d) => (
+        <div>
+          <p>{d.uploadedByName ?? "—"}</p>
+          <p className="text-xs text-muted-foreground">{formatDateTime(d.createdAt)}</p>
+        </div>
+      ),
+    },
     { key: "size", header: "Size", cell: (d) => formatSize(d.sizeBytes) },
     {
       key: "actions",

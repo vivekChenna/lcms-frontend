@@ -57,7 +57,9 @@ function renderAs(role: UserRole) {
 describe("RulesPage", () => {
   it("a legal_manager sees the table without any mutation buttons", async () => {
     renderAs("legal_manager");
-    await screen.findByText(/category: internal/i);
+    await screen.findByText(
+      (_, el) => el?.tagName === "LI" && /Categorys*Internal/.test(el.textContent ?? ""),
+    );
     expect(screen.queryByRole("button", { name: /new rule/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^edit$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
@@ -65,7 +67,9 @@ describe("RulesPage", () => {
 
   it("an admin sees mutation buttons", async () => {
     renderAs("admin");
-    await screen.findByText(/category: internal/i);
+    await screen.findByText(
+      (_, el) => el?.tagName === "LI" && /Categorys*Internal/.test(el.textContent ?? ""),
+    );
     expect(screen.getByRole("button", { name: /new rule/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^edit$/i })).toBeInTheDocument();
   });

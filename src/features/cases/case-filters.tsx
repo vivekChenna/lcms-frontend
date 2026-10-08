@@ -1,4 +1,7 @@
+import { SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -7,8 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FilterSelect } from "@/components/common/filter-select";
 import { FilterSheet } from "@/components/common/filter-sheet";
 import { SearchInput } from "@/components/common/search-input";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { useDebouncedField } from "@/hooks/use-debounced-field";
 import { useMe } from "@/lib/auth";
 import {
@@ -28,6 +33,17 @@ const ALL = "__all__";
 const PRIORITIES = ["P1", "P2", "P3", "P4"] as const;
 const SLA_STATES = ["on_track", "at_risk", "breached", "met"] as const;
 
+/** The filters that live behind "More filters" on a wide screen. */
+const ADVANCED_KEYS: (keyof CasesSearch)[] = [
+  "categoryId",
+  "caseTypeId",
+  "departmentId",
+  "entityId",
+  "businessUnitId",
+  "assignedLegalRepId",
+  "open",
+];
+
 type Props = {
   value: CasesSearch;
   onChange: (patch: Partial<CasesSearch>) => void;
@@ -38,6 +54,8 @@ type Props = {
 
 export function CaseFilters({ value, onChange, onClear, loading }: Props) {
   const me = useMe();
+  const bp = useBreakpoint();
+  const wide = bp === "lg" || bp === "xl";
   // Typing is debounced into a URL update; the box follows the URL when it changes from
   // elsewhere (back/forward, Clear filters).
   const {
@@ -63,22 +81,134 @@ export function CaseFilters({ value, onChange, onClear, loading }: Props) {
   const activeCount = Object.entries(value).filter(
     ([k, v]) => v !== undefined && k !== "page" && k !== "pageSize",
   ).length;
+  const advancedCount = ADVANCED_KEYS.filter((k) => value[k] !== undefined).length;
+
+  const searchBox = (
+    <SearchInput
+      id="case-search"
+      withIcon
+      aria-label="Search"
+      className="h-11 lg:h-10"
+      placeholder="Search by reference, title or description"
+      value={search}
+      busy={searchWaiting || loading}
+      onChange={(e) => setSearch(e.target.value)}
+    />
+  );
+
+  const advancedFields = (
+    <>
+      <NameFilter
+        label="Category"
+        value={value.categoryId}
+        items={categories.data}
+        onChange={(v) => onChange({ categoryId: v, caseTypeId: undefined })}
+      />
+      <NameFilter
+        label="Case type"
+        value={value.caseTypeId}
+        items={caseTypeOptions}
+        onChange={(v) => onChange({ caseTypeId: v })}
+      />
+      <NameFilter
+        label="Department"
+        value={value.departmentId}
+        items={departments.data}
+        onChange={(v) => onChange({ departmentId: v })}
+      />
+      <NameFilter
+        label="Entity"
+        value={value.entityId}
+        items={entities.data}
+        onChange={(v) => onChange({ entityId: v, businessUnitId: undefined })}
+      />
+      <NameFilter
+        label="Business unit"
+        value={value.businessUnitId}
+        items={businessUnitOptions}
+        onChange={(v) => onChange({ businessUnitId: v })}
+      />
+      {me?.role === "legal_manager" && (
+        <NameFilter
+          label="Assigned to"
+          value={value.assignedLegalRepId}
+          items={legalReps.data?.map((r) => ({ id: r.id, name: r.fullName }))}
+          onChange={(v) => onChange({ assignedLegalRepId: v })}
+        />
+      )}
+      {(me?.role === "legal_rep" || me?.role === "admin") && (
+        <ToggleFilter
+          id="case-mine"
+          label="Only my cases"
+          checked={value.assignedLegalRepId === me.id}
+          onChange={(checked) => onChange({ assignedLegalRepId: checked ? me.id : undefined })}
+        />
+      )}
+      <ToggleFilter
+        id="case-open"
+        label="Open cases only"
+        checked={value.open === "true"}
+        onChange={(checked) => onChange({ open: checked ? "true" : undefined })}
+      />
+    </>
+  );
+
+  if (wide) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="min-w-60 flex-1">{searchBox}</div>
+        <FilterSelect
+          label="Status"
+          value={value.status}
+          options={STATUS_ORDER.map((s) => ({ value: s, label: s }))}
+          onChange={(v) => onChange({ status: v as CasesSearch["status"] })}
+        />
+        <FilterSelect
+          label="Priority"
+          value={value.priority}
+          options={PRIORITIES.map((p) => ({ value: p, label: PRIORITY_LABEL[p as CasePriority] }))}
+          onChange={(v) => onChange({ priority: v as CasePriority | undefined })}
+        />
+        <FilterSelect
+          label="SLA"
+          value={value.slaState}
+          options={SLA_STATES.map((s) => ({ value: s, label: SLA_LABEL[s as SlaState] }))}
+          onChange={(v) => onChange({ slaState: v as SlaState | undefined })}
+        />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className={advancedCount > 0 ? "h-10 border-primary/40 bg-primary/5" : "h-10 bg-card"}
+            >
+              <SlidersHorizontal aria-hidden />
+              More filters
+              {advancedCount > 0 && (
+                <span className="grid size-5 place-items-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                  {advancedCount}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-[34rem] max-w-[calc(100vw-2rem)] p-4">
+            <p className="mb-3 text-sm font-medium">More filters</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">{advancedFields}</div>
+          </PopoverContent>
+        </Popover>
+        {activeCount > 0 && (
+          <Button type="button" variant="ghost" className="h-10" onClick={onClear}>
+            Clear all
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <FilterSheet activeCount={activeCount} onClear={onClear}>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="sm:col-span-2 lg:col-span-4">
-          <Label htmlFor="case-search">Search</Label>
-          <SearchInput
-            id="case-search"
-            className="mt-1 h-11 lg:h-9"
-            placeholder="Reference, title or description"
-            value={search}
-            busy={searchWaiting || loading}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
+    <div className="flex items-center gap-2">
+      <div className="min-w-0 flex-1">{searchBox}</div>
+      <FilterSheet activeCount={activeCount} onClear={onClear}>
         <EnumFilter
           label="Status"
           value={value.status}
@@ -99,69 +229,28 @@ export function CaseFilters({ value, onChange, onClear, loading }: Props) {
           labelFor={(s) => SLA_LABEL[s as SlaState]}
           onChange={(v) => onChange({ slaState: v as SlaState | undefined })}
         />
+        {advancedFields}
+      </FilterSheet>
+    </div>
+  );
+}
 
-        <NameFilter
-          label="Category"
-          value={value.categoryId}
-          items={categories.data}
-          onChange={(v) => onChange({ categoryId: v, caseTypeId: undefined })}
-        />
-        <NameFilter
-          label="Case type"
-          value={value.caseTypeId}
-          items={caseTypeOptions}
-          onChange={(v) => onChange({ caseTypeId: v })}
-        />
-        <NameFilter
-          label="Department"
-          value={value.departmentId}
-          items={departments.data}
-          onChange={(v) => onChange({ departmentId: v })}
-        />
-        <NameFilter
-          label="Entity"
-          value={value.entityId}
-          items={entities.data}
-          onChange={(v) => onChange({ entityId: v, businessUnitId: undefined })}
-        />
-        <NameFilter
-          label="Business unit"
-          value={value.businessUnitId}
-          items={businessUnitOptions}
-          onChange={(v) => onChange({ businessUnitId: v })}
-        />
-
-        {me?.role === "legal_manager" && (
-          <NameFilter
-            label="Assigned to"
-            value={value.assignedLegalRepId}
-            items={legalReps.data?.map((r) => ({ id: r.id, name: r.fullName }))}
-            onChange={(v) => onChange({ assignedLegalRepId: v })}
-          />
-        )}
-        {(me?.role === "legal_rep" || me?.role === "admin") && (
-          <div className="flex items-center gap-2 self-end pb-1">
-            <Switch
-              id="case-mine"
-              checked={value.assignedLegalRepId === me.id}
-              onCheckedChange={(checked) =>
-                onChange({ assignedLegalRepId: checked ? me.id : undefined })
-              }
-            />
-            <Label htmlFor="case-mine">Mine</Label>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 self-end pb-1">
-          <Switch
-            id="case-open"
-            checked={value.open === "true"}
-            onCheckedChange={(checked) => onChange({ open: checked ? "true" : undefined })}
-          />
-          <Label htmlFor="case-open">Open only</Label>
-        </div>
-      </div>
-    </FilterSheet>
+function ToggleFilter({
+  id,
+  label,
+  checked,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 self-end pb-2">
+      <Switch id={id} checked={checked} onCheckedChange={onChange} />
+      <Label htmlFor={id}>{label}</Label>
+    </div>
   );
 }
 

@@ -8,6 +8,7 @@ import { Pagination } from "@/components/common/pagination";
 import { StatusChart } from "@/features/dashboard/status-chart";
 import { Tiles } from "@/features/dashboard/tiles";
 import { useDashboard } from "@/features/dashboard/use-dashboard";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { useMe } from "@/lib/auth";
 import { ResultsRegion } from "@/components/common/results-region";
 import { ActiveFilters } from "./active-filters";
@@ -22,6 +23,8 @@ export function CasesPage() {
   const { data, isPending, isFetching, isError, error, refetch } = useCases(search);
   const exportCases = useExportCases(search);
   const me = useMe();
+  const bp = useBreakpoint();
+  const wide = bp === "lg" || bp === "xl";
   const summary = useDashboard();
 
   // `useSearch`/`useNavigate` are untyped without a `from`, which this reusable component (also
@@ -63,21 +66,30 @@ export function CasesPage() {
 
       {/* BRD UI-08: the dashboard's tiles and status chart, acting as filters for this list. If the
           summary fails to load the list still works, so its error is not shown here. */}
-      {me && summary.data?.tiles && (
-        <div className="mb-4 space-y-4">
-          <Tiles data={summary.data} role={me.role} compact />
-          <StatusChart byStatus={summary.data.byStatus ?? []} />
-        </div>
-      )}
+      {/* On a phone the search and filters come first (they are what you came to use); from lg up
+          the summary leads, as on the dashboard. */}
+      <div className="flex flex-col">
+        {me && summary.data?.tiles && (
+          <div className="order-2 mb-4 space-y-4 lg:order-1">
+            <Tiles data={summary.data} role={me.role} compact />
+            <StatusChart byStatus={summary.data.byStatus ?? []} />
+          </div>
+        )}
 
-      <div className="mb-4 space-y-3">
-        <CaseFilters
-          value={search}
-          onChange={(patch) => setSearch(patch)}
-          onClear={clear}
-          loading={isFetching && !isPending}
-        />
-        <ActiveFilters value={search} onRemove={(patch) => setSearch(patch)} />
+        <div className="order-1 mb-4 space-y-3 rounded-xl border bg-card p-3 lg:order-2">
+          <CaseFilters
+            value={search}
+            onChange={(patch) => setSearch(patch)}
+            onClear={clear}
+            loading={isFetching && !isPending}
+          />
+          <ActiveFilters
+            value={search}
+            onRemove={(patch) => setSearch(patch)}
+            // on a wide screen these four already show as highlighted controls in the toolbar
+            exclude={wide ? ["status", "priority", "sla", "search"] : []}
+          />
+        </div>
       </div>
 
       {isError && <ErrorState error={error} onRetry={() => void refetch()} />}

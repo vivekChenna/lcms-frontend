@@ -15,7 +15,7 @@ export function SendLinkDialog({ user, open, onOpenChange }: Props) {
       title={user.isInvited ? "Resend the invitation?" : "Send a password reset link?"}
       description={`${user.fullName} (${user.email}) will get an email with a link to choose ${
         user.isInvited ? "their" : "a new"
-      } password. Any earlier link stops working.`}
+      } password. If you sent them a link before, it will no longer work; only this new one will.`}
       confirmLabel="Send link"
       onConfirm={() => send.mutate(undefined, { onSuccess: () => onOpenChange(false) })}
     />

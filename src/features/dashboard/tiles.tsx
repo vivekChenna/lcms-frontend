@@ -127,7 +127,7 @@ export function Tiles({
     return (
       <div data-testid="dashboard-tiles" className="overflow-hidden rounded-xl border bg-card">
         <div
-          className="-ml-px -mt-px grid grid-cols-2 sm:grid-cols-3 lg:[grid-template-columns:repeat(var(--n),minmax(0,1fr))]"
+          className="-ml-px -mt-px grid grid-cols-3 lg:[grid-template-columns:repeat(var(--n),minmax(0,1fr))]"
           style={{ "--n": keys.length } as CSSProperties}
         >
           {keys.map((key) => (

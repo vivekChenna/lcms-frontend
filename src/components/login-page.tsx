@@ -41,7 +41,9 @@ export function LoginPage({
   const login = useLogin();
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    mode: "onBlur",
+    // Errors appear on submit, and clear as you fix them. The button is off while a field is empty,
+    // so an empty field never needs scolding; only a typed-but-malformed email is flagged on blur.
+    mode: "onSubmit",
     defaultValues: { email: "", password: "" },
   });
   const { errors } = form.formState;
@@ -86,7 +88,11 @@ export function LoginPage({
             className="h-12 text-base md:text-base lg:h-12 lg:text-base"
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}
-            {...form.register("email")}
+            {...form.register("email", {
+              onBlur: () => {
+                if (form.getValues("email").trim()) void form.trigger("email");
+              },
+            })}
           />
           {errors.email && (
             <p id="email-error" className="text-sm text-destructive">

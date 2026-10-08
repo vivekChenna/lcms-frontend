@@ -52,30 +52,59 @@ export function RulesPage() {
   if (isPending) return null;
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
-  const describeCriteria = (rule: RoutingRuleDto) => {
+  // One entry per condition the rule checks; an empty list means it matches every case.
+  const criteriaOf = (rule: RoutingRuleDto): { label: string; value: string }[] => {
     const c = rule.matchCriteria as Record<string, unknown>;
-    const parts: string[] = [];
+    const out: { label: string; value: string }[] = [];
     if (c["categoryId"])
-      parts.push(`Category: ${nameOf(categories.data, c["categoryId"] as string)}`);
+      out.push({ label: "Category", value: nameOf(categories.data, c["categoryId"] as string) });
     if (c["caseTypeId"])
-      parts.push(`Case type: ${nameOf(caseTypes.data, c["caseTypeId"] as string)}`);
-    if (c["entityId"]) parts.push(`Entity: ${nameOf(entities.data, c["entityId"] as string)}`);
+      out.push({ label: "Case type", value: nameOf(caseTypes.data, c["caseTypeId"] as string) });
+    if (c["entityId"])
+      out.push({ label: "Entity", value: nameOf(entities.data, c["entityId"] as string) });
     if (c["businessUnitId"])
-      parts.push(`Business unit: ${nameOf(businessUnits.data, c["businessUnitId"] as string)}`);
+      out.push({
+        label: "Business unit",
+        value: nameOf(businessUnits.data, c["businessUnitId"] as string),
+      });
     if (c["departmentId"])
-      parts.push(`Department: ${nameOf(departments.data, c["departmentId"] as string)}`);
+      out.push({
+        label: "Department",
+        value: nameOf(departments.data, c["departmentId"] as string),
+      });
     if (c["priority"])
-      parts.push(
-        `Priority: ${PRIORITY_LABEL[c["priority"] as keyof typeof PRIORITY_LABEL] ?? c["priority"]}`,
-      );
-    return parts.length > 0 ? parts.join(", ") : "Any case";
+      out.push({
+        label: "Priority",
+        value:
+          PRIORITY_LABEL[c["priority"] as keyof typeof PRIORITY_LABEL] ?? String(c["priority"]),
+      });
+    return out;
+  };
+
+  const describeCriteria = (rule: RoutingRuleDto) => {
+    const items = criteriaOf(rule);
+    if (items.length === 0) return <span className="text-sm">Any case</span>;
+    return (
+      <ul className="flex flex-wrap gap-1.5">
+        {items.map(({ label, value }) => (
+          <li
+            key={label}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs"
+          >
+            <span className="text-muted-foreground">{label}</span>
+            <span className="font-medium">{value}</span>
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   const columns: Column<RoutingRuleDto>[] = [
     {
       key: "criteria",
       header: "Matches",
-      cell: (r) => <span className="text-sm">{describeCriteria(r)}</span>,
+      cell: (r) => describeCriteria(r),
+      className: "whitespace-normal",
     },
     // only roles that may look up legal representatives can see who a rule assigns to
     ...(legalReps.data
@@ -168,7 +197,7 @@ export function RulesPage() {
               rowKey={(r) => r.id}
               renderCard={(r) => (
                 <div className="space-y-1">
-                  <p className="text-sm">{describeCriteria(r)}</p>
+                  {describeCriteria(r)}
                   <p className="text-sm text-muted-foreground">
                     →{" "}
                     {legalReps.data?.find((rep) => rep.id === r.targetLegalRepId)?.fullName ?? "—"}{" "}

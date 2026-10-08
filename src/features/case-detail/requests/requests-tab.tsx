@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HelpCircle } from "lucide-react";
+import { Download, FileText, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,9 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
-import type { CaseDto, InfoRequestDto, Profile } from "@/lib/api/types";
-import { formatDate, formatDateTime } from "@/lib/format";
+import type { CaseDto, DocumentDto, InfoRequestDto, Profile } from "@/lib/api/types";
+import { formatDate, formatDateTime, formatSize } from "@/lib/format";
+import { roleLabel } from "@/lib/labels";
 import { can } from "@/lib/permissions";
+import { downloadDocument, useDocuments } from "../documents/use-documents";
 import { RaiseDialog } from "./raise-dialog";
 import { RespondDialog } from "./respond-dialog";
 import { useInfoRequests, useReopenInfoRequest } from "./use-info-requests";
@@ -77,13 +79,53 @@ function ReopenDialog({
   );
 }
 
+/** Files uploaded against this request (usually with the response), each with a download. */
+function RequestAttachments({ files }: { files: DocumentDto[] }) {
+  if (files.length === 0) return null;
+  return (
+    <div className="mt-3">
+      <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+        Attachments ({files.length})
+      </p>
+      <ul className="space-y-2">
+        {files.map((d) => (
+          <li key={d.id} className="flex items-center gap-3 rounded-lg border bg-card p-2">
+            <span className="grid size-10 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+              <FileText className="size-5" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">{d.filename}</span>
+              <span className="block text-xs text-muted-foreground">
+                {formatSize(d.sizeBytes)} · {d.uploadedByName ?? "—"} ·{" "}
+                {formatDateTime(d.createdAt)}
+              </span>
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label={`Download ${d.filename}`}
+              onClick={() => void downloadDocument(d.id, d.filename)}
+            >
+              <Download aria-hidden />
+              Download
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function RequestCard({
   request,
+  attachments,
   me,
   onRespond,
   onReopen,
 }: {
   request: InfoRequestDto;
+  attachments: DocumentDto[];
   me: Profile;
   onRespond: () => void;
   onReopen: () => void;
@@ -97,7 +139,8 @@ function RequestCard({
         <div className="min-w-0">
           <p className="font-medium">{request.subject}</p>
           <p className="text-sm text-muted-foreground">
-            Raised by {request.raisedByName ?? "—"} ({request.raisedByRole ?? "—"}) —{" "}
+            Raised by {request.raisedByName ?? "—"} (
+            {request.raisedByRole ? roleLabel(request.raisedByRole) : "—"}) —{" "}
             {formatDateTime(request.createdAt)}
           </p>
         </div>
@@ -117,6 +160,7 @@ function RequestCard({
           <p className="mt-1 whitespace-pre-wrap">{request.responseText}</p>
         </div>
       )}
+      <RequestAttachments files={attachments} />
 
       {(canRespond || canReopen) && (
         <div className="mt-3 flex gap-2">
@@ -138,6 +182,7 @@ function RequestCard({
 
 export function RequestsTab({ caseItem, me }: { caseItem: CaseDto; me: Profile }) {
   const { data, isPending, isError, error, refetch } = useInfoRequests(caseItem.id);
+  const documents = useDocuments(caseItem.id);
   const [raiseOpen, setRaiseOpen] = useState(false);
   const [respondTarget, setRespondTarget] = useState<InfoRequestDto | null>(null);
   const [reopenTarget, setReopenTarget] = useState<InfoRequestDto | null>(null);
@@ -164,7 +209,11 @@ export function RequestsTab({ caseItem, me }: { caseItem: CaseDto; me: Profile }
         <EmptyState
           icon={HelpCircle}
           title="No information requests"
-          description="Requests for more information from the requester appear here."
+          description={
+            me.role === "requester"
+              ? "When legal needs more information from you, the request appears here."
+              : "Requests for more information from the requester appear here."
+          }
         />
       ) : (
         <div className="space-y-3">
@@ -172,6 +221,7 @@ export function RequestsTab({ caseItem, me }: { caseItem: CaseDto; me: Profile }
             <RequestCard
               key={r.id}
               request={r}
+              attachments={(documents.data ?? []).filter((d) => d.informationRequestId === r.id)}
               me={me}
               onRespond={() => setRespondTarget(r)}
               onReopen={() => setReopenTarget(r)}

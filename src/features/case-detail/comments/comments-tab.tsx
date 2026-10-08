@@ -8,6 +8,7 @@ import { ErrorState } from "@/components/common/error-state";
 import { MessageSquare } from "lucide-react";
 import type { CaseDto, Profile } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
+import { roleLabel } from "@/lib/labels";
 import { COMMENT_MAX, CommentForm } from "./comment-form";
 import { type CommentDto, useComments, useDeleteComment, useEditComment } from "./use-comments";
 
@@ -38,7 +39,8 @@ function CommentRow({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{comment.authorName ?? "Someone"}</span>
-          {comment.authorRole && ` (${comment.authorRole})`} — {formatDateTime(comment.createdAt)}
+          {comment.authorRole && ` (${roleLabel(comment.authorRole)})`} —{" "}
+          {formatDateTime(comment.createdAt)}
           {edited && " (edited)"}
         </p>
         {comment.isInternal && <Badge variant="outline">Internal</Badge>}
@@ -72,10 +74,16 @@ function CommentRow({
 
       {canEdit && !editing && (
         <div className="mt-2 flex gap-2">
-          <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
+          <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>
             Edit
           </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={onDelete}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="text-danger"
+            onClick={onDelete}
+          >
             Delete
           </Button>
         </div>

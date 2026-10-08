@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,16 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
+import { SelectedFiles } from "@/components/common/selected-files";
 import { ApiError } from "@/lib/api/errors";
 import { DOCUMENT_CATEGORIES, useUploadDocument } from "./use-documents";
 
 type Category = (typeof DOCUMENT_CATEGORIES)[number];
-type FileState = {
-  id: string;
-  file: File;
-  status: "queued" | "uploading" | "done" | "failed";
-  error?: string;
-};
+type Staged = { id: string; file: File; error?: string };
 
 const MAX_BYTES = 25 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx", "xls", "xlsx", "png", "jpg", "jpeg", "txt"];
@@ -35,56 +32,82 @@ export function fileHint(file: File): string | undefined {
 
 type Props = { caseId: string; open: boolean; onOpenChange: (open: boolean) => void };
 
-/** Upload one or more documents via a picker or drag-and-drop. Each file uploads independently,
- * so one rejected file never blocks the others; a failed file can be retried on its own. */
+/**
+ * Choose or drop files, check them in the list, then press Upload. Nothing is sent before that.
+ * Files upload one by one; the ones that go through leave the list, a rejected one stays with its
+ * reason so it can be removed or retried without redoing the rest.
+ */
 export function UploadDialog({ caseId, open, onOpenChange }: Props) {
   const upload = useUploadDocument(caseId);
   const [category, setCategory] = useState<Category>("Other");
-  const [items, setItems] = useState<FileState[]>([]);
+  const [staged, setStaged] = useState<Staged[]>([]);
+  const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const runOne = async (id: string, file: File, cat: Category) => {
-    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, status: "uploading" } : it)));
-    try {
-      await upload.mutateAsync({ file, category: cat });
-      setItems((prev) => prev.map((it) => (it.id === id ? { ...it, status: "done" } : it)));
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Upload failed";
-      setItems((prev) =>
-        prev.map((it) => (it.id === id ? { ...it, status: "failed", error: message } : it)),
-      );
-    }
-  };
-
   const addFiles = (fileList: FileList | File[]) => {
-    const files = Array.from(fileList);
-    const next: FileState[] = files.map((file) => {
-      const hint = fileHint(file);
-      return {
-        id: crypto.randomUUID(),
-        file,
-        status: hint ? "failed" : "queued",
-        ...(hint ? { error: hint } : {}),
-      };
-    });
-    setItems((prev) => [...prev, ...next]);
-    for (const it of next) {
-      if (it.status === "queued") void runOne(it.id, it.file, category);
-    }
+    const picked = Array.from(fileList);
+    setStaged((prev) => [
+      ...prev,
+      ...picked.map((file) => {
+        const error = fileHint(file);
+        return { id: crypto.randomUUID(), file, ...(error ? { error } : {}) };
+      }),
+    ]);
   };
 
-  const retry = (id: string) => {
-    const it = items.find((x) => x.id === id);
-    if (it) void runOne(id, it.file, category);
-  };
+  // a file already rejected by the server is offered again too: the person may have fixed the cause
+  const sendable = staged.filter((s) => !fileHint(s.file));
 
   const close = () => {
-    setItems([]);
+    setStaged([]);
     onOpenChange(false);
   };
 
+  const submit = async () => {
+    setUploading(true);
+    let sent = 0;
+    for (const item of sendable) {
+      try {
+        await upload.mutateAsync({ file: item.file, category });
+        sent += 1;
+        setStaged((prev) => prev.filter((s) => s.id !== item.id));
+      } catch (err) {
+        const message = err instanceof ApiError ? err.message : "Upload failed";
+        setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, error: message } : s)));
+      }
+    }
+    setUploading(false);
+    if (sent > 0) toast.success(sent === 1 ? "Document uploaded" : `${sent} documents uploaded`);
+    // everything went through: nothing left to look at
+    if (sent === staged.length) close();
+  };
+
   return (
-    <ResponsiveDialog open={open} onOpenChange={close} title="Upload documents">
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={close}
+      pending={uploading}
+      title="Upload documents"
+      footer={
+        <>
+          <Button type="button" variant="outline" disabled={uploading} onClick={close}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={uploading || sendable.length === 0}
+            onClick={() => void submit()}
+          >
+            {uploading && <Loader2 className="animate-spin" aria-hidden />}
+            {uploading
+              ? "Uploading…"
+              : sendable.length > 1
+                ? `Upload ${sendable.length} files`
+                : "Upload"}
+          </Button>
+        </>
+      }
+    >
       <Label htmlFor="upload-category">Category</Label>
       <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
         <SelectTrigger id="upload-category" className="mt-1 h-11 lg:h-9">
@@ -118,8 +141,10 @@ export function UploadDialog({ caseId, open, onOpenChange }: Props) {
           className="sr-only"
           aria-label="Choose files"
           onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0) addFiles(e.target.files);
+            // copy before resetting the input: clearing it empties its file list
+            const picked = Array.from(e.target.files ?? []);
             e.target.value = "";
+            if (picked.length > 0) addFiles(picked);
           }}
         />
         <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
@@ -127,30 +152,12 @@ export function UploadDialog({ caseId, open, onOpenChange }: Props) {
         </Button>
       </div>
 
-      {items.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {items.map((it) => (
-            <li key={it.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="min-w-0 truncate">{it.file.name}</span>
-              {it.status === "done" && <span className="text-success-foreground">Done</span>}
-              {it.status === "uploading" && (
-                <span className="text-muted-foreground">Uploading…</span>
-              )}
-              {it.status === "queued" && <span className="text-muted-foreground">Queued</span>}
-              {it.status === "failed" && (
-                <span className="flex items-center gap-2">
-                  <span role="alert" className="text-danger">
-                    {it.error}
-                  </span>
-                  <Button type="button" size="sm" variant="outline" onClick={() => retry(it.id)}>
-                    Retry
-                  </Button>
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      <SelectedFiles
+        files={staged.map((s) => s.file)}
+        errors={staged.map((s) => s.error)}
+        disabled={uploading}
+        onRemove={(i) => setStaged((prev) => prev.filter((_, idx) => idx !== i))}
+      />
     </ResponsiveDialog>
   );
 }

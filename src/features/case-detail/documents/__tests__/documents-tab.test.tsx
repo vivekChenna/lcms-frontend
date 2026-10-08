@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { makeProfile } from "@/test/render";
 import { DocumentsTab } from "../documents-tab";
@@ -72,6 +73,13 @@ describe("DocumentsTab", () => {
     const file = new File(["hello"], "note.txt", { type: "text/plain" });
     await userEvent.upload(screen.getByLabelText(/choose files/i), file);
 
+    // choosing a file only lists it; nothing is sent until Upload is pressed
+    expect(screen.getByText("note.txt")).toBeInTheDocument();
+    expect(urls().some((u) => u.includes("/cases/c1/documents?category="))).toBe(false);
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: /^upload$/i }),
+    );
+
     await waitFor(() =>
       expect(urls().some((u) => u.includes("/cases/c1/documents?category="))).toBe(true),
     );
@@ -108,9 +116,15 @@ describe("DocumentsTab", () => {
     const good = new File(["ok"], "good.txt", { type: "text/plain" });
     const bad = new File(["bad"], "bad.txt", { type: "text/plain" });
     await userEvent.upload(screen.getByLabelText(/choose files/i), [good, bad]);
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: /upload 2 files/i }),
+    );
 
+    // the rejected file stays in the list with the reason; the good one has gone through
     expect(await screen.findByText("File rejected by the server")).toBeInTheDocument();
-    expect(await screen.findByText("Done")).toBeInTheDocument();
+    expect(screen.getByText("bad.txt")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("good.txt")).not.toBeInTheDocument());
+    expect(toast.success).toHaveBeenCalledWith("Document uploaded");
   });
 
   it("downloads a document by its filename via apiDownload", async () => {

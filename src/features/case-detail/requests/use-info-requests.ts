@@ -46,37 +46,51 @@ async function uploadAttachment({ requestId, file }: AttachmentVars): Promise<vo
   });
 }
 
-type RespondVars = { requestId: string; responseText: string; files: File[] };
+type RespondVars = {
+  requestId: string;
+  responseText: string;
+  files: File[];
+  /** Called as each file lands, so the dialog can stop offering it if the send has to be retried. */
+  onUploaded?: (file: File) => void;
+};
 
-/** Responds, then uploads any attachments sequentially; an attachment failure doesn't undo the
- * response (same graceful-degradation pattern as new-request's case attachments). */
+/**
+ * Uploads the attachments first, then sends the response. The backend only accepts attachments
+ * while the request is still open, and answering closes it, so this order is not optional. If a
+ * file is rejected nothing is answered: the person fixes it and sends again, and the files that
+ * already went up are not offered twice.
+ */
 export function useRespondInfoRequest(caseId: string) {
   const qc = useQueryClient();
-  return useMutation<{ failedUploads: number }, ApiError, RespondVars>({
-    mutationFn: async ({ requestId, responseText, files }) => {
-      await apiJson<InfoRequestDto>(`/information-requests/${requestId}/respond`, {
-        method: "POST",
-        json: { responseText },
-      });
-      let failedUploads = 0;
+  return useMutation<InfoRequestDto, ApiError, RespondVars>({
+    mutationFn: async ({ requestId, responseText, files, onUploaded }) => {
       for (const file of files) {
         try {
           await uploadAttachment({ requestId, file });
-        } catch {
-          failedUploads++;
+        } catch (err) {
+          const reason = err instanceof ApiError ? err.message : "the upload failed";
+          throw new ApiError(
+            err instanceof ApiError ? err.status : 0,
+            err instanceof ApiError ? err.code : "UPLOAD_FAILED",
+            `${file.name}: ${reason}`,
+          );
         }
+        onUploaded?.(file);
       }
-      return { failedUploads };
+      return apiJson<InfoRequestDto>(`/information-requests/${requestId}/respond`, {
+        method: "POST",
+        json: { responseText },
+      });
     },
-    onSuccess: async ({ failedUploads }) => {
+    onSuccess: async () => {
       await invalidateCaseSubresources(qc, caseId);
-      toast.success(
-        failedUploads > 0
-          ? `Response sent, ${failedUploads} attachment(s) failed to upload`
-          : "Response sent",
-      );
+      toast.success("Response sent");
     },
-    onError: onErrorToast,
+    onError: async (err) => {
+      // files that did upload now show on the request, so refresh before explaining the failure
+      await invalidateCaseSubresources(qc, caseId);
+      onErrorToast(err);
+    },
   });
 }
 

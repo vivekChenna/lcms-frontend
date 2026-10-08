@@ -124,7 +124,7 @@ describe("AuditPage", () => {
     );
   });
 
-  it("the details drawer shows the before/after JSON", async () => {
+  it("the details drawer explains the change in plain words, with no raw data", async () => {
     renderAt("", (url) =>
       url.includes("/audit?") || url.endsWith("/audit")
         ? json({ items: [auditRow()], total: 1, page: 1, pageSize: 20 })
@@ -132,7 +132,8 @@ describe("AuditPage", () => {
     );
 
     await userEvent.click(await screen.findByRole("button", { name: /^details$/i }));
-    expect(screen.getByText(/"status": "In Progress"/)).toBeInTheDocument();
-    expect(screen.getByText(/"status": "Closed"/)).toBeInTheDocument();
+    expect(await screen.findByRole("list", { name: /what changed/i })).toBeInTheDocument();
+    expect(screen.queryByText(/"status"/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/technical details/i)).not.toBeInTheDocument();
   });
 });
