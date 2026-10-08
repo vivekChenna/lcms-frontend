@@ -1,5 +1,5 @@
 import { FolderOpen } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
 import { EmptyState } from "@/components/common/empty-state";
 import { PriorityBadge, SlaBadge, StatusBadge } from "@/components/common/badges";
@@ -14,6 +14,8 @@ function RefLink({ item }: { item: PanelItem }) {
     <Link
       to="/cases/$caseId"
       params={{ caseId: item.id }}
+      // the row opens the case too; keep a click on the link from navigating twice
+      onClick={(e) => e.stopPropagation()}
       className="font-medium underline-offset-2 hover:underline"
     >
       {item.referenceNumber}
@@ -26,9 +28,8 @@ function DueCell({ item }: { item: PanelItem }) {
   return <span className={due.overdue ? "text-danger" : ""}>{due.text}</span>;
 }
 
-// No `onRowClick`: rows carry their own Link (reference) plus the Accept/Reject buttons, and
-// ResponsiveTable's mobile card wraps in a <button> only when `onRowClick` is given — interactive
-// content inside that button would be invalid, so navigation here is a plain Link instead.
+// The whole row opens the case. Accept/Reject sit in a wrapper that swallows clicks (dialogs they
+// open render in a portal, and React events still bubble through it to the row).
 const columns: Column<PanelItem>[] = [
   { key: "ref", header: "Reference", cell: (r) => <RefLink item={r} /> },
   { key: "title", header: "Title", cell: (r) => <span className="line-clamp-2">{r.title}</span> },
@@ -39,12 +40,18 @@ const columns: Column<PanelItem>[] = [
   {
     key: "actions",
     header: "",
-    cell: (r) => (r.status === "Assigned" ? <AcceptRejectActions caseId={r.id} /> : null),
+    cell: (r) =>
+      r.status === "Assigned" ? (
+        <div onClick={(e) => e.stopPropagation()}>
+          <AcceptRejectActions caseId={r.id} />
+        </div>
+      ) : null,
   },
 ];
 
 /** A legal rep's own open cases, oldest first (as the backend orders them), capped at 20. */
 export function MyAssignedCases({ items }: { items: PanelItem[] }) {
+  const navigate = useNavigate();
   if (items.length === 0) {
     return (
       <EmptyState
@@ -62,10 +69,12 @@ export function MyAssignedCases({ items }: { items: PanelItem[] }) {
         columns={columns}
         rows={items}
         rowKey={(r) => r.id}
+        onRowClick={(r) => void navigate({ to: "/cases/$caseId", params: { caseId: r.id } })}
+        rowLabel={(r) => `Open case ${r.referenceNumber}`}
         renderCard={(r) => (
           <div className="space-y-2">
             <p>
-              <RefLink item={r} /> — {r.title}
+              <span className="font-medium">{r.referenceNumber}</span> — {r.title}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={r.status} />
@@ -73,9 +82,9 @@ export function MyAssignedCases({ items }: { items: PanelItem[] }) {
               <SlaBadge state={r.slaState} />
             </div>
             <p className="text-sm text-muted-foreground">{dueIn(r.resolutionDueAt).text}</p>
-            {r.status === "Assigned" && <AcceptRejectActions caseId={r.id} />}
           </div>
         )}
+        cardFooter={(r) => (r.status === "Assigned" ? <AcceptRejectActions caseId={r.id} /> : null)}
       />
     </div>
   );

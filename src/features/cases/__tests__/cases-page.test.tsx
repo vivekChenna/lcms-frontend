@@ -132,6 +132,24 @@ describe("CasesPage summary (BRD UI-08)", () => {
     await waitFor(() => expect(lastListUrl()).toContain("status=Submitted"));
   });
 
+  it("uses the slim summary strip, not the dashboard's large tiles", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    renderAt("legal_manager");
+    const tiles = await screen.findByTestId("dashboard-tiles");
+    expect(within(tiles).getByText("Overdue")).toBeInTheDocument();
+    expect(within(tiles).queryByText("Past the resolution deadline")).not.toBeInTheDocument();
+  });
+
+  it("shows each active filter as a chip that removes just that filter", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    const { router } = renderAt("legal_manager", "?status=Submitted&priority=P1");
+    const chips = await screen.findByRole("list", { name: /active filters/i });
+    expect(within(chips).getByText("Status: Submitted")).toBeInTheDocument();
+    await userEvent.click(within(chips).getByRole("button", { name: /remove filter status/i }));
+    await waitFor(() => expect(router.state.location.search).not.toHaveProperty("status"));
+    expect(router.state.location.search).toHaveProperty("priority", "P1");
+  });
+
   it("leaves the list working when the summary cannot be loaded", async () => {
     fetchMock.mockImplementation(
       withLookupDefaults((url) =>

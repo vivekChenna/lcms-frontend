@@ -320,8 +320,9 @@ const EXPECTED: Record<
       unrelated: ["assign", "escalate", "close", "priority"],
     },
     Assigned: {
-      related: ["accept", "reject", "assign", "escalate", "close", "priority"],
-      unrelated: ["accept", "reject", "assign", "escalate", "close", "priority"],
+      // only the assigned representative accepts or rejects; a manager reassigns instead
+      related: ["assign", "escalate", "close", "priority"],
+      unrelated: ["assign", "escalate", "close", "priority"],
     },
     "In Progress": {
       related: ["assign", "escalate", "close", "priority"],

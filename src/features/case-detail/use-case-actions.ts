@@ -122,15 +122,16 @@ export type CaseAction =
 /**
  * Which workflow actions `me` may take on `caseItem` right now, in a fixed display order.
  * Mirrors the backend's requireRole gates (see `can` in lib/permissions) plus the
- * case-specific rules the backend also enforces: accept/reject only the assignee (a manager can
- * act on any rep's case); edit, for a requester, only their own case.
+ * case-specific rules the backend also enforces: accept/reject only the assigned representative
+ * (a manager reassigns instead); edit, for a requester, only their own case.
  */
 export function actionsFor(me: Profile, caseItem: CaseDto): CaseAction[] {
   const notClosed = caseItem.status !== "Closed";
   const canAcceptOrReject =
     can.acceptOrReject(me.role) &&
     caseItem.status === "Assigned" &&
-    (me.role === "legal_manager" || caseItem.assignedLegalRepId === me.id);
+    me.role === "legal_rep" &&
+    caseItem.assignedLegalRepId === me.id;
   const canEdit =
     can.editCase(me.role) &&
     notClosed &&

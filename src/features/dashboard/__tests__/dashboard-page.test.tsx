@@ -47,8 +47,13 @@ function renderAt(role: UserRole) {
     path: "/cases",
     component: () => <div data-testid="cases-page">cases page</div>,
   });
+  const caseDetail = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/cases/$caseId",
+    component: () => <div data-testid="case-detail-page">case</div>,
+  });
   const router = createRouter({
-    routeTree: rootRoute.addChildren([home, cases]),
+    routeTree: rootRoute.addChildren([home, cases, caseDetail]),
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
   render(
@@ -60,6 +65,26 @@ function renderAt(role: UserRole) {
 }
 
 describe("DashboardPage", () => {
+  it("opens the case when anywhere on a my-assigned-cases row is clicked", async () => {
+    fetchMock.mockResolvedValue(json(repDashboard()));
+    const { router } = renderAt("legal_rep");
+    const row = (await screen.findByText("[Demo] Lease renewal advice")).closest(
+      "tr",
+    ) as HTMLElement;
+    await userEvent.click(within(row).getByText("[Demo] Lease renewal advice"));
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/cases\/[^/]+$/));
+  });
+
+  it("does not open the case when Accept is clicked", async () => {
+    fetchMock.mockResolvedValue(json(repDashboard()));
+    const { router } = renderAt("legal_rep");
+    const row = (await screen.findByText("[Demo] Lease renewal advice")).closest(
+      "tr",
+    ) as HTMLElement;
+    await userEvent.click(within(row).getByRole("button", { name: /accept/i }));
+    expect(router.state.location.pathname).toBe("/");
+  });
+
   it("shows a skeleton while loading, then 7 tiles for a requester, no legal-only panels", async () => {
     let resolve!: (v: Response) => void;
     fetchMock.mockReturnValue(new Promise((r) => (resolve = r)));

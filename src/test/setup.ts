@@ -1,4 +1,9 @@
 import "@testing-library/jest-dom/vitest";
+import { configure } from "@testing-library/react";
+
+// The first render in a file pays the cold module-load cost; the 1s default is too tight for it
+// on a busy machine, which made the first test of a file fail intermittently.
+configure({ asyncUtilTimeout: 4000 });
 
 // jsdom lacks these; vaul (Drawer) and Radix call them during pointer and focus handling.
 if (!Element.prototype.setPointerCapture) Element.prototype.setPointerCapture = () => {};

@@ -10,6 +10,7 @@ import { Tiles } from "@/features/dashboard/tiles";
 import { useDashboard } from "@/features/dashboard/use-dashboard";
 import { useMe } from "@/lib/auth";
 import { ResultsRegion } from "@/components/common/results-region";
+import { ActiveFilters } from "./active-filters";
 import { CaseFilters } from "./case-filters";
 import { CasesTable } from "./cases-table";
 import { useCases, useExportCases } from "./use-cases";
@@ -42,8 +43,12 @@ export function CasesPage() {
   return (
     <div>
       <PageHeader
-        title="Cases"
-        description="Search, filter and export the case repository."
+        title="Case repository"
+        description={
+          data
+            ? `${data.total} ${data.total === 1 ? "case" : "cases"} — search, filter and export.`
+            : "Search, filter and export."
+        }
         actions={
           <Button
             type="button"
@@ -60,18 +65,19 @@ export function CasesPage() {
           summary fails to load the list still works, so its error is not shown here. */}
       {me && summary.data?.tiles && (
         <div className="mb-4 space-y-4">
-          <Tiles data={summary.data} role={me.role} />
+          <Tiles data={summary.data} role={me.role} compact />
           <StatusChart byStatus={summary.data.byStatus ?? []} />
         </div>
       )}
 
-      <div className="mb-4">
+      <div className="mb-4 space-y-3">
         <CaseFilters
           value={search}
           onChange={(patch) => setSearch(patch)}
           onClear={clear}
           loading={isFetching && !isPending}
         />
+        <ActiveFilters value={search} onRemove={(patch) => setSearch(patch)} />
       </div>
 
       {isError && <ErrorState error={error} onRetry={() => void refetch()} />}

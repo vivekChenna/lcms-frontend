@@ -104,6 +104,18 @@ describe("NotificationBell", () => {
     expect(readCalls).toHaveLength(1);
   });
 
+  it("keeps the popup compact: the title and time, not the full wording", async () => {
+    fetchMock.mockImplementation(async () =>
+      json({ items: [notification()], total: 1, page: 1, pageSize: 5, unreadCount: 1 }),
+    );
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderWithRouter(<NotificationBell />, qc);
+
+    await userEvent.click(await screen.findByRole("button", { name: /notifications/i }));
+    expect(await screen.findByText("Case assigned")).toBeInTheDocument();
+    expect(screen.queryByText("You have been assigned a new case.")).not.toBeInTheDocument();
+  });
+
   it("rolls back the optimistic read on a 500", async () => {
     let readAttempted = false;
     fetchMock.mockImplementation(async (url: string) => {

@@ -140,7 +140,8 @@ describe("DocumentsTab", () => {
 
   it("asks for confirmation before deleting", async () => {
     renderTab([docRow({ uploaderId: "me-1" })]);
-    await userEvent.click(await screen.findByRole("button", { name: /^delete$/i }));
+    await userEvent.click(await screen.findByRole("button", { name: /more actions/i }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /delete/i }));
 
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText(/delete this document/i)).toBeInTheDocument();
@@ -158,7 +159,8 @@ describe("DocumentsTab", () => {
 
   it("does not show Delete for a document uploaded by someone else", async () => {
     renderTab([docRow({ uploaderId: "someone-else" })]);
-    await screen.findByText("contract.pdf");
-    expect(screen.queryByRole("button", { name: /^delete$/i })).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: /more actions/i }));
+    await screen.findByRole("menuitem", { name: /versions/i });
+    expect(screen.queryByRole("menuitem", { name: /delete/i })).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,20 @@
 import { useRef, useState } from "react";
-import { Download, FileText, History, Trash2, Upload as UploadIcon } from "lucide-react";
+import {
+  Download,
+  FileText,
+  History,
+  MoreHorizontal,
+  Trash2,
+  Upload as UploadIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { EmptyState } from "@/components/common/empty-state";
@@ -15,37 +29,6 @@ import {
 } from "./use-documents";
 import { UploadDialog } from "./upload-dialog";
 import { VersionsDialog } from "./versions-dialog";
-
-function NewVersionButton({ caseId, documentId }: { caseId: string; documentId: string }) {
-  const uploadVersion = useUploadNewVersion(caseId);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <>
-      <input
-        ref={inputRef}
-        type="file"
-        className="sr-only"
-        aria-label="New version file"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = "";
-          if (file) uploadVersion.mutate({ documentId, file });
-        }}
-      />
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={uploadVersion.isPending}
-        onClick={() => inputRef.current?.click()}
-      >
-        <UploadIcon />
-        New version
-      </Button>
-    </>
-  );
-}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -62,34 +45,67 @@ type RowActionsProps = {
 };
 
 function RowActions({ doc, me, caseId, onVersions, onDelete }: RowActionsProps) {
+  const uploadVersion = useUploadNewVersion(caseId);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex items-center gap-1">
+      {/* outside the menu: the menu content unmounts on close, which would drop the file picker */}
+      <input
+        ref={inputRef}
+        type="file"
+        className="sr-only"
+        aria-label="New version file"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) uploadVersion.mutate({ documentId: doc.id, file });
+        }}
+      />
       <Button
         type="button"
-        variant="ghost"
+        variant="outline"
         size="sm"
         onClick={() => void downloadDocument(doc.id, doc.filename)}
       >
         <Download />
         Download
       </Button>
-      <Button type="button" variant="outline" size="sm" onClick={() => onVersions(doc)}>
-        <History />
-        Versions
-      </Button>
-      <NewVersionButton caseId={caseId} documentId={doc.id} />
-      {doc.uploaderId === me.id && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="text-danger"
-          onClick={() => onDelete(doc)}
-        >
-          <Trash2 />
-          Delete
-        </Button>
-      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-11 lg:size-9"
+            aria-label={`More actions for ${doc.filename}`}
+          >
+            <MoreHorizontal aria-hidden />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuItem onSelect={() => onVersions(doc)}>
+            <History aria-hidden /> Versions
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={uploadVersion.isPending}
+            onSelect={() => inputRef.current?.click()}
+          >
+            <UploadIcon aria-hidden /> New version
+          </DropdownMenuItem>
+          {doc.uploaderId === me.id && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-danger focus:text-danger"
+                onSelect={() => onDelete(doc)}
+              >
+                <Trash2 aria-hidden /> Delete
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

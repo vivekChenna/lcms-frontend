@@ -107,11 +107,51 @@ export function TilesSkeletonGrid({ role }: { role: Role }) {
   );
 }
 
-export function Tiles({ data, role }: { data: DashboardDto; role: Role }) {
+export function Tiles({
+  data,
+  role,
+  compact,
+}: {
+  data: DashboardDto;
+  role: Role;
+  /** The Cases page: one slim strip of counts instead of the dashboard's large action tiles. */
+  compact?: boolean;
+}) {
   const primary = isLegal(role) ? PRIMARY_LEGAL : PRIMARY_OTHER;
   const primaryKeys = new Set(primary.map((p) => p.key));
   const secondary = tileKeys(role).filter((k) => !primaryKeys.has(k));
   const to = (key: TileKey) => casesSearch(data.filters[key]) as never;
+
+  if (compact) {
+    const keys = tileKeys(role);
+    return (
+      <div data-testid="dashboard-tiles" className="overflow-hidden rounded-xl border bg-card">
+        <div
+          className="-ml-px -mt-px grid grid-cols-2 sm:grid-cols-3 lg:[grid-template-columns:repeat(var(--n),minmax(0,1fr))]"
+          style={{ "--n": keys.length } as CSSProperties}
+        >
+          {keys.map((key) => (
+            <Link
+              key={key}
+              to="/cases"
+              search={to(key)}
+              className="min-h-11 min-w-0 border-l border-t px-3 py-2 transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+            >
+              <p className="truncate text-xs text-muted-foreground">{LABEL[key]}</p>
+              <p
+                className={cn(
+                  "text-lg font-semibold tabular-nums",
+                  key === "overdue" && data.tiles[key] > 0 && "text-danger",
+                )}
+              >
+                {data.tiles[key]}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div data-testid="dashboard-tiles" className="space-y-4">

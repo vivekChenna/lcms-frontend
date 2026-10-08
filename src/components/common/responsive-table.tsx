@@ -30,6 +30,8 @@ type Props<T> = {
    * Desktop `columns` cells may contain them.
    */
   renderCard: (row: T) => ReactNode;
+  /** Phone layout: buttons shown under a clickable card, outside its <button>. */
+  cardFooter?: (row: T) => ReactNode;
   empty?: ReactNode;
   /** Wrapper classes, e.g. a max height so the sticky header sticks while the table scrolls. */
   className?: string;
@@ -43,6 +45,7 @@ export function ResponsiveTable<T>({
   onRowClick,
   rowLabel,
   renderCard,
+  cardFooter,
   empty,
   className,
 }: Props<T>) {
@@ -67,6 +70,7 @@ export function ResponsiveTable<T>({
                 {renderCard(row)}
               </div>
             )}
+            {cardFooter && <div className="mt-2">{cardFooter(row)}</div>}
           </li>
         ))}
       </ul>
