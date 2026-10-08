@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { PASSWORD, loginAs } from "./fixtures";
+import { chooseNewPassword, inviteUser, loginAs, signInAs } from "./fixtures";
 
-test("admin creates a user and a category + case type; deactivating the user signs them out", async ({
+test("admin invites a user, who sets their own password; admin also adds a category + case type; deactivating the user signs them out", async ({
   browser,
 }) => {
   test.setTimeout(180_000);
@@ -10,19 +10,38 @@ test("admin creates a user and a category + case type; deactivating the user sig
   const fullName = `E2E Throwaway ${stamp}`;
   const categoryName = `E2E Category ${stamp}`;
   const caseTypeName = `E2E Type ${stamp}`;
+  const MY_PASSWORD = "My-Own#Passw0rd";
 
   const adminCtx = await browser.newContext();
   const admin = await adminCtx.newPage();
   await loginAs(admin, "admin");
 
-  // create the user
+  // invite the user: the form has no password, the row says Invited, and an email carries the link
   await admin.goto("/users");
   await admin.getByRole("button", { name: /new user/i }).click();
-  await admin.getByLabel(/full name/i).fill(fullName);
-  await admin.getByLabel(/^email$/i).fill(email);
-  await admin.getByLabel(/^password$/i).fill(PASSWORD);
-  await admin.getByRole("button", { name: /^save$/i }).click();
-  await expect(admin.getByText(email)).toBeVisible();
+  await expect(admin.getByLabel(/password/i)).toHaveCount(0);
+  await admin.getByRole("button", { name: /close/i }).first().click();
+  const token = await inviteUser(admin, fullName, email);
+  await expect(
+    admin.getByRole("row", { name: new RegExp(email) }).getByText("Invited"),
+  ).toBeVisible();
+
+  // until they choose a password they cannot sign in
+  const userCtx = await browser.newContext();
+  const user = await userCtx.newPage();
+  await user.goto("/login");
+  await user.getByLabel(/email/i).fill(email);
+  await user.getByRole("textbox", { name: /password/i }).fill("Password123!");
+  await user.getByRole("button", { name: /sign in/i }).click();
+  await expect(user.getByRole("alert")).toContainText(/invalid email or password/i);
+
+  // they open the link, choose a password, and sign in with it
+  await chooseNewPassword(user, token, MY_PASSWORD);
+  await signInAs(user, email, MY_PASSWORD);
+  await admin.reload();
+  await expect(
+    admin.getByRole("row", { name: new RegExp(email) }).getByText("Active"),
+  ).toBeVisible();
 
   // create a category and a case type under it
   await admin.goto("/master-data");
@@ -46,15 +65,7 @@ test("admin creates a user and a category + case type; deactivating the user sig
   await expect(requester.getByRole("option", { name: categoryName })).toBeVisible();
   await requester.keyboard.press("Escape");
 
-  // the new user signs in, then the admin deactivates them; their next page load goes to login
-  const userCtx = await browser.newContext();
-  const user = await userCtx.newPage();
-  await user.goto("/login");
-  await user.getByLabel(/email/i).fill(email);
-  await user.getByRole("textbox", { name: /password/i }).fill(PASSWORD);
-  await user.getByRole("button", { name: /sign in/i }).click();
-  await expect(user).toHaveURL(/\/$/);
-
+  // the admin deactivates the user; their next page load goes to login
   await admin.goto("/users");
   await admin.getByRole("button", { name: `Actions for ${fullName}` }).click();
   await admin.getByRole("menuitem", { name: /^deactivate$/i }).click();

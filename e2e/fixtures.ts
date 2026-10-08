@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { mailCount, tokenFromMail, waitForNewMail } from "./mail";
 
 export type Who = "requester" | "manager" | "rep1" | "rep2" | "admin" | "viewer";
 
@@ -66,6 +67,45 @@ export async function pickDate(page: Page, label: RegExp, iso: string): Promise<
   await calendar
     .getByRole("button", { name: new RegExp(`${monthName} ${day}(st|nd|rd|th), ${year}`) })
     .click();
+}
+
+/**
+ * As the signed-in admin, adds a user through the real form (no password: they get an email) and
+ * returns the one-time token from that email.
+ */
+export async function inviteUser(admin: Page, fullName: string, email: string): Promise<string> {
+  const before = await mailCount(email);
+  await admin.goto("/users");
+  await admin.getByRole("button", { name: /new user/i }).click();
+  await admin.getByLabel(/full name/i).fill(fullName);
+  await admin.getByLabel(/^email$/i).fill(email);
+  await admin.getByRole("button", { name: /^save$/i }).click();
+  // the row, not the page: the "Invitation sent to ..." toast shows the address too
+  await expect(admin.getByRole("row", { name: new RegExp(email) })).toBeVisible();
+  return tokenFromMail(await waitForNewMail(email, before));
+}
+
+/** Opens an emailed link and chooses a password, ending on the sign-in page with its notice. */
+export async function chooseNewPassword(
+  page: Page,
+  token: string,
+  password: string,
+): Promise<void> {
+  await page.goto(`/set-password?token=${token}`);
+  await page.getByLabel(/^new password$/i).fill(password);
+  await page.getByLabel(/^confirm password$/i).fill(password);
+  await page.getByRole("button", { name: /set password/i }).click();
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByRole("status")).toContainText(/password set/i);
+}
+
+/** Signs in through the real form with an arbitrary account; returns once the dashboard shows. */
+export async function signInAs(page: Page, email: string, password: string): Promise<void> {
+  await page.goto("/login");
+  await page.getByLabel(/email/i).fill(email);
+  await page.getByRole("textbox", { name: /password/i }).fill(password);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await expect(page).toHaveURL(/\/$/);
 }
 
 /** Submits a case as the signed-in requester through the real form; returns its detail URL path. */
