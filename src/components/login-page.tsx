@@ -45,6 +45,9 @@ export function LoginPage({
     defaultValues: { email: "", password: "" },
   });
   const { errors } = form.formState;
+  const [email, password] = form.watch(["email", "password"]);
+  // nothing to submit until both fields have something in them
+  const incomplete = !email.trim() || !password;
 
   const onSubmit = form.handleSubmit((values) =>
     login.mutate(values, { onSuccess: () => void navigate({ href: safeRedirect(redirect) }) }),
@@ -113,7 +116,11 @@ export function LoginPage({
             Forgot password?
           </Link>
         </div>
-        <Button type="submit" className="h-12 w-full text-base" disabled={login.isPending}>
+        <Button
+          type="submit"
+          className="h-12 w-full text-base"
+          disabled={incomplete || login.isPending}
+        >
           {login.isPending ? <Loader2 className="animate-spin" aria-hidden /> : null}
           Sign in
           {!login.isPending && <ArrowRight aria-hidden />}

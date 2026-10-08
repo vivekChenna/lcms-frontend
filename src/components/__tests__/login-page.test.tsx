@@ -48,6 +48,18 @@ async function signIn(ue: ReturnType<typeof userEvent.setup>, password = "Passwo
 }
 
 describe("LoginPage", () => {
+  it("keeps Sign in disabled until both the email and the password are filled in", async () => {
+    const { ue } = setup();
+    const button = screen.getByRole("button", { name: /sign in/i });
+    expect(button).toBeDisabled();
+    await ue.type(screen.getByLabelText(/email/i), "v@x.com");
+    expect(button).toBeDisabled();
+    await ue.type(screen.getByLabelText(/^password$/i), "x");
+    expect(button).toBeEnabled();
+    await ue.clear(screen.getByLabelText(/email/i));
+    expect(button).toBeDisabled();
+  });
+
   it("shows the password-changed notice when asked", () => {
     setup(undefined, "password-changed");
     expect(screen.getByRole("status")).toHaveTextContent(
@@ -97,6 +109,7 @@ describe("LoginPage", () => {
   it("validates the form before calling the backend", async () => {
     const { ue } = setup();
     await ue.type(screen.getByLabelText(/email/i), "not-an-email");
+    await ue.type(screen.getByLabelText(/^password$/i), "whatever");
     await ue.click(screen.getByRole("button", { name: /sign in/i }));
     expect(await screen.findByText("Enter a valid email address.")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -108,8 +121,8 @@ describe("LoginPage", () => {
     );
     const { ue } = setup();
     await ue.type(screen.getByLabelText(/email/i), "v@x.com");
-    await ue.click(screen.getByRole("button", { name: /sign in/i }));
-    expect(await screen.findByText("Enter your password.")).toBeInTheDocument();
+    // nothing to send without a password: the button stays off
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeDisabled();
     expect(fetchMock).not.toHaveBeenCalled();
 
     // a short password is the server's call to reject, not the form's
