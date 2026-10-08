@@ -8,9 +8,12 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
+import { ResultsRegion } from "@/components/common/results-region";
 import { Eye, History } from "lucide-react";
 import { describe, type AuditRow } from "@/features/case-detail/audit/describe";
 import { formatDateTime } from "@/lib/format";
+import { roleLabel } from "@/lib/labels";
+import { AuditDetails } from "./audit-details";
 import { AuditFiltersBar } from "./audit-filters";
 import { useAudit, useExportAudit, type AuditFilters } from "./use-audit";
 
@@ -39,7 +42,7 @@ export function AuditPage() {
     createdTo: search.createdTo,
   };
 
-  const { data, isPending, isError, error, refetch } = useAudit(filters, page);
+  const { data, isLoading, isFetching, isError, error, refetch } = useAudit(filters, page);
   const exportAudit = useExportAudit(filters);
 
   const setFilters = (patch: Partial<AuditFilters>) =>
@@ -56,7 +59,7 @@ export function AuditPage() {
       cell: (r) => (
         <>
           <p>{r.actorName ?? "—"}</p>
-          {r.actorRole && <p className="text-xs text-muted-foreground">{r.actorRole}</p>}
+          {r.actorRole && <p className="text-xs text-muted-foreground">{roleLabel(r.actorRole)}</p>}
         </>
       ),
     },
@@ -117,77 +120,79 @@ export function AuditPage() {
         }
       />
 
-      <AuditFiltersBar value={filters} onChange={setFilters} onClear={clear} />
+      <AuditFiltersBar
+        value={filters}
+        onChange={setFilters}
+        onClear={clear}
+        loading={isFetching && !isLoading}
+      />
 
-      {isPending && null}
       {isError && <ErrorState error={error} onRetry={() => void refetch()} />}
-      {data && data.items.length === 0 && (
-        <EmptyState
-          icon={History}
-          title="No activity"
-          description="Nothing matches these filters."
-        />
-      )}
-      {data && data.items.length > 0 && (
-        <div className="mt-4">
-          <ResponsiveTable
-            columns={columns}
-            rows={data.items}
-            rowKey={(r) => r.id}
-            renderCard={(r) => (
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">{formatDateTime(r.createdAt)}</p>
-                <p>
-                  <span className="font-medium">{r.actorName ?? "—"}</span>{" "}
-                  {r.actorRole && <span className="text-muted-foreground">({r.actorRole})</span>}
-                </p>
-                <p>{summaryFor(r)}</p>
-                {r.caseId && r.caseReference && (
-                  <Link
-                    to="/cases/$caseId"
-                    params={{ caseId: r.caseId }}
-                    className="-my-3 inline-block py-3 underline-offset-2 hover:underline"
+      <ResultsRegion
+        label="audit entries"
+        initialLoading={isLoading}
+        fetching={isFetching && !isLoading}
+      >
+        {data && data.items.length === 0 && (
+          <EmptyState
+            icon={History}
+            title="No activity"
+            description="Nothing matches these filters."
+          />
+        )}
+        {data && data.items.length > 0 && (
+          <div className="mt-4">
+            <ResponsiveTable
+              columns={columns}
+              rows={data.items}
+              rowKey={(r) => r.id}
+              renderCard={(r) => (
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">{formatDateTime(r.createdAt)}</p>
+                  <p>
+                    <span className="font-medium">{r.actorName ?? "—"}</span>{" "}
+                    {r.actorRole && (
+                      <span className="text-muted-foreground">({roleLabel(r.actorRole)})</span>
+                    )}
+                  </p>
+                  <p>{summaryFor(r)}</p>
+                  {r.caseId && r.caseReference && (
+                    <Link
+                      to="/cases/$caseId"
+                      params={{ caseId: r.caseId }}
+                      className="-my-3 inline-block py-3 underline-offset-2 hover:underline"
+                    >
+                      {r.caseReference}
+                    </Link>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDetailsRow(r)}
                   >
-                    {r.caseReference}
-                  </Link>
-                )}
-                <Button type="button" variant="outline" size="sm" onClick={() => setDetailsRow(r)}>
-                  <Eye aria-hidden />
-                  Details
-                </Button>
-              </div>
-            )}
-          />
-          <Pagination
-            page={data.page}
-            pageSize={data.pageSize}
-            total={data.total}
-            onPageChange={setPage}
-          />
-        </div>
-      )}
+                    <Eye aria-hidden />
+                    Details
+                  </Button>
+                </div>
+              )}
+            />
+            <Pagination
+              page={data.page}
+              pageSize={data.pageSize}
+              total={data.total}
+              onPageChange={setPage}
+            />
+          </div>
+        )}
+      </ResultsRegion>
 
       <ResponsiveDialog
         open={!!detailsRow}
         onOpenChange={(open) => !open && setDetailsRow(null)}
-        title="Audit entry details"
+        title="What happened"
       >
-        {detailsRow && (
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Before</p>
-              <pre className="mt-1 overflow-x-auto rounded-md bg-muted p-3 text-xs">
-                {JSON.stringify(detailsRow.beforeValue, null, 2) ?? "null"}
-              </pre>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">After</p>
-              <pre className="mt-1 overflow-x-auto rounded-md bg-muted p-3 text-xs">
-                {JSON.stringify(detailsRow.afterValue, null, 2) ?? "null"}
-              </pre>
-            </div>
-          </div>
-        )}
+        {detailsRow && <AuditDetails row={detailsRow} summary={summaryFor(detailsRow)} />}
       </ResponsiveDialog>
     </div>
   );

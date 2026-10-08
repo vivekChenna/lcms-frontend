@@ -33,6 +33,9 @@ export const ROLE_LABEL: Record<UserRole, string> = {
   viewer: "Viewer",
 };
 
+/** A role as a person reads it ("legal_rep" -> "Legal Representative"); unknown roles pass through. */
+export const roleLabel = (role: string): string => ROLE_LABEL[role as UserRole] ?? role;
+
 const STATUS_TONE: Record<CaseStatus, Tone> = {
   Submitted: "neutral",
   Assigned: "info",
