@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/components/ui/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -166,9 +167,8 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
             </div>
             <div>
               <Label htmlFor="uf-password">Password</Label>
-              <Input
+              <PasswordInput
                 id="uf-password"
-                type="password"
                 className="mt-1 h-11 lg:h-9"
                 {...register("password")}
               />

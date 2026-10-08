@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/components/ui/password-input";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,9 +45,8 @@ export function ResetPasswordDialog({ user, open, onOpenChange }: Props) {
       }
     >
       <Label htmlFor="rp-password">New password</Label>
-      <Input
+      <PasswordInput
         id="rp-password"
-        type="password"
         className="mt-1 h-11 lg:h-9"
         value={password}
         onChange={(e) => setPassword(e.target.value)}

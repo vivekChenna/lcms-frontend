@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/components/ui/password-input";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
@@ -116,9 +117,8 @@ export function ChangePasswordDialog({
         {fields.map(({ name, label, autoComplete }) => (
           <div key={name} className="space-y-2">
             <Label htmlFor={`cp-${name}`}>{label}</Label>
-            <Input
+            <PasswordInput
               id={`cp-${name}`}
-              type="password"
               autoComplete={autoComplete}
               className="h-11 lg:h-9"
               aria-invalid={!!errors[name]}
