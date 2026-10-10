@@ -11,8 +11,14 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { isSoundEnabled, playNotificationSound } from "@/lib/notification-sound";
 import { NotificationBell } from "../notification-bell";
 import { useMarkAllRead } from "../use-notifications";
+
+vi.mock("@/lib/notification-sound", () => ({
+  playNotificationSound: vi.fn(),
+  isSoundEnabled: vi.fn(() => true),
+}));
 
 afterEach(cleanup);
 
@@ -21,6 +27,8 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 beforeEach(() => {
+  vi.mocked(playNotificationSound).mockClear();
+  vi.mocked(isSoundEnabled).mockReturnValue(true);
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -132,6 +140,39 @@ describe("NotificationBell", () => {
     await qc.invalidateQueries({ queryKey: ["notifications"] });
     const ringing = await screen.findByRole("button", { name: /notifications, 3 unread/i });
     await waitFor(() => expect(ringing).toHaveAttribute("data-ringing", "true"));
+  });
+
+  it("plays the chime when the unread count goes up, never on the first load", async () => {
+    let unread = 1;
+    fetchMock.mockImplementation(async () =>
+      json({ items: [notification()], total: 1, page: 1, pageSize: 5, unreadCount: unread }),
+    );
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderWithRouter(<NotificationBell />, qc);
+    await screen.findByRole("button", { name: /notifications, 1 unread/i });
+    expect(playNotificationSound).not.toHaveBeenCalled();
+
+    unread = 2;
+    await qc.invalidateQueries({ queryKey: ["notifications"] });
+    await screen.findByRole("button", { name: /notifications, 2 unread/i });
+    await waitFor(() => expect(playNotificationSound).toHaveBeenCalledTimes(1));
+  });
+
+  it("stays silent, though the bell still rings, when the person turned the sound off", async () => {
+    vi.mocked(isSoundEnabled).mockReturnValue(false);
+    let unread = 1;
+    fetchMock.mockImplementation(async () =>
+      json({ items: [notification()], total: 1, page: 1, pageSize: 5, unreadCount: unread }),
+    );
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderWithRouter(<NotificationBell />, qc);
+    await screen.findByRole("button", { name: /notifications, 1 unread/i });
+
+    unread = 2;
+    await qc.invalidateQueries({ queryKey: ["notifications"] });
+    const bell = await screen.findByRole("button", { name: /notifications, 2 unread/i });
+    await waitFor(() => expect(bell).toHaveAttribute("data-ringing", "true"));
+    expect(playNotificationSound).not.toHaveBeenCalled();
   });
 
   it("tints unread items in the popup so new ones stand out", async () => {

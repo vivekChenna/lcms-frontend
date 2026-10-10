@@ -1,10 +1,13 @@
-import { KeyRound } from "lucide-react";
+import { KeyRound, Volume2 } from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/common/page-header";
 import { ChangePasswordDialog } from "@/components/layout/change-password-dialog";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useMe } from "@/lib/auth";
 import { ROLE_LABEL } from "@/lib/labels";
+import { isSoundEnabled, playNotificationSound, setSoundEnabled } from "@/lib/notification-sound";
 
 const initials = (name: string) =>
   name
@@ -18,6 +21,7 @@ const initials = (name: string) =>
 export function ProfilePage() {
   const me = useMe();
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [sound, setSound] = useState(isSoundEnabled);
   if (!me) return null;
 
   const details: [string, string | null][] = [
@@ -59,6 +63,41 @@ export function ProfilePage() {
         <p className="mt-4 text-xs text-muted-foreground">
           To change these details, ask an administrator.
         </p>
+      </section>
+
+      <section
+        className="mb-6 rounded-xl border bg-card p-5"
+        aria-labelledby="profile-notifications"
+      >
+        <h2 id="profile-notifications" className="text-base font-semibold">
+          Notifications
+        </h2>
+        <div className="mt-3 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <Label htmlFor="notification-sound">Play a sound for new notifications</Label>
+            <p className="text-sm text-muted-foreground">
+              A short chime while the app is open. This setting is saved on this device only.
+            </p>
+          </div>
+          <Switch
+            id="notification-sound"
+            checked={sound}
+            onCheckedChange={(on) => {
+              setSound(on);
+              setSoundEnabled(on);
+            }}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={playNotificationSound}
+        >
+          <Volume2 aria-hidden />
+          Play sample
+        </Button>
       </section>
 
       <section className="rounded-xl border bg-card p-5" aria-labelledby="profile-security">

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { isSoundEnabled, playNotificationSound } from "@/lib/notification-sound";
 import { qk } from "@/lib/queries/keys";
 import { NotificationItem } from "./notification-item";
 import { useLatestNotifications, useUnreadCount } from "./use-notifications";
@@ -28,6 +29,7 @@ export function NotificationBell() {
     previous.current = unreadCount;
     if (before === undefined || unreadCount <= before) return;
     setRinging(true);
+    if (isSoundEnabled()) playNotificationSound();
     // A new notification means something changed: refresh the popup list, and the dashboard and case
     // lists behind it, so the screen does not keep showing the state from before.
     void qc.invalidateQueries({
