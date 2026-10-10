@@ -7,7 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useMe } from "@/lib/auth";
 import { ROLE_LABEL } from "@/lib/labels";
-import { isSoundEnabled, playNotificationSound, setSoundEnabled } from "@/lib/notification-sound";
+import {
+  isSoundEnabled,
+  isSoundFeatureOn,
+  playNotificationSound,
+  setSoundEnabled,
+} from "@/lib/notification-sound";
 
 const initials = (name: string) =>
   name
@@ -65,40 +70,42 @@ export function ProfilePage() {
         </p>
       </section>
 
-      <section
-        className="mb-6 rounded-xl border bg-card p-5"
-        aria-labelledby="profile-notifications"
-      >
-        <h2 id="profile-notifications" className="text-base font-semibold">
-          Notifications
-        </h2>
-        <div className="mt-3 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <Label htmlFor="notification-sound">Play a sound for new notifications</Label>
-            <p className="text-sm text-muted-foreground">
-              A short chime while the app is open. This setting is saved on this device only.
-            </p>
-          </div>
-          <Switch
-            id="notification-sound"
-            checked={sound}
-            onCheckedChange={(on) => {
-              setSound(on);
-              setSoundEnabled(on);
-            }}
-          />
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          onClick={playNotificationSound}
+      {isSoundFeatureOn() && (
+        <section
+          className="mb-6 rounded-xl border bg-card p-5"
+          aria-labelledby="profile-notifications"
         >
-          <Volume2 aria-hidden />
-          Play sample
-        </Button>
-      </section>
+          <h2 id="profile-notifications" className="text-base font-semibold">
+            Notifications
+          </h2>
+          <div className="mt-3 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <Label htmlFor="notification-sound">Play a sound for new notifications</Label>
+              <p className="text-sm text-muted-foreground">
+                A short chime while the app is open. This setting is saved on this device only.
+              </p>
+            </div>
+            <Switch
+              id="notification-sound"
+              checked={sound}
+              onCheckedChange={(on) => {
+                setSound(on);
+                setSoundEnabled(on);
+              }}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={playNotificationSound}
+          >
+            <Volume2 aria-hidden />
+            Play sample
+          </Button>
+        </section>
+      )}
 
       <section className="rounded-xl border bg-card p-5" aria-labelledby="profile-security">
         <h2 id="profile-security" className="text-base font-semibold">

@@ -11,6 +11,7 @@ One variable, read at build time (Vite inlines it into the bundle):
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | `http://localhost:4000` | Origin of the backend API, no trailing slash |
+| `VITE_NOTIFICATION_SOUND` | off | Set to `true` to play a chime on new notifications and show the sound switch on the Profile page. Any other value, or none, leaves it off |
 
 Changing it requires a rebuild (`npm run build`); the dev server needs a restart.
 

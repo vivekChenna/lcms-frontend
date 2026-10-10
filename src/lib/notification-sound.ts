@@ -1,7 +1,17 @@
 const KEY = "lcms-notification-sound";
 
-/** On unless someone turned it off on this device. */
+/**
+ * The feature itself is opt-in per deployment: it exists only when the build is given
+ * VITE_NOTIFICATION_SOUND=true (read when Vite starts or builds). Anything else, including no
+ * setting at all, leaves it off: no chime, and no switch on the Profile page.
+ */
+export function isSoundFeatureOn(): boolean {
+  return import.meta.env["VITE_NOTIFICATION_SOUND"] === "true";
+}
+
+/** Whether a chime should play now: the feature is on, and this device has not turned it off. */
 export function isSoundEnabled(): boolean {
+  if (!isSoundFeatureOn()) return false;
   try {
     return localStorage.getItem(KEY) !== "off";
   } catch {

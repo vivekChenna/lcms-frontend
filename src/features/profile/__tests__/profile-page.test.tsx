@@ -12,7 +12,11 @@ vi.mock("@/lib/notification-sound", async (importOriginal) => ({
   playNotificationSound: vi.fn(),
 }));
 
-beforeEach(() => window.localStorage.clear());
+beforeEach(() => {
+  window.localStorage.clear();
+  vi.stubEnv("VITE_NOTIFICATION_SOUND", "true");
+});
+afterEach(() => vi.unstubAllEnvs());
 afterEach(cleanup);
 
 function setup() {
@@ -63,5 +67,13 @@ describe("ProfilePage", () => {
     setup();
     await userEvent.click(await screen.findByRole("button", { name: /play sample/i }));
     expect(playNotificationSound).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the sound setting entirely when the feature is not switched on", async () => {
+    vi.stubEnv("VITE_NOTIFICATION_SOUND", "false");
+    setup();
+    await screen.findByRole("heading", { name: "Profile" });
+    expect(screen.queryByRole("switch", { name: /sound/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /play sample/i })).not.toBeInTheDocument();
   });
 });
