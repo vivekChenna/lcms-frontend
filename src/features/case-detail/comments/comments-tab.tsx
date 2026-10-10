@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CardsSkeleton } from "@/components/common/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,7 +99,13 @@ export function CommentsTab({ caseItem, me }: { caseItem: CaseDto; me: Profile }
   const deleteComment = useDeleteComment(caseItem.id);
   const [deleteTarget, setDeleteTarget] = useState<CommentDto | null>(null);
 
-  if (isPending) return null;
+  if (isPending) {
+    return (
+      <div role="status" aria-label="Loading comments">
+        <CardsSkeleton count={2} />
+      </div>
+    );
+  }
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   const canWrite = canWriteToCase(me, caseItem);

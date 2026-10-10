@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Clock, FolderOpen, Hourglass, TriangleAlert, UserX, type LucideIcon } from "lucide-react";
 import type { DashboardDto } from "@/lib/api/types";
 import { isLegal } from "@/lib/permissions";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { casesSearch, scrollToResults } from "./use-dashboard";
 
@@ -82,12 +83,7 @@ function tileKeys(role: Role): TileKey[] {
 }
 
 export function TileSkeleton() {
-  return (
-    <div
-      data-testid="tile-skeleton"
-      className="h-20 min-w-0 animate-pulse rounded-lg border bg-muted"
-    />
-  );
+  return <Skeleton data-testid="tile-skeleton" className="h-20 min-w-0 rounded-lg" />;
 }
 
 export function TilesSkeletonGrid({ role }: { role: Role }) {

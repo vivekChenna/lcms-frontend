@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ListSkeleton } from "@/components/common/skeletons";
 import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,7 +50,13 @@ export function RulesPage() {
 
   const [formRule, setFormRule] = useState<RoutingRuleDto | null | undefined>(undefined);
 
-  if (isPending) return null;
+  if (isPending) {
+    return (
+      <div role="status" aria-label="Loading rules">
+        <ListSkeleton columns={4} rows={4} />
+      </div>
+    );
+  }
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   // One entry per condition the rule checks; an empty list means it matches every case.

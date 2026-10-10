@@ -5,19 +5,29 @@ import { cn } from "@/lib/utils";
 type Props = {
   /** What is being loaded, for the screen-reader text: "users", "cases"... */
   label: string;
-  /** No data yet (first load): a centred spinner replaces the content. */
+  /** No data yet (first load): the `skeleton` (or a centred spinner) replaces the content. */
   initialLoading?: boolean;
+  /** Shimmering placeholder shaped like the results, shown on the first load. */
+  skeleton?: ReactNode;
   /** A new search or page is being fetched while the previous results are still shown. */
   fetching?: boolean;
   children: ReactNode;
 };
 
 /**
- * Wraps a list of results so every request is visible: a centred spinner on the first load, and on
+ * Wraps a list of results so every request is visible: a shimmering skeleton (or spinner) on the first load, and on
  * later searches the old results stay in place, dimmed, with an "Updating" badge, so the page never
  * goes blank and the filters above it never unmount.
  */
-export function ResultsRegion({ label, initialLoading, fetching, children }: Props) {
+export function ResultsRegion({ label, initialLoading, skeleton, fetching, children }: Props) {
+  if (initialLoading && skeleton) {
+    return (
+      <div role="status" aria-label={`Loading ${label}`}>
+        <span className="sr-only">Loading {label}…</span>
+        {skeleton}
+      </div>
+    );
+  }
   if (initialLoading) {
     return (
       <div

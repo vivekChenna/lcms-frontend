@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
 import { ResultsRegion } from "@/components/common/results-region";
+import { ListSkeleton } from "@/components/common/skeletons";
 import { Eye, History } from "lucide-react";
 import { describe, type AuditRow } from "@/features/case-detail/audit/describe";
 import { formatDateTime } from "@/lib/format";
@@ -131,6 +132,7 @@ export function AuditPage() {
       <ResultsRegion
         label="audit entries"
         initialLoading={isLoading}
+        skeleton={<ListSkeleton columns={5} />}
         fetching={isFetching && !isLoading}
       >
         {data && data.items.length === 0 && (

@@ -223,3 +223,21 @@
   button, a, input, textarea, select { outline-color: var(--color-ring); }
   button { cursor: pointer; }
 }
+
+/*
+ * Loading placeholders use react-loading-skeleton (colours set in main.tsx from these variables).
+ * The highlight is a lighter shade of --muted, so the sweep works in both themes.
+ */
+:root {
+  --skeleton-base: color-mix(in oklab, var(--muted), var(--foreground) 5%);
+  --skeleton-highlight: color-mix(in oklab, var(--muted), white 70%);
+}
+.dark {
+  --skeleton-base: var(--muted);
+  --skeleton-highlight: color-mix(in oklab, var(--muted), white 12%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .react-loading-skeleton {
+    animation: none !important;
+  }
+}

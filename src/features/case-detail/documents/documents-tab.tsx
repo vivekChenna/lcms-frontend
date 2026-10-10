@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { ListSkeleton } from "@/components/common/skeletons";
 import {
   Download,
   FileText,
@@ -124,7 +125,13 @@ export function DocumentsTab({
   const [versionsFor, setVersionsFor] = useState<DocumentDto | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentDto | null>(null);
 
-  if (isPending) return null;
+  if (isPending) {
+    return (
+      <div role="status" aria-label="Loading documents">
+        <ListSkeleton columns={4} rows={3} />
+      </div>
+    );
+  }
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   // Four columns so the table fits without sideways scrolling: the name carries its category and

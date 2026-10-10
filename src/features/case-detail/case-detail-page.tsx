@@ -1,5 +1,6 @@
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { CaseDetailSkeleton } from "@/components/common/skeletons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorState } from "@/components/common/error-state";
 import { ApiError } from "@/lib/api/errors";
@@ -55,7 +56,13 @@ export function CaseDetailPage() {
   const setTab = (next: string) =>
     void navigate({ to: ".", search: { tab: next as TabKey } as never });
 
-  if (isPending || !me) return null;
+  if (isPending || !me) {
+    return (
+      <div role="status" aria-label="Loading case">
+        <CaseDetailSkeleton />
+      </div>
+    );
+  }
 
   if (isError) {
     if (error instanceof ApiError && error.isNotFound) return <NotFoundCase />;

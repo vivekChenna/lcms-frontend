@@ -1,5 +1,6 @@
 import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
+import { ChartSkeleton, ListSkeleton } from "@/components/common/skeletons";
 import { useMe } from "@/lib/auth";
 import { isLegal } from "@/lib/permissions";
 import { useDashboard } from "./use-dashboard";
@@ -16,7 +17,13 @@ export function DashboardPage() {
     <div>
       <PageHeader title="Dashboard" description="Your caseload and SLA overview." />
 
-      {isPending && me && <TilesSkeletonGrid role={me.role} />}
+      {isPending && me && (
+        <div role="status" aria-label="Loading dashboard" className="space-y-6">
+          <TilesSkeletonGrid role={me.role} />
+          <ChartSkeleton />
+          {isLegal(me.role) && <ListSkeleton columns={6} rows={4} />}
+        </div>
+      )}
       {isError && <ErrorState error={error} onRetry={() => void refetch()} />}
 
       {data && me && (

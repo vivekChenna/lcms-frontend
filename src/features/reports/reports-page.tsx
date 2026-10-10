@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
 import { ResultsRegion } from "@/components/common/results-region";
+import { ChartSkeleton } from "@/components/common/skeletons";
 import { AgeingChart } from "./charts/ageing-chart";
 import { RepWorkloadChart } from "./charts/rep-workload-chart";
 import { SlaComplianceChart } from "./charts/sla-compliance-chart";
@@ -71,6 +72,12 @@ function ReportCard<T>({
       <ResultsRegion
         label={label}
         initialLoading={query.isLoading}
+        skeleton={
+          <div className="space-y-4">
+            <ChartSkeleton />
+            <ChartSkeleton />
+          </div>
+        }
         fetching={query.isFetching && !query.isLoading}
       >
         {query.data && render(query.data)}

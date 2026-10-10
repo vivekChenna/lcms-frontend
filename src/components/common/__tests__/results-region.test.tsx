@@ -39,4 +39,15 @@ describe("ResultsRegion", () => {
       "false",
     );
   });
+
+  it("shows the shimmering skeleton, still announced as loading, when one is given", () => {
+    render(
+      <ResultsRegion initialLoading label="cases" skeleton={<div data-testid="my-skeleton" />}>
+        <p>rows</p>
+      </ResultsRegion>,
+    );
+    expect(screen.getByRole("status", { name: /loading cases/i })).toBeInTheDocument();
+    expect(screen.getByTestId("my-skeleton")).toBeInTheDocument();
+    expect(screen.queryByText("rows")).not.toBeInTheDocument();
+  });
 });

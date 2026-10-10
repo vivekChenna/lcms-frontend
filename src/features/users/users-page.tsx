@@ -19,6 +19,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
 import { ResultsRegion } from "@/components/common/results-region";
+import { ListSkeleton } from "@/components/common/skeletons";
 import { SearchInput } from "@/components/common/search-input";
 import { useDebouncedField } from "@/hooks/use-debounced-field";
 import { useMe } from "@/lib/auth";
@@ -242,7 +243,12 @@ export function UsersPage() {
       </FilterSheet>
 
       <div className="mt-4">
-        <ResultsRegion label="users" initialLoading={isPending} fetching={isFetching && !isPending}>
+        <ResultsRegion
+          label="users"
+          initialLoading={isPending}
+          skeleton={<ListSkeleton columns={5} />}
+          fetching={isFetching && !isPending}
+        >
           {data &&
             (data.items.length === 0 ? (
               <EmptyState icon={UsersIcon} title="No users match these filters" />

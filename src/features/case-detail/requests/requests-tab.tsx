@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CardsSkeleton } from "@/components/common/skeletons";
 import { Download, FileText, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -192,7 +193,13 @@ export function RequestsTab({ caseItem, me }: { caseItem: CaseDto; me: Profile }
     caseItem.assignedLegalRepId === me.id &&
     (caseItem.status === "In Progress" || caseItem.status === "Waiting on Input");
 
-  if (isPending) return null;
+  if (isPending) {
+    return (
+      <div role="status" aria-label="Loading information requests">
+        <CardsSkeleton count={2} />
+      </div>
+    );
+  }
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   return (

@@ -11,6 +11,7 @@ import { useDashboard } from "@/features/dashboard/use-dashboard";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { useMe } from "@/lib/auth";
 import { ResultsRegion } from "@/components/common/results-region";
+import { ListSkeleton } from "@/components/common/skeletons";
 import { ActiveFilters } from "./active-filters";
 import { CaseFilters } from "./case-filters";
 import { CasesTable } from "./cases-table";
@@ -97,7 +98,12 @@ export function CasesPage() {
       {/* the tiles and chart link here (#results), so a click lands on the list, not the top */}
       {/* min height: even a one-row list leaves enough page below to scroll the list to the top */}
       <div id="results" className="min-h-[70vh] scroll-mt-4">
-        <ResultsRegion label="cases" initialLoading={isPending} fetching={isFetching && !isPending}>
+        <ResultsRegion
+          label="cases"
+          initialLoading={isPending}
+          skeleton={<ListSkeleton columns={7} />}
+          fetching={isFetching && !isPending}
+        >
           {data && (
             <div className="space-y-4">
               <CasesTable

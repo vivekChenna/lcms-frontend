@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RowsSkeleton } from "@/components/common/skeletons";
 import { History } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
@@ -12,7 +13,13 @@ export function AuditTab({ caseId }: { caseId: string }) {
   const [page, setPage] = useState(1);
   const { data, isPending, isError, error, refetch } = useCaseAudit(caseId, page);
 
-  if (isPending) return null;
+  if (isPending) {
+    return (
+      <div role="status" aria-label="Loading audit trail">
+        <RowsSkeleton />
+      </div>
+    );
+  }
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
   if (data.items.length === 0) {

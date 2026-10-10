@@ -6,6 +6,7 @@ import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { ResultsRegion } from "@/components/common/results-region";
+import { RowsSkeleton } from "@/components/common/skeletons";
 import { NotificationItem } from "./notification-item";
 import { useMarkAllRead, useNotifications } from "./use-notifications";
 
@@ -72,6 +73,7 @@ export function NotificationsPage() {
       <ResultsRegion
         label="notifications"
         initialLoading={isPending && !isError}
+        skeleton={<RowsSkeleton />}
         fetching={isFetching && !isPending}
       >
         {data && data.items.length === 0 && (
