@@ -116,6 +116,43 @@ describe("NotificationBell", () => {
     expect(screen.queryByText("You have been assigned a new case.")).not.toBeInTheDocument();
   });
 
+  it("rings the bell when the unread count goes up, but not on the first load", async () => {
+    let unread = 1;
+    fetchMock.mockImplementation(async () =>
+      json({ items: [notification()], total: 1, page: 1, pageSize: 5, unreadCount: unread }),
+    );
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderWithRouter(<NotificationBell />, qc);
+
+    const bell = await screen.findByRole("button", { name: /notifications, 1 unread/i });
+    // the count the page loaded with is not news
+    expect(bell).toHaveAttribute("data-ringing", "false");
+
+    unread = 3;
+    await qc.invalidateQueries({ queryKey: ["notifications"] });
+    const ringing = await screen.findByRole("button", { name: /notifications, 3 unread/i });
+    await waitFor(() => expect(ringing).toHaveAttribute("data-ringing", "true"));
+  });
+
+  it("tints unread items in the popup so new ones stand out", async () => {
+    fetchMock.mockImplementation(async () =>
+      json({
+        items: [notification({ id: "n1" }), notification({ id: "n2", isRead: true, title: "Old" })],
+        total: 2,
+        page: 1,
+        pageSize: 5,
+        unreadCount: 1,
+      }),
+    );
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderWithRouter(<NotificationBell />, qc);
+    await userEvent.click(await screen.findByRole("button", { name: /notifications/i }));
+    const unread = (await screen.findByText("Case assigned")).closest("button")!;
+    const read = screen.getByText("Old").closest("button")!;
+    expect(unread.className).toContain("bg-primary/5");
+    expect(read.className).not.toContain("bg-primary/5");
+  });
+
   it("rolls back the optimistic read on a 500", async () => {
     let readAttempted = false;
     fetchMock.mockImplementation(async (url: string) => {

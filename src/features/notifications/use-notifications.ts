@@ -32,7 +32,8 @@ export function useUnreadCount() {
     queryKey: qk.notifications({ page: 1, pageSize: 1, badge: true }),
     queryFn: () => apiJson<NotificationListDto>("/notifications?page=1&pageSize=1"),
     select: (data) => data.unreadCount,
-    refetchInterval: 60_000,
+    // short enough that a new notification shows up while someone is still looking at the screen
+    refetchInterval: 15_000,
     refetchIntervalInBackground: false,
   });
 }

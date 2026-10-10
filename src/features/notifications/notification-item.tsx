@@ -27,7 +27,10 @@ export function NotificationItem({ notification, onNavigate, compact }: Props) {
     <button
       type="button"
       onClick={open}
-      className="flex w-full items-start gap-2 rounded-md p-2 text-left hover:bg-muted"
+      className={cn(
+        "flex w-full items-start gap-2 rounded-md p-2 text-left hover:bg-muted",
+        !notification.isRead && "bg-primary/5",
+      )}
     >
       <span
         aria-hidden
