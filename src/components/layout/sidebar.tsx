@@ -2,11 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Gavel, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { UserRole } from "@/lib/api/types";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { navItemsFor } from "./nav-items";
 
 type Props = {
-  role: UserRole;
+  /** Whose menu to show. Left out while the session is still loading: the menu is drawn as shimmering placeholders. */
+  role?: UserRole | undefined;
   /** Desktop only: icons-only rail at lg (the md range is always a rail). */
   collapsed?: boolean;
   /**
@@ -79,34 +81,53 @@ export function Sidebar({
           </button>
         )}
       </div>
-      <nav aria-label="Main navigation" className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
-        {navItemsFor(role).map(({ key, label, to, icon: Icon }) => (
-          <Link
-            key={key}
-            to={to}
-            title={label}
-            onClick={onNavigate}
-            activeOptions={{ exact: to === "/" }}
-            className={cn(
-              "flex h-11 min-w-0 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors lg:h-10",
-              centre,
-            )}
-            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-            inactiveProps={{
-              className: "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
-            }}
-          >
-            <Icon className="size-5 shrink-0" aria-hidden />
-            <motion.span
-              initial={false}
-              animate={labelFade}
-              transition={{ duration: 0.16 }}
-              className={cn("truncate", hideLabel)}
+      <nav
+        aria-label="Main navigation"
+        aria-busy={role === undefined}
+        className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2"
+      >
+        {role === undefined &&
+          Array.from({ length: 7 }, (_, i) => (
+            <div
+              key={i}
+              data-testid="nav-skeleton"
+              className={cn("flex h-11 items-center gap-3 px-3 opacity-20 lg:h-10", centre)}
             >
-              {label}
-            </motion.span>
-          </Link>
-        ))}
+              <Skeleton className="size-5 shrink-0" />
+              <Skeleton
+                className={cn("h-4 flex-1", desktop && cn("md:max-lg:hidden", rail && "lg:hidden"))}
+              />
+            </div>
+          ))}
+        {role !== undefined &&
+          navItemsFor(role).map(({ key, label, to, icon: Icon }) => (
+            <Link
+              key={key}
+              to={to}
+              title={label}
+              onClick={onNavigate}
+              activeOptions={{ exact: to === "/" }}
+              className={cn(
+                "flex h-11 min-w-0 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors lg:h-10",
+                centre,
+              )}
+              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+              inactiveProps={{
+                className:
+                  "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
+              }}
+            >
+              <Icon className="size-5 shrink-0" aria-hidden />
+              <motion.span
+                initial={false}
+                animate={labelFade}
+                transition={{ duration: 0.16 }}
+                className={cn("truncate", hideLabel)}
+              >
+                {label}
+              </motion.span>
+            </Link>
+          ))}
       </nav>
     </div>
   );
