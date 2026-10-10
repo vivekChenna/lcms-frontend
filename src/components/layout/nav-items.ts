@@ -17,7 +17,7 @@ export type NavItem = {
   key: NavKey;
   label: string;
   to:
-    | "/"
+    | "/dashboard"
     | "/cases"
     | "/new-request"
     | "/reports"
@@ -30,7 +30,7 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { key: "dashboard", label: "Dashboard", to: "/", icon: LayoutDashboard },
+  { key: "dashboard", label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { key: "cases", label: "Cases", to: "/cases", icon: FolderOpen },
   { key: "new-request", label: "New Request", to: "/new-request", icon: FilePlus2 },
   { key: "reports", label: "Reports", to: "/reports", icon: BarChart3 },
@@ -47,8 +47,6 @@ export const navItemsFor = (role: UserRole) => NAV_ITEMS.filter((i) => canSee(ro
 /** Topbar title: the nav item owning the path ("/cases/abc" -> "Cases"). */
 export function titleFor(pathname: string): string {
   if (pathname === "/profile") return "Profile";
-  const item = NAV_ITEMS.find((i) =>
-    i.to === "/" ? pathname === "/" : pathname === i.to || pathname.startsWith(`${i.to}/`),
-  );
+  const item = NAV_ITEMS.find((i) => pathname === i.to || pathname.startsWith(`${i.to}/`));
   return item?.label ?? "Legal Case Management";
 }

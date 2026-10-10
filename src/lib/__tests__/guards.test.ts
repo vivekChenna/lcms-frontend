@@ -29,7 +29,7 @@ describe("guardDecision", () => {
     expect(guardDecision(null)).toEqual({ redirectTo: "/login" });
   });
   it("a role without access goes home", () => {
-    expect(guardDecision(profile("viewer"), "audit")).toEqual({ redirectTo: "/" });
+    expect(guardDecision(profile("viewer"), "audit")).toEqual({ redirectTo: "/dashboard" });
   });
   it("an allowed role passes", () => {
     expect(guardDecision(profile("admin"), "master-data")).toBeNull();
@@ -78,7 +78,7 @@ describe("safeRedirect", () => {
     "/cases\u0000",
     "/\u007f/evil.com",
   ])("rejects %j", (value) => {
-    expect(safeRedirect(value)).toBe("/");
+    expect(safeRedirect(value)).toBe("/dashboard");
   });
 });
 
@@ -104,10 +104,10 @@ describe("requireNav", () => {
     });
   });
 
-  it("redirects home when the role may not see the route", async () => {
+  it("redirects to the dashboard when the role may not see the route", async () => {
     const err = await thrown(requireNav(withMe(profile("viewer")), { href: "/audit" }, "audit"));
     expect(isRedirect(err)).toBe(true);
-    expect((err as Response & { options: object }).options).toMatchObject({ to: "/" });
+    expect((err as Response & { options: object }).options).toMatchObject({ to: "/dashboard" });
   });
 
   it("returns the profile for an allowed role", async () => {

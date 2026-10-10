@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
-export const Route = createFileRoute("/_authed/")({
+// The dashboard is the landing page after sign-in, at /dashboard. There is no separate home page:
+// the bare address "/" just forwards here (see routes/index.tsx).
+export const Route = createFileRoute("/_authed/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard | Algihaz LCMS" },

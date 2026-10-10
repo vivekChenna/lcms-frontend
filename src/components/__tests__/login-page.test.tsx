@@ -162,10 +162,10 @@ describe("LoginPage", () => {
     expect(JSON.parse(init.body)).toEqual({ email: "v@x.com", password: "Password123!" });
   });
 
-  it("ignores an off-site redirect and goes home", async () => {
+  it("ignores an off-site redirect and goes to the dashboard", async () => {
     fetchMock.mockResolvedValue(json(200, { user }));
     const { ue } = setup("//evil.com");
     await signIn(ue);
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/" }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/dashboard" }));
   });
 });

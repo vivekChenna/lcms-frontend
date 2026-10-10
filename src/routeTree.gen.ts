@@ -9,12 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
-import { Route as AuthedIndexRouteImport } from './routes/_authed.index'
 import { Route as AuthedAuditRouteImport } from './routes/_authed.audit'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed.dashboard'
 import { Route as AuthedMasterDataRouteImport } from './routes/_authed.master-data'
 import { Route as AuthedNewRequestRouteImport } from './routes/_authed.new-request'
 import { Route as AuthedNotificationsRouteImport } from './routes/_authed.notifications'
@@ -25,6 +26,11 @@ import { Route as AuthedUsersRouteImport } from './routes/_authed.users'
 import { Route as AuthedCasesIndexRouteImport } from './routes/_authed.cases.index'
 import { Route as AuthedCasesCaseIdRouteImport } from './routes/_authed.cases.$caseId'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -44,14 +50,14 @@ const SetPasswordRoute = SetPasswordRouteImport.update({
   path: '/set-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedIndexRoute = AuthedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthedRoute,
-} as any)
 const AuthedAuditRoute = AuthedAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedMasterDataRoute = AuthedMasterDataRouteImport.update({
@@ -101,11 +107,12 @@ const AuthedCasesCaseIdRoute = AuthedCasesCaseIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthedIndexRoute
+  '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/set-password': typeof SetPasswordRoute
   '/audit': typeof AuthedAuditRoute
+  '/dashboard': typeof AuthedDashboardRoute
   '/master-data': typeof AuthedMasterDataRoute
   '/new-request': typeof AuthedNewRequestRoute
   '/notifications': typeof AuthedNotificationsRoute
@@ -117,10 +124,12 @@ export interface FileRoutesByFullPath {
   '/cases/': typeof AuthedCasesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/set-password': typeof SetPasswordRoute
   '/audit': typeof AuthedAuditRoute
+  '/dashboard': typeof AuthedDashboardRoute
   '/master-data': typeof AuthedMasterDataRoute
   '/new-request': typeof AuthedNewRequestRoute
   '/notifications': typeof AuthedNotificationsRoute
@@ -128,17 +137,18 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthedReportsRoute
   '/rules': typeof AuthedRulesRoute
   '/users': typeof AuthedUsersRoute
-  '/': typeof AuthedIndexRoute
   '/cases/$caseId': typeof AuthedCasesCaseIdRoute
   '/cases': typeof AuthedCasesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/set-password': typeof SetPasswordRoute
   '/_authed/audit': typeof AuthedAuditRoute
+  '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/master-data': typeof AuthedMasterDataRoute
   '/_authed/new-request': typeof AuthedNewRequestRoute
   '/_authed/notifications': typeof AuthedNotificationsRoute
@@ -146,7 +156,6 @@ export interface FileRoutesById {
   '/_authed/reports': typeof AuthedReportsRoute
   '/_authed/rules': typeof AuthedRulesRoute
   '/_authed/users': typeof AuthedUsersRoute
-  '/_authed/': typeof AuthedIndexRoute
   '/_authed/cases/$caseId': typeof AuthedCasesCaseIdRoute
   '/_authed/cases/': typeof AuthedCasesIndexRoute
 }
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/set-password'
     | '/audit'
+    | '/dashboard'
     | '/master-data'
     | '/new-request'
     | '/notifications'
@@ -169,10 +179,12 @@ export interface FileRouteTypes {
     | '/cases/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/forgot-password'
     | '/login'
     | '/set-password'
     | '/audit'
+    | '/dashboard'
     | '/master-data'
     | '/new-request'
     | '/notifications'
@@ -180,16 +192,17 @@ export interface FileRouteTypes {
     | '/reports'
     | '/rules'
     | '/users'
-    | '/'
     | '/cases/$caseId'
     | '/cases'
   id:
     | '__root__'
+    | '/'
     | '/_authed'
     | '/forgot-password'
     | '/login'
     | '/set-password'
     | '/_authed/audit'
+    | '/_authed/dashboard'
     | '/_authed/master-data'
     | '/_authed/new-request'
     | '/_authed/notifications'
@@ -197,12 +210,12 @@ export interface FileRouteTypes {
     | '/_authed/reports'
     | '/_authed/rules'
     | '/_authed/users'
-    | '/_authed/'
     | '/_authed/cases/$caseId'
     | '/_authed/cases/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -211,6 +224,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -239,18 +259,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/': {
-      id: '/_authed/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthedIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
     '/_authed/audit': {
       id: '/_authed/audit'
       path: '/audit'
       fullPath: '/audit'
       preLoaderRoute: typeof AuthedAuditRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/master-data': {
@@ -321,6 +341,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthedRouteChildren {
   AuthedAuditRoute: typeof AuthedAuditRoute
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedMasterDataRoute: typeof AuthedMasterDataRoute
   AuthedNewRequestRoute: typeof AuthedNewRequestRoute
   AuthedNotificationsRoute: typeof AuthedNotificationsRoute
@@ -328,13 +349,13 @@ interface AuthedRouteChildren {
   AuthedReportsRoute: typeof AuthedReportsRoute
   AuthedRulesRoute: typeof AuthedRulesRoute
   AuthedUsersRoute: typeof AuthedUsersRoute
-  AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedCasesCaseIdRoute: typeof AuthedCasesCaseIdRoute
   AuthedCasesIndexRoute: typeof AuthedCasesIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAuditRoute: AuthedAuditRoute,
+  AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedMasterDataRoute: AuthedMasterDataRoute,
   AuthedNewRequestRoute: AuthedNewRequestRoute,
   AuthedNotificationsRoute: AuthedNotificationsRoute,
@@ -342,7 +363,6 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedReportsRoute: AuthedReportsRoute,
   AuthedRulesRoute: AuthedRulesRoute,
   AuthedUsersRoute: AuthedUsersRoute,
-  AuthedIndexRoute: AuthedIndexRoute,
   AuthedCasesCaseIdRoute: AuthedCasesCaseIdRoute,
   AuthedCasesIndexRoute: AuthedCasesIndexRoute,
 }
@@ -351,6 +371,7 @@ const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,

@@ -5,7 +5,7 @@ import type { Profile, UserRole } from "@/lib/api/types";
 import type { NavKey } from "@/lib/permissions";
 import * as guards from "@/lib/guards";
 import { Route as authed } from "@/routes/_authed";
-import { Route as home } from "@/routes/_authed.index";
+import { Route as home } from "@/routes/_authed.dashboard";
 import { Route as cases } from "@/routes/_authed.cases.index";
 import { Route as caseDetail } from "@/routes/_authed.cases.$caseId";
 import { Route as notifications } from "@/routes/_authed.notifications";
@@ -25,7 +25,7 @@ const profile = (role: UserRole) => ({ id: "u1", fullName: "Test User", role }) 
 
 // The plan table: route -> nav key passed to requireNav (undefined = session only).
 const table: [string, { options: { beforeLoad?: unknown } }, NavKey | undefined][] = [
-  ["/", home, undefined],
+  ["/dashboard", home, undefined],
   ["/cases/", cases, undefined],
   ["/cases/$caseId", caseDetail, undefined],
   ["/notifications", notifications, undefined],
@@ -86,7 +86,7 @@ describe("route guards", () => {
         expect(outcome.ok).toBe(false);
         const e = (outcome as { e: unknown }).e;
         expect(isRedirect(e)).toBe(true);
-        expect((e as Response & { options: object }).options).toMatchObject({ to: "/" });
+        expect((e as Response & { options: object }).options).toMatchObject({ to: "/dashboard" });
       } else {
         expect(outcome).toEqual({ ok: true, v: undefined });
       }

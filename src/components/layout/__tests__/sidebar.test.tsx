@@ -65,7 +65,7 @@ describe("Sidebar", () => {
       .getAllByRole("link")
       .map((a) => a.getAttribute("href"));
     expect(hrefs).toEqual([
-      "/",
+      "/dashboard",
       "/cases",
       "/new-request",
       "/reports",

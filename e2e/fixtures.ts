@@ -47,7 +47,7 @@ export async function loginAs(page: Page, who: Who): Promise<void> {
     await page.getByRole("button", { name: /sign in/i }).click();
     const throttled = page.getByText(/too many attempts/i);
     const arrived = await Promise.race([
-      page.waitForURL(/\/$/, { timeout: 15_000 }).then(() => true),
+      page.waitForURL(/\/dashboard$/, { timeout: 15_000 }).then(() => true),
       throttled.waitFor({ timeout: 15_000 }).then(() => false),
     ]).catch(() => false);
     if (arrived) return;

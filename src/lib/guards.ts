@@ -19,9 +19,9 @@ export async function loadSession(queryClient: QueryClient): Promise<Profile | n
 export function guardDecision(
   me: Profile | null,
   key?: NavKey,
-): { redirectTo: "/login" | "/" } | null {
+): { redirectTo: "/login" | "/dashboard" } | null {
   if (!me) return { redirectTo: "/login" };
-  if (key && !canSee(me.role, key)) return { redirectTo: "/" };
+  if (key && !canSee(me.role, key)) return { redirectTo: "/dashboard" };
   return null;
 }
 
@@ -40,7 +40,7 @@ export async function requireNav(
 
 /**
  * Only same-origin relative paths ("/x", not "//x", "/\x", absolute URLs or anything with a
- * control character, which URL parsing strips so "/\t/x" would become "//x"); anything else is "/".
+ * control character, which URL parsing strips so "/\t/x" would become "//x"); anything else is "/dashboard", where people land after signing in.
  */
 export function safeRedirect(target: string | undefined): string {
   if (
@@ -51,7 +51,7 @@ export function safeRedirect(target: string | undefined): string {
     // eslint-disable-next-line no-control-regex
     /[\x00-\x1f\x7f]/.test(target)
   ) {
-    return "/";
+    return "/dashboard";
   }
   return target;
 }

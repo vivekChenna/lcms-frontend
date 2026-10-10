@@ -106,7 +106,7 @@ export function Sidebar({
               to={to}
               title={label}
               onClick={onNavigate}
-              activeOptions={{ exact: to === "/" }}
+              activeOptions={{ exact: to === "/dashboard" }}
               className={cn(
                 "flex h-11 min-w-0 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors lg:h-10",
                 centre,
