@@ -48,7 +48,7 @@ function docRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderTab(docs: unknown[] = [docRow()]) {
+function renderTab(docs: unknown[] = [docRow()], canWrite = true) {
   fetchMock.mockImplementation(async (url: string) => {
     if (url.endsWith("/cases/c1/documents")) return json(docs);
     return json({});
@@ -56,7 +56,7 @@ function renderTab(docs: unknown[] = [docRow()]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={qc}>
-      <DocumentsTab caseId="c1" me={makeProfile({ id: "me-1" })} />
+      <DocumentsTab caseId="c1" me={makeProfile({ id: "me-1" })} canWrite={canWrite} />
     </QueryClientProvider>,
   );
 }
@@ -176,5 +176,21 @@ describe("DocumentsTab", () => {
     await userEvent.click(await screen.findByRole("button", { name: /more actions/i }));
     await screen.findByRole("menuitem", { name: /versions/i });
     expect(screen.queryByRole("menuitem", { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it("without write access: no Upload, no New version or Delete, and a plain permission message", async () => {
+    renderTab([docRow({ uploaderId: "me-1" })], false);
+    expect(await screen.findByText("contract.pdf")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^upload$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent(/don't have permission to add/i);
+    await userEvent.click(screen.getByRole("button", { name: /more actions/i }));
+    await screen.findByRole("menuitem", { name: /versions/i });
+    expect(screen.queryByRole("menuitem", { name: /new version/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it("without write access and no files, says the person has no permission to upload", async () => {
+    renderTab([], false);
+    expect(await screen.findByText(/don't have permission to upload files/i)).toBeInTheDocument();
   });
 });

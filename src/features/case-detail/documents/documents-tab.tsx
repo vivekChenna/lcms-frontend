@@ -172,6 +172,11 @@ export function DocumentsTab({
 
   return (
     <div>
+      {!canWrite && data && data.length > 0 && (
+        <p role="note" className="mb-3 text-sm text-muted-foreground">
+          You can view and download these files, but you don't have permission to add to them.
+        </p>
+      )}
       {canWrite && (
         <div className="mb-3 flex justify-end">
           <Button type="button" size="sm" onClick={() => setUploadOpen(true)}>
@@ -188,7 +193,7 @@ export function DocumentsTab({
           description={
             canWrite
               ? "Upload evidence, correspondence or other case files."
-              : "No files have been added to this case."
+              : "You don't have permission to upload files to this case."
           }
         />
       ) : (
