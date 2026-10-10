@@ -36,9 +36,11 @@ type RowActionsProps = {
   caseId: string;
   onVersions: (doc: DocumentDto) => void;
   onDelete: (doc: DocumentDto) => void;
+  /** False when the case is closed, or is another representative's: the server would refuse. */
+  canWrite: boolean;
 };
 
-function RowActions({ doc, me, caseId, onVersions, onDelete }: RowActionsProps) {
+function RowActions({ doc, me, caseId, onVersions, onDelete, canWrite }: RowActionsProps) {
   const uploadVersion = useUploadNewVersion(caseId);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -81,13 +83,15 @@ function RowActions({ doc, me, caseId, onVersions, onDelete }: RowActionsProps) 
           <DropdownMenuItem onSelect={() => onVersions(doc)}>
             <History aria-hidden /> Versions
           </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={uploadVersion.isPending}
-            onSelect={() => inputRef.current?.click()}
-          >
-            <UploadIcon aria-hidden /> New version
-          </DropdownMenuItem>
-          {doc.uploaderId === me.id && (
+          {canWrite && (
+            <DropdownMenuItem
+              disabled={uploadVersion.isPending}
+              onSelect={() => inputRef.current?.click()}
+            >
+              <UploadIcon aria-hidden /> New version
+            </DropdownMenuItem>
+          )}
+          {canWrite && doc.uploaderId === me.id && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -104,7 +108,16 @@ function RowActions({ doc, me, caseId, onVersions, onDelete }: RowActionsProps) 
   );
 }
 
-export function DocumentsTab({ caseId, me }: { caseId: string; me: Profile }) {
+export function DocumentsTab({
+  caseId,
+  me,
+  canWrite = true,
+}: {
+  caseId: string;
+  me: Profile;
+  /** Whether this person may add to the case (see canWriteToCase); hides Upload, New version, Delete. */
+  canWrite?: boolean;
+}) {
   const { data, isPending, isError, error, refetch } = useDocuments(caseId);
   const deleteDoc = useDeleteDocument(caseId);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -151,6 +164,7 @@ export function DocumentsTab({ caseId, me }: { caseId: string; me: Profile }) {
           caseId={caseId}
           onVersions={setVersionsFor}
           onDelete={setDeleteTarget}
+          canWrite={canWrite}
         />
       ),
     },
@@ -158,18 +172,24 @@ export function DocumentsTab({ caseId, me }: { caseId: string; me: Profile }) {
 
   return (
     <div>
-      <div className="mb-3 flex justify-end">
-        <Button type="button" size="sm" onClick={() => setUploadOpen(true)}>
-          <UploadIcon />
-          Upload
-        </Button>
-      </div>
+      {canWrite && (
+        <div className="mb-3 flex justify-end">
+          <Button type="button" size="sm" onClick={() => setUploadOpen(true)}>
+            <UploadIcon />
+            Upload
+          </Button>
+        </div>
+      )}
 
       {data && data.length === 0 ? (
         <EmptyState
           icon={FileText}
           title="No documents yet"
-          description="Upload evidence, correspondence or other case files."
+          description={
+            canWrite
+              ? "Upload evidence, correspondence or other case files."
+              : "No files have been added to this case."
+          }
         />
       ) : (
         <ResponsiveTable
@@ -191,6 +211,7 @@ export function DocumentsTab({ caseId, me }: { caseId: string; me: Profile }) {
                 caseId={caseId}
                 onVersions={setVersionsFor}
                 onDelete={setDeleteTarget}
+                canWrite={canWrite}
               />
             </div>
           )}

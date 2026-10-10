@@ -120,28 +120,32 @@ export type CaseAction =
   "accept" | "reject" | "assign" | "escalate" | "close" | "priority" | "edit";
 
 /**
- * Which workflow actions `me` may take on `caseItem` right now, in a fixed display order.
- * Mirrors the backend's requireRole gates (see `can` in lib/permissions) plus the
- * case-specific rules the backend also enforces: accept/reject only the assigned representative
- * (a manager reassigns instead); edit, for a requester, only their own case.
+ * Which workflow actions `me` may take on `caseItem` right now, in a fixed display order. Each rule
+ * is one the server enforces, so no button is offered that would only be refused:
+ * - accept/reject: the assigned representative, while the case is Assigned
+ * - escalate: the assigned representative, a manager or an admin
+ * - close: the same people, and only from In Progress (not while Waiting on Input)
+ * - edit: the submitter or an admin, and only while Submitted
  */
 export function actionsFor(me: Profile, caseItem: CaseDto): CaseAction[] {
   const notClosed = caseItem.status !== "Closed";
-  const canAcceptOrReject =
-    can.acceptOrReject(me.role) &&
-    caseItem.status === "Assigned" &&
-    me.role === "legal_rep" &&
-    caseItem.assignedLegalRepId === me.id;
+  const owningRep = me.role === "legal_rep" && caseItem.assignedLegalRepId === me.id;
+  // a representative acts only on their own case; managers and admins on any
+  const mayActAsLegal = me.role === "legal_rep" ? owningRep : true;
+
+  const canAcceptOrReject = owningRep && caseItem.status === "Assigned";
+  const canEscalate = can.escalate(me.role) && notClosed && mayActAsLegal;
+  const canClose = can.close(me.role) && caseItem.status === "In Progress" && mayActAsLegal;
   const canEdit =
     can.editCase(me.role) &&
-    notClosed &&
-    (me.role !== "requester" || caseItem.requesterId === me.id);
+    caseItem.status === "Submitted" &&
+    (caseItem.requesterId === me.id || me.role === "admin");
 
   const actions: CaseAction[] = [];
   if (canAcceptOrReject) actions.push("accept", "reject");
   if (can.assign(me.role) && notClosed) actions.push("assign");
-  if (can.escalate(me.role) && notClosed) actions.push("escalate");
-  if (can.close(me.role) && notClosed) actions.push("close");
+  if (canEscalate) actions.push("escalate");
+  if (canClose) actions.push("close");
   if (can.changePriority(me.role) && notClosed) actions.push("priority");
   if (canEdit) actions.push("edit");
   return actions;

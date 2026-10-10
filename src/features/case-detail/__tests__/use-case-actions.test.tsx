@@ -288,73 +288,66 @@ function makeCase(overrides: Partial<CaseDto> = {}): CaseDto {
 const STATUSES = ["Submitted", "Assigned", "In Progress", "Waiting on Input", "Closed"] as const;
 const ROLES: UserRole[] = ["admin", "legal_manager", "legal_rep", "requester", "viewer"];
 
-// Hand-derived from the spec (plan Task B10), independent of the implementation: for each
-// (role, status), the actions allowed when `related` is true (legal_rep assigned to this case /
-// requester owns this case) and when false. related is ignored for admin/legal_manager/viewer.
+// Derived from what the server enforces, independent of the implementation. For each (role,
+// status): the actions allowed when `related` is true (legal_rep assigned to this case / requester
+// owns this case) and when false. related is ignored for admin/legal_manager/viewer.
+// Server rules behind it: accept/reject only the assigned rep while Assigned; escalate and close
+// only the assigned rep, a manager or an admin; close only from In Progress; edit only the
+// submitter or an admin, and only while Submitted.
 const EXPECTED: Record<
   UserRole,
   Record<(typeof STATUSES)[number], { related: CaseAction[]; unrelated: CaseAction[] }>
 > = {
   admin: {
     Submitted: {
-      related: ["assign", "escalate", "close", "priority", "edit"],
-      unrelated: ["assign", "escalate", "close", "priority", "edit"],
+      related: ["assign", "escalate", "priority", "edit"],
+      unrelated: ["assign", "escalate", "priority", "edit"],
     },
     Assigned: {
-      related: ["assign", "escalate", "close", "priority", "edit"],
-      unrelated: ["assign", "escalate", "close", "priority", "edit"],
+      related: ["assign", "escalate", "priority"],
+      unrelated: ["assign", "escalate", "priority"],
     },
     "In Progress": {
-      related: ["assign", "escalate", "close", "priority", "edit"],
-      unrelated: ["assign", "escalate", "close", "priority", "edit"],
+      related: ["assign", "escalate", "close", "priority"],
+      unrelated: ["assign", "escalate", "close", "priority"],
     },
     "Waiting on Input": {
-      related: ["assign", "escalate", "close", "priority", "edit"],
-      unrelated: ["assign", "escalate", "close", "priority", "edit"],
+      related: ["assign", "escalate", "priority"],
+      unrelated: ["assign", "escalate", "priority"],
     },
     Closed: { related: [], unrelated: [] },
   },
   legal_manager: {
     Submitted: {
-      related: ["assign", "escalate", "close", "priority"],
-      unrelated: ["assign", "escalate", "close", "priority"],
+      related: ["assign", "escalate", "priority"],
+      unrelated: ["assign", "escalate", "priority"],
     },
     Assigned: {
-      // only the assigned representative accepts or rejects; a manager reassigns instead
-      related: ["assign", "escalate", "close", "priority"],
-      unrelated: ["assign", "escalate", "close", "priority"],
+      related: ["assign", "escalate", "priority"],
+      unrelated: ["assign", "escalate", "priority"],
     },
     "In Progress": {
       related: ["assign", "escalate", "close", "priority"],
       unrelated: ["assign", "escalate", "close", "priority"],
     },
     "Waiting on Input": {
-      related: ["assign", "escalate", "close", "priority"],
-      unrelated: ["assign", "escalate", "close", "priority"],
+      related: ["assign", "escalate", "priority"],
+      unrelated: ["assign", "escalate", "priority"],
     },
     Closed: { related: [], unrelated: [] },
   },
   legal_rep: {
-    Submitted: { related: ["escalate", "close", "edit"], unrelated: ["escalate", "close", "edit"] },
-    Assigned: {
-      related: ["accept", "reject", "escalate", "close", "edit"],
-      unrelated: ["escalate", "close", "edit"],
-    },
-    "In Progress": {
-      related: ["escalate", "close", "edit"],
-      unrelated: ["escalate", "close", "edit"],
-    },
-    "Waiting on Input": {
-      related: ["escalate", "close", "edit"],
-      unrelated: ["escalate", "close", "edit"],
-    },
+    Submitted: { related: ["escalate"], unrelated: [] },
+    Assigned: { related: ["accept", "reject", "escalate"], unrelated: [] },
+    "In Progress": { related: ["escalate", "close"], unrelated: [] },
+    "Waiting on Input": { related: ["escalate"], unrelated: [] },
     Closed: { related: [], unrelated: [] },
   },
   requester: {
     Submitted: { related: ["edit"], unrelated: [] },
-    Assigned: { related: ["edit"], unrelated: [] },
-    "In Progress": { related: ["edit"], unrelated: [] },
-    "Waiting on Input": { related: ["edit"], unrelated: [] },
+    Assigned: { related: [], unrelated: [] },
+    "In Progress": { related: [], unrelated: [] },
+    "Waiting on Input": { related: [], unrelated: [] },
     Closed: { related: [], unrelated: [] },
   },
   viewer: {

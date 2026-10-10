@@ -219,6 +219,16 @@ describe("CaseDetailPage", () => {
     expect(screen.getByRole("button", { name: /^escalate$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^change priority$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^edit$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^close case$/i })).toBeInTheDocument();
+    // a case that has not been worked yet cannot be closed
+    expect(screen.queryByRole("button", { name: /^close case$/i })).not.toBeInTheDocument();
+  });
+
+  it("offers Close case only once the case is In Progress", async () => {
+    renderAt("admin", (url) =>
+      url.endsWith("/cases/c1") ? json(makeCase({ status: "In Progress" })) : undefined,
+    );
+    expect(await screen.findByRole("button", { name: /^close case$/i })).toBeInTheDocument();
+    // editing is only for a case still Submitted
+    expect(screen.queryByRole("button", { name: /^edit$/i })).not.toBeInTheDocument();
   });
 });

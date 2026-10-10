@@ -9,6 +9,7 @@ import { MessageSquare } from "lucide-react";
 import type { CaseDto, Profile } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import { roleLabel } from "@/lib/labels";
+import { canWriteToCase } from "../can-write";
 import { COMMENT_MAX, CommentForm } from "./comment-form";
 import { type CommentDto, useComments, useDeleteComment, useEditComment } from "./use-comments";
 
@@ -100,7 +101,7 @@ export function CommentsTab({ caseItem, me }: { caseItem: CaseDto; me: Profile }
   if (isPending) return null;
   if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
 
-  const canWrite = me.role !== "viewer" && caseItem.status !== "Closed";
+  const canWrite = canWriteToCase(me, caseItem);
 
   return (
     <div className="space-y-4">

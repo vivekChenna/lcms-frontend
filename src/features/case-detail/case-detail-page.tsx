@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api/errors";
 import { useMe } from "@/lib/auth";
 import { AuditTab } from "./audit/audit-tab";
 import { CaseHeader } from "./case-header";
+import { canWriteToCase } from "./can-write";
 import { CommentsTab } from "./comments/comments-tab";
 import { DocumentsTab } from "./documents/documents-tab";
 import { OverviewTab } from "./overview-tab";
@@ -79,7 +80,7 @@ export function CaseDetailPage() {
           <OverviewTab caseItem={caseItem} />
         </TabsContent>
         <TabsContent value="documents">
-          <DocumentsTab caseId={caseId} me={me} />
+          <DocumentsTab caseId={caseId} me={me} canWrite={canWriteToCase(me, caseItem)} />
         </TabsContent>
         <TabsContent value="requests">
           <RequestsTab caseItem={caseItem} me={me} />
