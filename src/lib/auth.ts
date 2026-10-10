@@ -1,5 +1,4 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { showSplash } from "./splash";
 import { useNavigate } from "@tanstack/react-router";
 import { apiJson } from "@/lib/api/client";
 import type { ApiBody, LoginResponse, Profile } from "@/lib/api/types";
@@ -26,8 +25,6 @@ export function useLogin() {
       // never show another user's cached data; the login `user` is a full Profile
       queryClient.clear();
       queryClient.setQueryData(meQueryOptions().queryKey, data.user);
-      // cover the screen with the splash while the first page loads, instead of the page assembling itself in view
-      showSplash();
     },
   });
 }
