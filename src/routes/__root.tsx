@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { NetworkBanner } from "../components/common/network-banner";
+import { SplashGate } from "../components/layout/splash-gate";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -111,6 +112,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {createPortal(<HeadContent />, document.head)}
       <NetworkBanner />
+      <SplashGate />
       <Outlet />
     </QueryClientProvider>
   );
