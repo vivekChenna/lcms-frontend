@@ -2,6 +2,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { EmptyState } from "@/components/common/empty-state";
 import { Clock } from "lucide-react";
 import type { AgeingReportDto } from "@/lib/api/types";
+import { GRID, axisProps, TOOLTIP } from "./chart-theme";
 
 export function AgeingChart({ data }: { data: AgeingReportDto }) {
   if (data.every((d) => d.count === 0)) {
@@ -19,10 +20,10 @@ export function AgeingChart({ data }: { data: AgeingReportDto }) {
       <div className="h-[260px] min-w-0 overflow-hidden">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="bucket" tick={{ fontSize: 11 }} />
-            <YAxis allowDecimals={false} width={28} tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <CartesianGrid {...GRID} />
+            <XAxis dataKey="bucket" {...axisProps(11)} />
+            <YAxis allowDecimals={false} width={28} {...axisProps(11)} />
+            <Tooltip {...TOOLTIP} />
             <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

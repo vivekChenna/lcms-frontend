@@ -107,37 +107,57 @@ describe("CasesPage summary (BRD UI-08)", () => {
       ? json(managerDashboard())
       : json({ items: [caseRow()], total: 1, page: 1, pageSize: 20 });
 
-  it("shows the same tiles and status chart as the dashboard above the list", async () => {
+  it("shows the overdue alert and the workflow above the list, not below it", async () => {
     fetchMock.mockImplementation(withLookupDefaults(handler));
     renderAt("legal_manager");
-    const tiles = await screen.findByTestId("dashboard-tiles");
-    expect(within(tiles).getByText("Overdue")).toBeInTheDocument();
-    const chart = screen.getByRole("region", { name: /cases by status/i });
+    const flow = await screen.findByRole("navigation", { name: /case workflow/i });
+    const alert = screen.getByRole("link", { name: /review overdue/i });
     const list = await screen.findByText("AGC-INT-000001");
-    // above the repository: the summary comes first in the page
-    expect(tiles.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(chart.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(alert.compareDocumentPosition(flow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(flow.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("the tiles and chart act as filters on this very list", async () => {
+  it("draws every status as a stage with its count, in workflow order", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    renderAt("legal_manager");
+    const flow = await screen.findByRole("navigation", { name: /case workflow/i });
+    const stages = within(flow).getAllByRole("link");
+    expect(stages.map((a) => a.getAttribute("data-stage"))).toEqual([
+      "Submitted",
+      "Assigned",
+      "In Progress",
+      "Waiting on Input",
+      "Closed",
+    ]);
+  });
+
+  it("a stage filters this very list to its status", async () => {
     fetchMock.mockImplementation(withLookupDefaults(handler));
     const { router } = renderAt("legal_manager");
-    const chart = await screen.findByRole("region", { name: /cases by status/i });
-    // the legend entry (the bar segment carries the same link)
-    const legend = within(within(chart).getByRole("list", { name: /cases by status/i }));
-    await userEvent.click(legend.getByRole("link", { name: /^submitted/i }));
+    const flow = await screen.findByRole("navigation", { name: /case workflow/i });
+    await userEvent.click(within(flow).getByRole("link", { name: /^submitted/i }));
     await waitFor(() =>
       expect(router.state.location.search).toMatchObject({ status: "Submitted" }),
     );
     await waitFor(() => expect(lastListUrl()).toContain("status=Submitted"));
   });
 
-  it("uses the slim summary strip, not the dashboard's large tiles", async () => {
+  it("marks the stage the list is filtered to", async () => {
     fetchMock.mockImplementation(withLookupDefaults(handler));
-    renderAt("legal_manager");
-    const tiles = await screen.findByTestId("dashboard-tiles");
-    expect(within(tiles).getByText("Overdue")).toBeInTheDocument();
-    expect(within(tiles).queryByText("Past the resolution deadline")).not.toBeInTheDocument();
+    renderAt("legal_manager", "?status=Submitted");
+    const flow = await screen.findByRole("navigation", { name: /case workflow/i });
+    expect(within(flow).getByRole("link", { name: /^submitted/i })).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+    expect(within(flow).getByRole("link", { name: /^closed/i })).not.toHaveAttribute("data-active");
+  });
+
+  it("the overdue alert filters the list to overdue cases", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    const { router } = renderAt("legal_manager");
+    await userEvent.click(await screen.findByRole("link", { name: /review overdue/i }));
+    await waitFor(() => expect(router.state.location.search).toHaveProperty("slaState"));
   });
 
   it("shows the hidden filters as chips that each remove just that filter", async () => {

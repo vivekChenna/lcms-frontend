@@ -5,8 +5,6 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
-import { StatusChart } from "@/features/dashboard/status-chart";
-import { Tiles } from "@/features/dashboard/tiles";
 import { useDashboard } from "@/features/dashboard/use-dashboard";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { useMe } from "@/lib/auth";
@@ -15,6 +13,7 @@ import { ListSkeleton } from "@/components/common/skeletons";
 import { ActiveFilters } from "./active-filters";
 import { CaseFilters } from "./case-filters";
 import { CasesTable } from "./cases-table";
+import { WorkflowStrip } from "./workflow-strip";
 import { useCases, useExportCases } from "./use-cases";
 import type { CasesSearch } from "./search-params";
 
@@ -47,10 +46,10 @@ export function CasesPage() {
   return (
     <div>
       <PageHeader
-        title="Case repository"
+        title="Cases"
         description={
           data
-            ? `${data.total} ${data.total === 1 ? "case" : "cases"} — search, filter and export.`
+            ? `${data.total} ${data.total === 1 ? "case" : "cases"} in the repository`
             : "Search, filter and export."
         }
         actions={
@@ -65,15 +64,20 @@ export function CasesPage() {
         }
       />
 
-      {/* BRD UI-08: the dashboard's tiles and status chart, acting as filters for this list. If the
-          summary fails to load the list still works, so its error is not shown here. */}
+      {/* BRD UI-08: the overdue alert and the workflow strip stand in for the tiles and status chart,
+          and act as filters for this list. If the summary fails to load the list still works, so its
+          error is not shown here. */}
       {/* On a phone the search and filters come first (they are what you came to use); from lg up
           the summary leads, as on the dashboard. */}
       <div className="flex flex-col">
         {me && summary.data?.tiles && (
-          <div className="order-2 mb-4 space-y-4 lg:order-1">
-            <Tiles data={summary.data} role={me.role} compact />
-            <StatusChart byStatus={summary.data.byStatus ?? []} />
+          <div className="order-2 mb-4 lg:order-1">
+            <WorkflowStrip
+              byStatus={summary.data.byStatus ?? []}
+              activeStatus={search.status}
+              overdue={summary.data.tiles.overdue}
+              overdueSearch={summary.data.filters["overdue"]}
+            />
           </div>
         )}
 
