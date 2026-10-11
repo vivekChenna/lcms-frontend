@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import type { CaseStatus } from "@/lib/api/types";
 import { STATUS_ORDER, statusTone, type Tone } from "@/lib/labels";
 import { cn } from "@/lib/utils";
-import { scrollToResults } from "./use-dashboard";
 
 type Props = { byStatus: { status: CaseStatus; count: number }[] };
 
@@ -53,8 +52,6 @@ export function StatusChart({ byStatus }: Props) {
                 key={r.status}
                 to="/cases"
                 search={toStatus(r.status)}
-                hash="results"
-                onClick={scrollToResults}
                 data-segment={r.status}
                 aria-label={`${r.status}: ${r.count} ${r.count === 1 ? "case" : "cases"}`}
                 title={`${r.status}: ${r.count}`}
@@ -77,8 +74,6 @@ export function StatusChart({ byStatus }: Props) {
             <Link
               to="/cases"
               search={toStatus(r.status)}
-              hash="results"
-              onClick={scrollToResults}
               className="flex min-h-11 min-w-0 items-center gap-2 rounded-md px-1 text-sm transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring"
             >
               <span

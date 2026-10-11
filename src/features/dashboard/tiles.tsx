@@ -6,7 +6,7 @@ import type { DashboardDto } from "@/lib/api/types";
 import { isLegal } from "@/lib/permissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { casesSearch, scrollToResults } from "./use-dashboard";
+import { casesSearch } from "./use-dashboard";
 
 type Role = Parameters<typeof isLegal>[0];
 type TileKey = keyof DashboardDto["tiles"];
@@ -125,8 +125,6 @@ export function Tiles({ data, role }: { data: DashboardDto; role: Role }) {
               <Link
                 to="/cases"
                 search={to(key)}
-                hash="results"
-                onClick={scrollToResults}
                 className={cn(
                   "group flex h-full min-h-11 min-w-0 items-start gap-4 rounded-xl border bg-card p-5 transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-ring",
                   alarm && "border-danger/30 bg-danger/5 hover:bg-danger/10",
@@ -170,8 +168,6 @@ export function Tiles({ data, role }: { data: DashboardDto; role: Role }) {
               key={key}
               to="/cases"
               search={to(key)}
-              hash="results"
-              onClick={scrollToResults}
               className="min-h-11 min-w-0 border-l border-t px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
             >
               <p className="truncate text-sm text-muted-foreground">{LABEL[key]}</p>

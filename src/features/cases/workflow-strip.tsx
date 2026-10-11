@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, TriangleAlert } from "lucide-react";
 import type { CSSProperties } from "react";
-import { scrollToResults } from "@/features/dashboard/use-dashboard";
 import type { CaseStatus, DashboardDto, UserRole } from "@/lib/api/types";
 import { isLegal } from "@/lib/permissions";
 import { STATUS_ORDER, statusTone, type Tone } from "@/lib/labels";
@@ -78,8 +77,6 @@ export function WorkflowStrip({ data, role, activeStatus }: Props) {
         <Link
           to="/cases"
           search={{ ...overdueSearch } as never}
-          hash="results"
-          onClick={scrollToResults}
           className="group flex min-h-12 items-center gap-3 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-danger transition-colors hover:bg-danger/10 focus-visible:outline-2 focus-visible:outline-ring"
         >
           <TriangleAlert className="size-5 shrink-0" aria-hidden />
@@ -110,8 +107,6 @@ export function WorkflowStrip({ data, role, activeStatus }: Props) {
               key={status}
               to="/cases"
               search={{ status } as never}
-              hash="results"
-              onClick={scrollToResults}
               data-stage={status}
               data-active={active ? "true" : undefined}
               style={{ "--tone": TONE_COLOUR[statusTone(status)] } as CSSProperties}
@@ -150,8 +145,6 @@ export function WorkflowStrip({ data, role, activeStatus }: Props) {
             <Link
               to="/cases"
               search={{ ...data.filters[key] } as never}
-              hash="results"
-              onClick={scrollToResults}
               className="inline-flex min-h-9 items-center gap-2 rounded-full border bg-card px-3.5 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
             >
               {COUNT_LABEL[key]}

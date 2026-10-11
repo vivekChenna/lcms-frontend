@@ -64,9 +64,7 @@ export function CasesPage() {
         }
       />
 
-      {/* BRD UI-08: the overdue alert and the workflow strip stand in for the tiles and status chart,
-          and act as filters for this list. If the summary fails to load the list still works, so its
-          error is not shown here. */}
+      {/* BRD UI-08: the overdue alert, the workflow and the counts act as filters for this list. If the summary fails to load the list still works, so its error is not shown here. */}
       {/* On a phone the search and filters come first (they are what you came to use); from lg up
           the summary leads, as on the dashboard. */}
       <div className="flex flex-col">
@@ -94,9 +92,7 @@ export function CasesPage() {
 
       {isError && <ErrorState error={error} onRetry={() => void refetch()} />}
 
-      {/* the tiles and chart link here (#results), so a click lands on the list, not the top */}
-      {/* min height: even a one-row list leaves enough page below to scroll the list to the top */}
-      <div id="results" className="min-h-[70vh] scroll-mt-4">
+      <div>
         <ResultsRegion
           label="cases"
           initialLoading={isPending}
