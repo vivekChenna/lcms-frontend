@@ -15,4 +15,4 @@ export const AUTH_FORM = "space-y-5";
 
 /** The quiet "Back to sign in" link under a form. */
 export const AUTH_BACK_LINK =
-  "block py-3 text-center text-sm text-muted-foreground underline-offset-2 hover:underline";
+  "block py-3 text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground";

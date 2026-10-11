@@ -1,5 +1,5 @@
-import { Gavel } from "lucide-react";
 import type { ReactNode } from "react";
+import { AlgihazLogo } from "@/components/brand/algihaz-logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { BrandPanel } from "./brand-panel";
 
@@ -25,12 +25,7 @@ export function AuthShell({
 
       <main className="relative flex min-h-0 flex-col px-5 py-6 sm:px-10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 lg:invisible">
-            <span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <Gavel className="size-5" aria-hidden />
-            </span>
-            <span className="font-semibold tracking-tight">Algihaz Legal</span>
-          </div>
+          <AlgihazLogo className="h-10 text-foreground lg:invisible" />
           <ThemeToggle />
         </div>
 

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Gavel } from "lucide-react";
+import { AlgihazLogo } from "@/components/brand/algihaz-logo";
 
 const RISE = {
   hidden: { opacity: 0, y: 10 },
@@ -32,11 +32,8 @@ export function BrandPanel() {
         animate="show"
         variants={{ show: { transition: { staggerChildren: 0.08 } } }}
       >
-        <motion.div variants={RISE} className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-sky-400/20 text-sky-200 ring-1 ring-white/15">
-            <Gavel className="size-5" aria-hidden />
-          </span>
-          <span className="text-lg font-semibold tracking-tight">Algihaz Legal</span>
+        <motion.div variants={RISE}>
+          <AlgihazLogo className="h-14 text-login-foreground" />
         </motion.div>
 
         <div className="max-w-lg">

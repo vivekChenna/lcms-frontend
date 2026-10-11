@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Gavel, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { UserRole } from "@/lib/api/types";
+import { AlgihazLogo } from "@/components/brand/algihaz-logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { navItemsFor } from "./nav-items";
@@ -49,22 +50,19 @@ export function Sidebar({
           !desktop && "pr-14",
         )}
       >
-        <span
-          className={cn(
-            "grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground",
-            desktop && rail && "lg:hidden",
-          )}
-        >
-          <Gavel className="size-4" aria-hidden />
-        </span>
-        <motion.span
-          initial={false}
-          animate={labelFade}
-          transition={{ duration: 0.16 }}
-          className={cn("min-w-0 flex-1 truncate font-semibold", hideLabel)}
-        >
-          Algihaz Legal
-        </motion.span>
+        <div className="flex min-w-0 flex-1 items-center md:max-lg:flex-none">
+          {/* the round emblem alone where there is only room for an icon: the md rail */}
+          <AlgihazLogo variant="mark" className={cn("h-8", desktop ? "lg:hidden" : "hidden")} />
+          {/* the full logo in the sheet and in the expanded desktop sidebar; fades with the width animation */}
+          <motion.div
+            initial={false}
+            animate={labelFade}
+            transition={{ duration: 0.16 }}
+            className={desktop ? cn("hidden lg:block", rail && "lg:hidden") : "block"}
+          >
+            <AlgihazLogo className="h-8" />
+          </motion.div>
+        </div>
         {desktop && onCollapsedChange && (
           <button
             type="button"
