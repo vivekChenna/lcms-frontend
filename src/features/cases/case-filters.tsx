@@ -88,7 +88,7 @@ export function CaseFilters({ value, onChange, onClear, loading }: Props) {
       id="case-search"
       withIcon
       aria-label="Search"
-      className="h-11 lg:h-10"
+      className="h-11 lg:h-9"
       placeholder="Search by reference, title or description"
       value={search}
       busy={searchWaiting || loading}
@@ -180,7 +180,11 @@ export function CaseFilters({ value, onChange, onClear, loading }: Props) {
             <Button
               type="button"
               variant="outline"
-              className={advancedCount > 0 ? "h-10 border-primary/40 bg-primary/5" : "h-10 bg-card"}
+              className={
+                advancedCount > 0
+                  ? "h-11 border-primary/40 bg-primary/5 lg:h-9"
+                  : "h-11 bg-card lg:h-9"
+              }
             >
               <SlidersHorizontal aria-hidden />
               More filters

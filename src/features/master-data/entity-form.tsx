@@ -134,7 +134,7 @@ export function EntityForm({ entities, businessUnits }: Props) {
           <Label htmlFor="entity-name">New entity name</Label>
           <Input
             id="entity-name"
-            className="mt-1 h-10"
+            className="mt-1 h-11 lg:h-9"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -143,7 +143,7 @@ export function EntityForm({ entities, businessUnits }: Props) {
           <Label htmlFor="entity-code">Code</Label>
           <Input
             id="entity-code"
-            className="mt-1 h-10"
+            className="mt-1 h-11 lg:h-9"
             value={code}
             onChange={(e) => setCode(e.target.value)}
           />

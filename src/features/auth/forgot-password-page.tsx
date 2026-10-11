@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AUTH_BACK_LINK, AUTH_FIELD, AUTH_FORM, AUTH_SUBMIT } from "./auth-styles";
 import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -20,10 +21,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 const BackToSignIn = () => (
-  <Link
-    to="/login"
-    className="block py-3 text-center text-sm text-muted-foreground underline-offset-2 hover:underline"
-  >
+  <Link to="/login" className={AUTH_BACK_LINK}>
     Back to sign in
   </Link>
 );
@@ -53,7 +51,7 @@ export function ForgotPasswordPage() {
       title="Forgot your password?"
       description="We'll email you a link to choose a new one."
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <form onSubmit={onSubmit} noValidate className={AUTH_FORM}>
         {forgot.isError && (
           <p
             role="alert"
@@ -63,12 +61,13 @@ export function ForgotPasswordPage() {
           </p>
         )}
         <div className="space-y-2">
-          <Label htmlFor="fp-email">Email</Label>
+          <Label htmlFor="fp-email">Work email</Label>
           <Input
             id="fp-email"
             type="email"
             autoComplete="email"
-            className="h-11 text-base md:text-base"
+            placeholder="name@company.com"
+            className={AUTH_FIELD}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "fp-email-error" : undefined}
             {...form.register("email")}
@@ -79,7 +78,7 @@ export function ForgotPasswordPage() {
             </p>
           )}
         </div>
-        <Button type="submit" className="h-11 w-full" disabled={forgot.isPending}>
+        <Button type="submit" className={AUTH_SUBMIT} disabled={forgot.isPending}>
           {forgot.isPending && <Loader2 className="animate-spin" aria-hidden />}
           Send link
         </Button>

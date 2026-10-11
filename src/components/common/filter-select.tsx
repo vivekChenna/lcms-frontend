@@ -29,7 +29,7 @@ export function FilterSelect({
       <SelectTrigger
         aria-label={label}
         className={cn(
-          "h-10 w-auto min-w-28 gap-2 rounded-lg bg-card",
+          "h-11 w-auto min-w-28 gap-2 rounded-lg bg-card lg:h-9",
           current && "border-primary/40 bg-primary/5",
           className,
         )}

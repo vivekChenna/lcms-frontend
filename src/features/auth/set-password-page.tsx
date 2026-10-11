@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AUTH_BACK_LINK, AUTH_FIELD, AUTH_FORM, AUTH_SUBMIT } from "./auth-styles";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -32,13 +33,10 @@ function DeadLink() {
       description="It may have expired, already been used, or been replaced by a newer one."
     >
       <div className="space-y-3">
-        <Button asChild className="h-11 w-full">
+        <Button asChild className={AUTH_SUBMIT}>
           <Link to="/forgot-password">Send me a new link</Link>
         </Button>
-        <Link
-          to="/login"
-          className="block py-3 text-center text-sm text-muted-foreground underline-offset-2 hover:underline"
-        >
+        <Link to="/login" className={AUTH_BACK_LINK}>
           Back to sign in
         </Link>
       </div>
@@ -76,7 +74,7 @@ export function SetPasswordPage({ token }: { token: string | undefined }) {
       title="Choose your password"
       description="Your password must be at least 8 characters long. Only you will know it."
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <form onSubmit={onSubmit} noValidate className={AUTH_FORM}>
         {setPassword.isError && !dead && (
           <p
             role="alert"
@@ -90,7 +88,7 @@ export function SetPasswordPage({ token }: { token: string | undefined }) {
           <PasswordInput
             id="sp-new"
             autoComplete="new-password"
-            className="h-11 text-base md:text-base"
+            className={AUTH_FIELD}
             aria-invalid={!!errors.newPassword}
             aria-describedby={errors.newPassword ? "sp-new-error" : undefined}
             {...form.register("newPassword")}
@@ -106,7 +104,7 @@ export function SetPasswordPage({ token }: { token: string | undefined }) {
           <PasswordInput
             id="sp-confirm"
             autoComplete="new-password"
-            className="h-11 text-base md:text-base"
+            className={AUTH_FIELD}
             aria-invalid={!!errors.confirm}
             aria-describedby={errors.confirm ? "sp-confirm-error" : undefined}
             {...form.register("confirm")}
@@ -117,14 +115,11 @@ export function SetPasswordPage({ token }: { token: string | undefined }) {
             </p>
           )}
         </div>
-        <Button type="submit" className="h-11 w-full" disabled={setPassword.isPending}>
+        <Button type="submit" className={AUTH_SUBMIT} disabled={setPassword.isPending}>
           {setPassword.isPending && <Loader2 className="animate-spin" aria-hidden />}
           Set password
         </Button>
-        <Link
-          to="/login"
-          className="block py-3 text-center text-sm text-muted-foreground underline-offset-2 hover:underline"
-        >
+        <Link to="/login" className={AUTH_BACK_LINK}>
           Back to sign in
         </Link>
       </form>

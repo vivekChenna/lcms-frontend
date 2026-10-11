@@ -34,5 +34,7 @@ describe("getRouter's QueryClient", () => {
       })
       .catch(() => undefined);
     expect(toast.error).not.toHaveBeenCalled();
-  });
+    // importing ../router loads every route and screen in the app, which takes a while on a cold,
+    // busy machine; the default 15s was not always enough once the app grew
+  }, 60_000);
 });

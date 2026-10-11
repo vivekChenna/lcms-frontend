@@ -1,4 +1,5 @@
 import { PasswordInput } from "@/components/ui/password-input";
+import { AUTH_FIELD, AUTH_FORM, AUTH_SUBMIT } from "@/features/auth/auth-styles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Loader2 } from "lucide-react";
@@ -60,7 +61,7 @@ export function LoginPage({
       title="Welcome back"
       description="Sign in with your Algihaz credentials to continue."
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-5">
+      <form onSubmit={onSubmit} noValidate className={AUTH_FORM}>
         {notice && !login.isError && (
           <p
             role="status"
@@ -85,7 +86,7 @@ export function LoginPage({
             inputMode="email"
             autoComplete="email"
             placeholder="name@company.com"
-            className="h-12 text-base md:text-base lg:h-12 lg:text-base"
+            className={AUTH_FIELD}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}
             {...form.register("email", {
@@ -105,7 +106,7 @@ export function LoginPage({
           <PasswordInput
             id="password"
             autoComplete="current-password"
-            className="h-12 text-base md:text-base lg:h-12 lg:text-base"
+            className={AUTH_FIELD}
             aria-invalid={!!errors.password}
             aria-describedby={errors.password ? "password-error" : undefined}
             {...form.register("password")}
@@ -122,11 +123,7 @@ export function LoginPage({
             Forgot password?
           </Link>
         </div>
-        <Button
-          type="submit"
-          className="h-12 w-full text-base"
-          disabled={incomplete || login.isPending}
-        >
+        <Button type="submit" className={AUTH_SUBMIT} disabled={incomplete || login.isPending}>
           {login.isPending ? <Loader2 className="animate-spin" aria-hidden /> : null}
           Sign in
           {!login.isPending && <ArrowRight aria-hidden />}

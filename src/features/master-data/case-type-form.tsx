@@ -85,7 +85,7 @@ export function CaseTypeForm({ categories, caseTypes }: Props) {
         <div>
           <Label htmlFor="ct-category">Category</Label>
           <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger id="ct-category" className="mt-1 h-10">
+            <SelectTrigger id="ct-category" className="mt-1 h-11 lg:h-9">
               <SelectValue placeholder="Select a category" />
             </SelectTrigger>
             <SelectContent>
@@ -101,7 +101,7 @@ export function CaseTypeForm({ categories, caseTypes }: Props) {
           <Label htmlFor="ct-name">Name</Label>
           <Input
             id="ct-name"
-            className="mt-1 h-10"
+            className="mt-1 h-11 lg:h-9"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -111,7 +111,7 @@ export function CaseTypeForm({ categories, caseTypes }: Props) {
           <Input
             id="ct-ack"
             type="number"
-            className="mt-1 h-10"
+            className="mt-1 h-11 lg:h-9"
             value={ackHours}
             onChange={(e) => setAckHours(e.target.value)}
           />
@@ -121,7 +121,7 @@ export function CaseTypeForm({ categories, caseTypes }: Props) {
           <Input
             id="ct-resolution"
             type="number"
-            className="mt-1 h-10"
+            className="mt-1 h-11 lg:h-9"
             value={resolutionHours}
             onChange={(e) => setResolutionHours(e.target.value)}
           />

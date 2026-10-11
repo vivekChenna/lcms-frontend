@@ -29,7 +29,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 async function submit(email: string) {
   const ue = userEvent.setup();
-  if (email) await ue.type(screen.getByLabelText(/^email$/i), email);
+  if (email) await ue.type(screen.getByLabelText(/^work email$/i), email);
   await ue.click(screen.getByRole("button", { name: /send link/i }));
 }
 
@@ -37,7 +37,7 @@ describe("ForgotPasswordPage", () => {
   it("asks for the email address", async () => {
     await renderPage(<ForgotPasswordPage />);
     expect(screen.getByRole("heading", { name: /forgot your password/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^work email$/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /back to sign in/i })).toHaveAttribute(
       "href",
       "/login",
@@ -62,7 +62,7 @@ describe("ForgotPasswordPage", () => {
 
     expect(await screen.findByText(/if that account exists/i)).toBeInTheDocument();
     expect(screen.getByText(/48 hours/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^work email$/i)).not.toBeInTheDocument();
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(String(url)).toMatch(/\/auth\/forgot-password$/);
     expect(JSON.parse(init.body)).toEqual({ email: "someone@example.com" });
@@ -82,7 +82,7 @@ describe("ForgotPasswordPage", () => {
     await renderPage(<ForgotPasswordPage />);
     await submit("someone@example.com");
     expect(await screen.findByRole("alert")).toHaveTextContent(/too many attempts/i);
-    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^work email$/i)).toBeInTheDocument();
   });
 
   it("says so when the server cannot be reached", async () => {
