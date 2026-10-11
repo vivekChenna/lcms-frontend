@@ -72,12 +72,7 @@ export function CasesPage() {
       <div className="flex flex-col">
         {me && summary.data?.tiles && (
           <div className="order-2 mb-4 lg:order-1">
-            <WorkflowStrip
-              byStatus={summary.data.byStatus ?? []}
-              activeStatus={search.status}
-              overdue={summary.data.tiles.overdue}
-              overdueSearch={summary.data.filters["overdue"]}
-            />
+            <WorkflowStrip data={summary.data} role={me.role} activeStatus={search.status} />
           </div>
         )}
 

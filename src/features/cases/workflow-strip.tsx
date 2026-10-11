@@ -2,18 +2,41 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, TriangleAlert } from "lucide-react";
 import type { CSSProperties } from "react";
 import { scrollToResults } from "@/features/dashboard/use-dashboard";
-import type { CaseStatus } from "@/lib/api/types";
+import type { CaseStatus, DashboardDto, UserRole } from "@/lib/api/types";
+import { isLegal } from "@/lib/permissions";
 import { STATUS_ORDER, statusTone, type Tone } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  byStatus: { status: CaseStatus; count: number }[];
+  data: DashboardDto;
+  role: UserRole;
   /** The status the list is filtered to right now, if any. */
   activeStatus: CaseStatus | undefined;
-  overdue: number;
-  /** The search params that show only overdue cases (from the dashboard's own filter map). */
-  overdueSearch: Record<string, string> | undefined;
 };
+
+type TileKey = keyof DashboardDto["tiles"];
+
+// The BRD's summary counts (DR-02) that are not a workflow stage: each is a one-click filter.
+// Closed is the last stage of the workflow, and Overdue has the alert above it.
+const COUNT_LABEL: Partial<Record<TileKey, string>> = {
+  total: "All cases",
+  open: "Open",
+  awaitingAcceptance: "Awaiting acceptance",
+  waitingOnInput: "Waiting on input",
+  overdue: "Overdue",
+  onTime: "On time",
+  unassigned: "Unassigned",
+  assignedToMe: "Assigned to me",
+};
+const COMMON_COUNTS: TileKey[] = [
+  "total",
+  "open",
+  "awaitingAcceptance",
+  "waitingOnInput",
+  "overdue",
+  "onTime",
+];
+const LEGAL_COUNTS: TileKey[] = [...COMMON_COUNTS, "unassigned", "assignedToMe"];
 
 // Each stage borrows its colour from the app's own tokens, so it follows light and dark mode.
 const TONE_COLOUR: Record<Tone, string> = {
@@ -36,7 +59,14 @@ const CHEVRON =
  * of arrows, Submitted through Closed, each with its count. Every part filters the list below it
  * and brings the list into view (BRD UI-07, UI-08).
  */
-export function WorkflowStrip({ byStatus, activeStatus, overdue, overdueSearch }: Props) {
+export function WorkflowStrip({ data, role, activeStatus }: Props) {
+  const byStatus = data.byStatus ?? [];
+  const overdue = data.tiles.overdue;
+  const overdueSearch = data.filters["overdue"];
+  // while the alert is up, Overdue is not repeated as a chip
+  const counts = (isLegal(role) ? LEGAL_COUNTS : COMMON_COUNTS).filter(
+    (k) => !(k === "overdue" && overdue > 0),
+  );
   const rows = STATUS_ORDER.map((status) => ({
     status,
     count: byStatus.find((s) => s.status === status)?.count ?? 0,
@@ -113,6 +143,30 @@ export function WorkflowStrip({ byStatus, activeStatus, overdue, overdueSearch }
           );
         })}
       </nav>
+
+      <ul aria-label="Case counts" className="flex flex-wrap gap-2">
+        {counts.map((key) => (
+          <li key={key}>
+            <Link
+              to="/cases"
+              search={{ ...data.filters[key] } as never}
+              hash="results"
+              onClick={scrollToResults}
+              className="inline-flex min-h-9 items-center gap-2 rounded-full border bg-card px-3.5 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              {COUNT_LABEL[key]}
+              <b
+                className={cn(
+                  "font-semibold tabular-nums text-foreground",
+                  key === "overdue" && data.tiles[key] > 0 && "text-danger",
+                )}
+              >
+                {data.tiles[key]}
+              </b>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -153,6 +153,43 @@ describe("CasesPage summary (BRD UI-08)", () => {
     expect(within(flow).getByRole("link", { name: /^closed/i })).not.toHaveAttribute("data-active");
   });
 
+  it("keeps every BRD summary count one click away, as filters", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    renderAt("legal_manager");
+    const counts = await screen.findByRole("list", { name: /case counts/i });
+    for (const name of [
+      /^all cases/i,
+      /^open/i,
+      /^awaiting acceptance/i,
+      /^waiting on input/i,
+      /^on time/i,
+      /^unassigned/i,
+      /^assigned to me/i,
+    ]) {
+      expect(within(counts).getByRole("link", { name })).toBeInTheDocument();
+    }
+    // overdue has the alert above, so it is not repeated while there is something overdue
+    expect(within(counts).queryByRole("link", { name: /^overdue/i })).not.toBeInTheDocument();
+  });
+
+  it("does not offer the legal-only counts to a requester", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    renderAt("requester");
+    const counts = await screen.findByRole("list", { name: /case counts/i });
+    expect(within(counts).queryByRole("link", { name: /^unassigned/i })).not.toBeInTheDocument();
+    expect(
+      within(counts).queryByRole("link", { name: /^assigned to me/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("a count chip applies its filter to this very list", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(handler));
+    const { router } = renderAt("legal_manager");
+    const counts = await screen.findByRole("list", { name: /case counts/i });
+    await userEvent.click(within(counts).getByRole("link", { name: /^open/i }));
+    await waitFor(() => expect(router.state.location.search).toHaveProperty("open"));
+  });
+
   it("the overdue alert filters the list to overdue cases", async () => {
     fetchMock.mockImplementation(withLookupDefaults(handler));
     const { router } = renderAt("legal_manager");
