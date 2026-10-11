@@ -50,7 +50,12 @@ export function Sidebar({
           !desktop && "pr-14",
         )}
       >
-        <div className="flex min-w-0 flex-1 items-center md:max-lg:flex-none">
+        <Link
+          to="/dashboard"
+          aria-label="Algihaz Holding, go to the dashboard"
+          onClick={onNavigate}
+          className="flex min-w-0 flex-1 items-center rounded-md md:max-lg:flex-none"
+        >
           {/* the round emblem alone where there is only room for an icon: the md rail */}
           <AlgihazLogo variant="mark" className={cn("h-8", desktop ? "lg:hidden" : "hidden")} />
           {/* the full logo in the sheet and in the expanded desktop sidebar; fades with the width animation */}
@@ -62,7 +67,7 @@ export function Sidebar({
           >
             <AlgihazLogo className="h-8" />
           </motion.div>
-        </div>
+        </Link>
         {desktop && onCollapsedChange && (
           <button
             type="button"

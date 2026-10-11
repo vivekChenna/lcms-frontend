@@ -149,6 +149,20 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("button", { name: /^assign$/i })).toBeInTheDocument();
   });
 
+  it("opens the case when an unassigned row is clicked, but Assign works in place", async () => {
+    fetchMock.mockResolvedValue(json(managerDashboard()));
+    const { router } = renderAt("legal_manager");
+    const row = (await screen.findByText("[Demo] Vendor payment dispute")).closest("tr") as HTMLElement;
+
+    await userEvent.click(within(row).getByRole("button", { name: /^assign$/i }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/");
+    await userEvent.keyboard("{Escape}");
+
+    await userEvent.click(within(row).getByText("[Demo] Vendor payment dispute"));
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/cases\/[^/]+$/));
+  });
+
   it("links the Overdue tile to /cases with the backend's replay filter", async () => {
     fetchMock.mockResolvedValue(json(repDashboard()));
     const { router } = renderAt("legal_rep");

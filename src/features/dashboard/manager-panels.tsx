@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
@@ -99,7 +99,13 @@ function OpenCaseloadByRep({ rows }: { rows: RepLoad[] }) {
   );
 }
 
+function useOpenCase() {
+  const navigate = useNavigate();
+  return (r: PanelItem) => void navigate({ to: "/cases/$caseId", params: { caseId: r.id } });
+}
+
 function UnassignedPanel({ count, items }: ManagerPanels["unassigned"]) {
+  const openCase = useOpenCase();
   const [assignId, setAssignId] = useState<string | null>(null);
   const columns: Column<PanelItem>[] = [
     {
@@ -120,7 +126,15 @@ function UnassignedPanel({ count, items }: ManagerPanels["unassigned"]) {
       header: <span className="sr-only">Assign</span>,
       className: "w-px text-right",
       cell: (r) => (
-        <Button type="button" size="sm" className="h-11 lg:h-9" onClick={() => setAssignId(r.id)}>
+        <Button
+          type="button"
+          size="sm"
+          className="h-11 lg:h-9"
+          onClick={(e) => {
+            e.stopPropagation(); // the row itself opens the case
+            setAssignId(r.id);
+          }}
+        >
           Assign
         </Button>
       ),
@@ -132,6 +146,8 @@ function UnassignedPanel({ count, items }: ManagerPanels["unassigned"]) {
         columns={columns}
         rows={items}
         rowKey={(r) => r.id}
+        onRowClick={openCase}
+        rowLabel={(r) => `Open case ${r.referenceNumber}`}
         empty={<EmptyState icon={Users} title="Nothing unassigned" />}
         renderCard={(r) => (
           <div className="space-y-2">
@@ -139,17 +155,12 @@ function UnassignedPanel({ count, items }: ManagerPanels["unassigned"]) {
               {r.referenceNumber} — {r.title}
             </p>
             <PriorityBadge priority={r.priority} />
-            <div>
-              <Button
-                type="button"
-                size="sm"
-                className="h-11 lg:h-9"
-                onClick={() => setAssignId(r.id)}
-              >
-                Assign
-              </Button>
-            </div>
           </div>
+        )}
+        cardFooter={(r) => (
+          <Button type="button" size="sm" className="h-11" onClick={() => setAssignId(r.id)}>
+            Assign
+          </Button>
         )}
       />
       {assignId && (
@@ -160,6 +171,7 @@ function UnassignedPanel({ count, items }: ManagerPanels["unassigned"]) {
 }
 
 function AwaitingAcceptancePanel({ count, items }: ManagerPanels["awaitingAcceptance"]) {
+  const openCase = useOpenCase();
   const columns: Column<PanelItem>[] = [
     {
       key: "case",
@@ -188,6 +200,8 @@ function AwaitingAcceptancePanel({ count, items }: ManagerPanels["awaitingAccept
         columns={columns}
         rows={items}
         rowKey={(r) => r.id}
+        onRowClick={openCase}
+        rowLabel={(r) => `Open case ${r.referenceNumber}`}
         empty={<EmptyState icon={Users} title="Nothing awaiting acceptance" />}
         renderCard={(r) => (
           <div className="space-y-1">

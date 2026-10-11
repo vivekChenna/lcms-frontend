@@ -68,7 +68,7 @@ describe("AppShell", () => {
     const { ue, router } = setup("viewer");
     await ue.click(await screen.findByRole("button", { name: /open navigation/i }));
     const sheet = await screen.findByRole("dialog");
-    const links = within(sheet)
+    const links = within(within(sheet).getByRole("navigation", { name: /main navigation/i }))
       .getAllByRole("link")
       .map((a) => a.textContent?.trim());
     expect(links).toEqual(["Dashboard", "Cases", "Reports", "Rules & SLAs", "Notifications"]);

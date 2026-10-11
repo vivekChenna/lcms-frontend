@@ -95,11 +95,17 @@ describe("Sidebar", () => {
     ]);
   });
 
+  it("sends the logo to the dashboard", async () => {
+    renderWithRouter(<Sidebar role="requester" />);
+    expect(await screen.findByRole("link", { name: /go to the dashboard/i })).toHaveAttribute("href", "/dashboard");
+  });
+
   it("draws the menu as placeholders, with no links, while the session is still loading", async () => {
     renderWithRouter(<Sidebar />);
     expect(await screen.findAllByTestId("nav-skeleton")).toHaveLength(7);
-    expect(screen.queryAllByRole("link")).toHaveLength(0);
-    expect(screen.getByRole("navigation", { name: /main navigation/i })).toHaveAttribute(
+    const nav = screen.getByRole("navigation", { name: /main navigation/i });
+    expect(within(nav).queryAllByRole("link")).toHaveLength(0);
+    expect(nav).toHaveAttribute(
       "aria-busy",
       "true",
     );
