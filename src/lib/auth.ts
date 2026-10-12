@@ -16,6 +16,29 @@ export function useMe(): Profile | undefined {
   return useQuery(meQueryOptions()).data;
 }
 
+/** Public: which sign-in the server wants shown. If it cannot be read, fall back to the password form. */
+export type AuthConfig = { mode: "local" | "drona"; localLoginAllowed: boolean };
+export const authConfigQueryOptions = () =>
+  queryOptions({
+    queryKey: ["auth-config"],
+    queryFn: () => apiJson<AuthConfig>("/auth/config"),
+    staleTime: 0,
+    retry: false,
+  });
+
+/** Signs in through Drona: the server matches the profile email to an existing account. */
+export function useDronaSignIn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { email: string }) =>
+      apiJson<LoginResponse>("/auth/drona", { method: "POST", json: body }),
+    onSuccess: (data) => {
+      queryClient.clear();
+      queryClient.setQueryData(meQueryOptions().queryKey, data.user);
+    },
+  });
+}
+
 export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({

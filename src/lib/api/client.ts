@@ -36,6 +36,7 @@ function refreshSession(): Promise<boolean> {
 // public account routes: a 401 here is never an expired session, so never trigger a refresh
 const NO_RETRY = [
   "/auth/login",
+  "/auth/drona",
   "/auth/refresh",
   "/auth/logout",
   "/auth/set-password",

@@ -12,6 +12,7 @@ export default tseslint.config(
       ".output",
       ".vinxi",
       "src/lib/api/schema.d.ts",
+      "public/dronahq.js",
       "test-results",
       "playwright-report",
     ],

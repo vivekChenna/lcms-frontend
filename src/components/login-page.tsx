@@ -6,6 +6,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { DronaSignIn } from "@/components/drona-sign-in";
 import { AuthShell } from "@/features/auth/auth-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,9 +35,12 @@ const NOTICES: Record<LoginNotice, string> = {
 export function LoginPage({
   redirect,
   notice,
+  mode = "local",
 }: {
   redirect?: string | undefined;
   notice?: LoginNotice | undefined;
+  /** "drona": sign in through the DronaHQ container instead of with a password. */
+  mode?: "local" | "drona";
 }) {
   const navigate = useNavigate();
   const login = useLogin();
@@ -55,6 +59,14 @@ export function LoginPage({
   const onSubmit = form.handleSubmit((values) =>
     login.mutate(values, { onSuccess: () => void navigate({ href: safeRedirect(redirect) }) }),
   );
+
+  if (mode === "drona") {
+    return (
+      <AuthShell title="Continue from Drona">
+        <DronaSignIn onSignedIn={() => void navigate({ href: safeRedirect(redirect) })} />
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell

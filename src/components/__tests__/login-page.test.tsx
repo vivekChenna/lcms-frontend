@@ -169,3 +169,18 @@ describe("LoginPage", () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith({ href: "/dashboard" }));
   });
 });
+
+describe("LoginPage in Drona mode", () => {
+  it("shows the Drona sign-in instead of the password form", () => {
+    window.DronaHQ = { IsReady: true, user: { getProfile: () => undefined } };
+    const queryClient = new QueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <LoginPage mode="drona" />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByTestId("drona-sign-in")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^password$/i)).not.toBeInTheDocument();
+    delete window.DronaHQ;
+  });
+});

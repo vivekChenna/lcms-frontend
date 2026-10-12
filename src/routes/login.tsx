@@ -1,6 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { LoginPage } from "@/components/login-page";
+import { authConfigQueryOptions } from "@/lib/auth";
 import { loadSession, safeRedirect } from "@/lib/guards";
 
 export const Route = createFileRoute("/login")({
@@ -32,5 +34,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginRoute() {
   const { redirect: to, notice } = Route.useSearch();
-  return <LoginPage redirect={to} notice={notice} />;
+  // until the server answers (or if it cannot), the password form is shown
+  const { data: config } = useQuery(authConfigQueryOptions());
+  return <LoginPage redirect={to} notice={notice} mode={config?.mode ?? "local"} />;
 }
