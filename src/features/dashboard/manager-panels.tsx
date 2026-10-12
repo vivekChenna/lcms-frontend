@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { personLabel } from "@/lib/format";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -190,7 +191,7 @@ function AwaitingAcceptancePanel({ count, items }: ManagerPanels["awaitingAccept
       header: "Assigned to",
       truncate: "max-w-40",
       title: (r) => r.assignedLegalRepName ?? undefined,
-      cell: (r) => r.assignedLegalRepName ?? "—",
+      cell: (r) => personLabel(r.assignedLegalRepName, r.assignedLegalRepDesignation),
     },
     { key: "status", header: "Status", cell: (r) => <StatusBadge status={r.status} /> },
   ];
@@ -208,7 +209,9 @@ function AwaitingAcceptancePanel({ count, items }: ManagerPanels["awaitingAccept
             <p className="font-medium">
               {r.referenceNumber} — {r.title}
             </p>
-            <p className="text-sm text-muted-foreground">{r.assignedLegalRepName ?? "—"}</p>
+            <p className="text-sm text-muted-foreground">
+              {personLabel(r.assignedLegalRepName, r.assignedLegalRepDesignation)}
+            </p>
             <StatusBadge status={r.status} />
           </div>
         )}

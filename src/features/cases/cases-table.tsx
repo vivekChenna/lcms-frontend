@@ -8,7 +8,7 @@ import {
   StatusBadge,
 } from "@/components/common/badges";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
-import { formatDate } from "@/lib/format";
+import { formatDate, personLabel } from "@/lib/format";
 import type { CaseListDto } from "@/lib/api/types";
 
 type CaseRow = CaseListDto["items"][number];
@@ -55,7 +55,14 @@ const columns: Column<CaseRow>[] = [
     header: "Requester",
     truncate: "max-w-36",
     title: (r) => r.requesterName ?? undefined,
-    cell: (r) => r.requesterName ?? "—",
+    cell: (r) => (
+      <>
+        <p className="truncate">{r.requesterName ?? "—"}</p>
+        {r.requesterDesignation && (
+          <p className="truncate text-xs text-muted-foreground">{r.requesterDesignation}</p>
+        )}
+      </>
+    ),
   },
   {
     key: "assigned",
@@ -63,7 +70,18 @@ const columns: Column<CaseRow>[] = [
     truncate: "max-w-36",
     title: (r) => r.assignedLegalRepName ?? undefined,
     cell: (r) =>
-      r.assignedLegalRepName ?? <span className="text-muted-foreground">Unassigned</span>,
+      r.assignedLegalRepName ? (
+        <>
+          <p className="truncate">{r.assignedLegalRepName}</p>
+          {r.assignedLegalRepDesignation && (
+            <p className="truncate text-xs text-muted-foreground">
+              {r.assignedLegalRepDesignation}
+            </p>
+          )}
+        </>
+      ) : (
+        <span className="text-muted-foreground">Unassigned</span>
+      ),
   },
   { key: "priority", header: "Priority", cell: (r) => <PriorityBadge priority={r.priority} /> },
   { key: "status", header: "Status", cell: (r) => <StatusBadge status={r.status} /> },
@@ -101,7 +119,10 @@ export function CasesTable({ rows, empty }: { rows: CaseRow[]; empty: ReactNode 
             <SlaBadge state={r.slaState} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {r.requesterName ?? "—"} · {r.assignedLegalRepName ?? "Unassigned"}
+            {personLabel(r.requesterName, r.requesterDesignation)} ·{" "}
+            {r.assignedLegalRepName
+              ? personLabel(r.assignedLegalRepName, r.assignedLegalRepDesignation)
+              : "Unassigned"}
           </p>
           <p className="text-xs text-muted-foreground">{formatDate(r.createdAt)}</p>
         </div>

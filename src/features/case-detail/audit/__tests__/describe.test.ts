@@ -8,6 +8,7 @@ function row(overrides: Partial<AuditRow> = {}): AuditRow {
     caseReference: "AGC-INT-000001",
     actorId: "u1",
     actorName: "Rex Rep",
+    actorDesignation: null,
     actorRole: "legal_rep",
     action: "case.submitted",
     beforeValue: null,

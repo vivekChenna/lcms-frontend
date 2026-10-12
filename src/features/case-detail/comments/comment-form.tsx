@@ -56,7 +56,14 @@ export function CommentForm({ caseId, role }: { caseId: string; role: UserRole }
         </div>
       )}
       <div className="mt-3 flex justify-end">
-        <Button type="button" size="sm" disabled={!body.trim() || post.isPending} onClick={submit}>
+        <Button
+          type="button"
+          size="sm"
+          disabled={!body.trim()}
+          loading={post.isPending}
+          loadingText="Posting…"
+          onClick={submit}
+        >
           Post
         </Button>
       </div>

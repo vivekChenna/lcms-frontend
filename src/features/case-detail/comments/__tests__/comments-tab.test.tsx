@@ -63,6 +63,7 @@ function makeCase(overrides: Partial<CaseDto> = {}): CaseDto {
     requesterDesignation: null,
     assignedLegalRepName: "Rex Rep",
     assignedLegalRepRole: "legal_rep",
+    assignedLegalRepDesignation: null,
     categoryName: "Internal",
     caseTypeName: "Query",
     departmentName: "Finance",

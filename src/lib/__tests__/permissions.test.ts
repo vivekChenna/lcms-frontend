@@ -45,8 +45,9 @@ describe("can.*", () => {
     expect(can.changePriority("legal_manager")).toBe(true);
   });
 
-  it("only legal_rep can raise an information request", () => {
-    for (const role of ROLES) expect(can.raiseInfoRequest(role)).toBe(role === "legal_rep");
+  it("only a legal_rep or legal_manager can raise an information request", () => {
+    for (const role of ROLES)
+      expect(can.raiseInfoRequest(role)).toBe(role === "legal_rep" || role === "legal_manager");
   });
 
   it("matches the case-action matrix", () => {

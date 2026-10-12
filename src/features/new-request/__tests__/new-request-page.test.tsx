@@ -103,6 +103,29 @@ describe("NewRequestPage", () => {
     expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
   });
 
+  it("keeps Submit disabled until the confirmation is ticked", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(() => undefined));
+    renderPage({ role: "requester" });
+    await fillStep1();
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    const submit = screen.getByRole("button", { name: /submit request/i });
+    expect(submit).toBeDisabled();
+    await userEvent.click(screen.getByLabelText(/confirm the information/i));
+    expect(submit).toBeEnabled();
+    await userEvent.click(screen.getByLabelText(/confirm the information/i));
+    expect(submit).toBeDisabled();
+  });
+
+  it("pre-fills the contact details from the signed-in person's profile", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(() => undefined));
+    renderPage({ role: "requester", fullName: "Vivek Requester", email: "vivek.r@algihaz.local" });
+    await fillStep1();
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(await screen.findByLabelText(/^name$/i)).toHaveValue("Vivek Requester");
+    expect(screen.getByLabelText(/^email$/i)).toHaveValue("vivek.r@algihaz.local");
+  });
+
   it("maps a backend validation error to the right field and returns to step 1", async () => {
     fetchMock.mockImplementation(
       withLookupDefaults((url) => {

@@ -63,6 +63,7 @@ function makeCase(overrides: Partial<CaseDto> = {}): CaseDto {
     requesterDesignation: null,
     assignedLegalRepName: "Rex Rep",
     assignedLegalRepRole: "legal_rep",
+    assignedLegalRepDesignation: null,
     categoryName: "Internal",
     caseTypeName: "Query",
     departmentName: "Finance",
@@ -168,10 +169,15 @@ describe("RequestsTab", () => {
     expect(screen.queryByRole("button", { name: /raise request/i })).not.toBeInTheDocument();
   });
 
-  it("hides Raise request for a legal_manager", async () => {
+  it("hides Raise request for a legal_manager who does not hold the case", async () => {
     renderTab("legal_manager", {}, [], "manager-1");
     await screen.findByText(/no information requests/i);
     expect(screen.queryByRole("button", { name: /raise request/i })).not.toBeInTheDocument();
+  });
+
+  it("shows Raise request for a legal_manager who holds the case", async () => {
+    renderTab("legal_manager", { assignedLegalRepId: "manager-1" }, [], "manager-1");
+    expect(await screen.findByRole("button", { name: /raise request/i })).toBeInTheDocument();
   });
 
   it("hides Raise request for the assigned rep when the case is not In Progress/Waiting on Input", async () => {
@@ -283,6 +289,11 @@ describe("RequestsTab", () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
     fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith("/cases/c1/information-request-responders")) {
+        return json([
+          { id: "requester-1", fullName: "Ria Requester", designation: null, role: "requester" },
+        ]);
+      }
       if (url.endsWith("/cases/c1/information-requests") && !url.includes("?")) return json([]);
       if (url.includes("/cases/c1/information-requests")) {
         return json(infoRequest(), 201);

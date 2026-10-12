@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { MessageSquare } from "lucide-react";
 import type { CaseDto, Profile } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, personLabel } from "@/lib/format";
 import { roleLabel } from "@/lib/labels";
 import { canWriteToCase } from "../can-write";
 import { COMMENT_MAX, CommentForm } from "./comment-form";
@@ -40,7 +40,11 @@ function CommentRow({
     <li className="rounded-lg border bg-card p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{comment.authorName ?? "Someone"}</span>
+          <span className="font-medium text-foreground">
+            {comment.authorName
+              ? personLabel(comment.authorName, comment.authorDesignation)
+              : "Someone"}
+          </span>
           {comment.authorRole && ` (${roleLabel(comment.authorRole)})`} —{" "}
           {formatDateTime(comment.createdAt)}
           {edited && " (edited)"}
@@ -57,7 +61,13 @@ function CommentRow({
             maxLength={COMMENT_MAX}
           />
           <div className="mt-2 flex gap-2">
-            <Button type="button" size="sm" disabled={edit.isPending} onClick={save}>
+            <Button
+              type="button"
+              size="sm"
+              loading={edit.isPending}
+              loadingText="Saving…"
+              onClick={save}
+            >
               Save
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => setEditing(false)}>

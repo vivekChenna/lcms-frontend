@@ -21,13 +21,14 @@ import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import type { DocumentDto, Profile } from "@/lib/api/types";
-import { formatDateTime, formatSize } from "@/lib/format";
+import { formatDateTime, formatSize, personLabel } from "@/lib/format";
 import {
   downloadDocument,
   useDeleteDocument,
   useDocuments,
   useUploadNewVersion,
 } from "./use-documents";
+import { PreviewButton } from "./preview-dialog";
 import { UploadDialog } from "./upload-dialog";
 import { VersionsDialog } from "./versions-dialog";
 
@@ -59,6 +60,7 @@ function RowActions({ doc, me, caseId, onVersions, onDelete, canWrite }: RowActi
           if (file) uploadVersion.mutate({ documentId: doc.id, file });
         }}
       />
+      <PreviewButton id={doc.id} filename={doc.filename} />
       <Button
         type="button"
         variant="outline"
@@ -155,7 +157,7 @@ export function DocumentsTab({
       header: "Uploaded by",
       cell: (d) => (
         <div>
-          <p>{d.uploadedByName ?? "—"}</p>
+          <p>{personLabel(d.uploadedByName, d.uploadedByDesignation)}</p>
           <p className="text-xs text-muted-foreground">{formatDateTime(d.createdAt)}</p>
         </div>
       ),
@@ -215,7 +217,8 @@ export function DocumentsTab({
                 {d.category} — v{d.version} — {formatSize(d.sizeBytes)}
               </p>
               <p className="text-sm text-muted-foreground">
-                {d.uploadedByName ?? "—"} — {formatDateTime(d.createdAt)}
+                {personLabel(d.uploadedByName, d.uploadedByDesignation)} —{" "}
+                {formatDateTime(d.createdAt)}
               </p>
               <RowActions
                 doc={d}

@@ -2,7 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiJson } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
-import type { ApiBody, InfoRequestDto, InfoRequestListDto } from "@/lib/api/types";
+import type {
+  ApiBody,
+  InfoRequestDto,
+  InfoRequestListDto,
+  ResponderCandidateListDto,
+} from "@/lib/api/types";
 import { invalidateCaseSubresources } from "@/lib/queries/invalidate";
 import { qk } from "@/lib/queries/keys";
 
@@ -10,6 +15,16 @@ export function useInfoRequests(caseId: string) {
   return useQuery({
     queryKey: qk.infoRequests(caseId),
     queryFn: () => apiJson<InfoRequestListDto>(`/cases/${caseId}/information-requests`),
+  });
+}
+
+/** The people of the case's department a legal representative may ask for information. */
+export function useResponderCandidates(caseId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: qk.responders(caseId),
+    queryFn: () =>
+      apiJson<ResponderCandidateListDto>(`/cases/${caseId}/information-request-responders`),
+    enabled,
   });
 }
 

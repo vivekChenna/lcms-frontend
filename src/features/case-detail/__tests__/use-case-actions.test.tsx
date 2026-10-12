@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, renderHook, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -31,7 +31,10 @@ beforeEach(() => {
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  cleanup(); // an open Radix dialog leaves the page unclickable for the next test
+  vi.unstubAllGlobals();
+});
 
 function wrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -137,6 +140,8 @@ describe("useEscalateCase", () => {
   });
 });
 
+const closureDocuments = [{ id: "d1", category: "Closure Document", filename: "memo.pdf" }];
+
 describe("useCloseCase", () => {
   it("PATCHes /cases/:id/close with the exact body and invalidates the five key prefixes", async () => {
     fetchMock.mockResolvedValue(json({ id: "c1", status: "Closed" }));
@@ -165,6 +170,7 @@ describe("useCloseCase", () => {
       if (url.includes("/closure-outcomes")) {
         return json([{ id: "outcome-1", name: "Resolved" }]);
       }
+      if (url.endsWith("/cases/c1/documents")) return json(closureDocuments);
       if (url.includes("/close")) {
         return json(
           {
@@ -190,10 +196,42 @@ describe("useCloseCase", () => {
     await userEvent.click(await screen.findByRole("option", { name: "Resolved" }));
     await userEvent.type(screen.getByLabelText(/summary/i), "Resolved by refund");
     await userEvent.click(screen.getByRole("checkbox"));
-    await userEvent.click(screen.getByRole("button", { name: /close case/i }));
+    await userEvent.click(
+      await screen
+        .findByText("memo.pdf")
+        .then(() => screen.getByRole("button", { name: /^close case$/i })),
+    );
+    // nothing is sent until the second, "are you sure" step is accepted
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes("/close"))).toBe(false);
+    await userEvent.click(await screen.findByRole("button", { name: /yes, close the case/i }));
 
     expect(await screen.findByText("Close the open information request first")).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it("cannot be submitted without a closure document, and says one is needed", async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("/closure-outcomes")) return json([{ id: "outcome-1", name: "Resolved" }]);
+      if (url.endsWith("/cases/c1/documents")) {
+        return json([{ id: "d1", category: "Evidence", filename: "evidence.pdf" }]);
+      }
+      return json({});
+    });
+    const { Wrapper } = wrapper();
+    render(
+      <Wrapper>
+        <CloseCaseDialog caseId="c1" open onOpenChange={vi.fn()} />
+      </Wrapper>,
+    );
+
+    await userEvent.type(await screen.findByLabelText(/summary/i), "Resolved by refund");
+    await userEvent.click(screen.getByRole("checkbox"));
+    await userEvent.click(screen.getByLabelText(/outcome/i));
+    await userEvent.click(await screen.findByRole("option", { name: "Resolved" }));
+
+    expect(screen.getByText(/at least one is required/i)).toBeInTheDocument();
+    expect(screen.queryByText("evidence.pdf")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^close case$/i })).toBeDisabled();
   });
 });
 
@@ -272,6 +310,7 @@ function makeCase(overrides: Partial<CaseDto> = {}): CaseDto {
     requesterDesignation: null,
     assignedLegalRepName: null,
     assignedLegalRepRole: null,
+    assignedLegalRepDesignation: null,
     categoryName: "Internal",
     caseTypeName: "Query",
     departmentName: "Finance",
@@ -300,39 +339,39 @@ const EXPECTED: Record<
 > = {
   admin: {
     Submitted: {
-      related: ["assign", "escalate", "priority", "edit"],
-      unrelated: ["assign", "escalate", "priority", "edit"],
+      related: ["assign", "escalate", "priority", "dates", "edit"],
+      unrelated: ["assign", "escalate", "priority", "dates", "edit"],
     },
     Assigned: {
-      related: ["assign", "escalate", "priority"],
-      unrelated: ["assign", "escalate", "priority"],
+      related: ["assign", "escalate", "priority", "dates"],
+      unrelated: ["assign", "escalate", "priority", "dates"],
     },
     "In Progress": {
-      related: ["assign", "escalate", "close", "priority"],
-      unrelated: ["assign", "escalate", "close", "priority"],
+      related: ["assign", "escalate", "close", "priority", "dates"],
+      unrelated: ["assign", "escalate", "close", "priority", "dates"],
     },
     "Waiting on Input": {
-      related: ["assign", "escalate", "priority"],
-      unrelated: ["assign", "escalate", "priority"],
+      related: ["assign", "escalate", "priority", "dates"],
+      unrelated: ["assign", "escalate", "priority", "dates"],
     },
     Closed: { related: [], unrelated: [] },
   },
   legal_manager: {
     Submitted: {
-      related: ["assign", "escalate", "priority"],
-      unrelated: ["assign", "escalate", "priority"],
+      related: ["assign", "escalate", "priority", "dates"],
+      unrelated: ["assign", "escalate", "priority", "dates"],
     },
     Assigned: {
-      related: ["assign", "escalate", "priority"],
-      unrelated: ["assign", "escalate", "priority"],
+      related: ["assign", "escalate", "priority", "dates"],
+      unrelated: ["assign", "escalate", "priority", "dates"],
     },
     "In Progress": {
-      related: ["assign", "escalate", "close", "priority"],
-      unrelated: ["assign", "escalate", "close", "priority"],
+      related: ["assign", "escalate", "close", "priority", "dates"],
+      unrelated: ["assign", "escalate", "close", "priority", "dates"],
     },
     "Waiting on Input": {
-      related: ["assign", "escalate", "priority"],
-      unrelated: ["assign", "escalate", "priority"],
+      related: ["assign", "escalate", "priority", "dates"],
+      unrelated: ["assign", "escalate", "priority", "dates"],
     },
     Closed: { related: [], unrelated: [] },
   },

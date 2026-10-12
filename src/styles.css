@@ -220,8 +220,16 @@
     text-rendering: optimizeLegibility;
   }
 
-  button, a, input, textarea, select { outline-color: var(--color-ring); }
-  button { cursor: pointer; }
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    outline-color: var(--color-ring);
+  }
+  button {
+    cursor: pointer;
+  }
 }
 
 /*

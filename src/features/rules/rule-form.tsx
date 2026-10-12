@@ -106,7 +106,9 @@ export function RuleForm({ rule, open, onOpenChange }: Props) {
         <Button
           type="button"
           className="h-11 lg:h-9"
-          disabled={!targetLegalRepId || mutation.isPending}
+          disabled={!targetLegalRepId}
+          loading={mutation.isPending}
+          loadingText="Saving…"
           onClick={confirm}
         >
           Save

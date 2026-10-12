@@ -10,7 +10,8 @@ import { CloseCaseDialog } from "./actions/close";
 import { EditCaseDialog } from "./actions/edit-case";
 import { EscalateDialog } from "./actions/escalate";
 import { PriorityDialog } from "./actions/priority";
-import { actionsFor } from "./use-case-actions";
+import { TargetDatesDialog } from "./actions/target-dates";
+import { actionsFor, closeButton } from "./use-case-actions";
 
 type Props = { caseItem: CaseDto; me: Profile };
 
@@ -18,10 +19,12 @@ type Props = { caseItem: CaseDto; me: Profile };
  * action `me` is allowed to take right now. */
 export function CaseHeader({ caseItem, me }: Props) {
   const actions = actionsFor(me, caseItem);
+  const close = closeButton(me, caseItem);
   const [assignOpen, setAssignOpen] = useState(false);
   const [escalateOpen, setEscalateOpen] = useState(false);
   const [closeOpen, setCloseOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+  const [datesOpen, setDatesOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
   return (
@@ -81,6 +84,17 @@ export function CaseHeader({ caseItem, me }: Props) {
               Change priority
             </Button>
           )}
+          {actions.includes("dates") && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-11 lg:h-9"
+              onClick={() => setDatesOpen(true)}
+            >
+              Change dates
+            </Button>
+          )}
           {actions.includes("edit") && (
             <Button
               type="button"
@@ -92,16 +106,19 @@ export function CaseHeader({ caseItem, me }: Props) {
               Edit
             </Button>
           )}
-          {actions.includes("close") && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-11 lg:h-9"
-              onClick={() => setCloseOpen(true)}
-            >
-              Close case
-            </Button>
+          {close.visible && (
+            <span title={close.reason} className="inline-flex">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-11 lg:h-9"
+                disabled={!close.enabled}
+                onClick={() => setCloseOpen(true)}
+              >
+                Close case
+              </Button>
+            </span>
           )}
         </div>
       </div>
@@ -122,8 +139,11 @@ export function CaseHeader({ caseItem, me }: Props) {
           onOpenChange={setEscalateOpen}
         />
       )}
-      {actions.includes("close") && (
+      {close.enabled && (
         <CloseCaseDialog caseId={caseItem.id} open={closeOpen} onOpenChange={setCloseOpen} />
+      )}
+      {actions.includes("dates") && datesOpen && (
+        <TargetDatesDialog caseItem={caseItem} open onOpenChange={setDatesOpen} />
       )}
       {actions.includes("priority") && (
         <PriorityDialog

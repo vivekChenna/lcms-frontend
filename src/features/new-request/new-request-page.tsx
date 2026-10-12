@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/common/page-header";
 import { ApiError, fieldErrors } from "@/lib/api/errors";
 import { useMe } from "@/lib/auth";
+import type { Profile } from "@/lib/api/types";
 import { DetailsStep } from "./steps/details";
 import { PartiesStep } from "./steps/parties";
 import { ReviewStep } from "./steps/review";
@@ -48,6 +49,18 @@ const DEFAULT_VALUES: RequestFormInput = {
   declarationConfirmed: false,
 };
 
+/** Everything the system already knows about the person is filled in; they can still change it. */
+function defaultsFor(me: Profile | null | undefined): RequestFormInput {
+  return {
+    ...DEFAULT_VALUES,
+    contactName: me?.fullName ?? "",
+    contactEmail: me?.email ?? "",
+    departmentId: me?.departmentId ?? "",
+    entityId: me?.entityId ?? "",
+    businessUnitId: me?.businessUnitId ?? "",
+  };
+}
+
 export function NewRequestPage() {
   const me = useMe();
   const [step, setStep] = useState(0);
@@ -57,11 +70,12 @@ export function NewRequestPage() {
   const form = useForm<RequestFormInput, unknown, RequestFormValues>({
     resolver: zodResolver(requestSchema),
     mode: "onBlur",
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: defaultsFor(me),
   });
+  const confirmed = form.watch("declarationConfirmed");
   // Clears the dirty flag before navigating away, synchronously — not via `submit.isSuccess`,
   // which only updates on the next render and would otherwise race the blocker below.
-  const submit = useSubmitCase({ onBeforeNavigate: () => form.reset(DEFAULT_VALUES) });
+  const submit = useSubmitCase({ onBeforeNavigate: () => form.reset(defaultsFor(me)) });
 
   // The blocker is always armed (`condition: true`) and reads `form.formState.isDirty` fresh,
   // inside the callback, at the moment a navigation is attempted — not as an external
@@ -157,7 +171,9 @@ export function NewRequestPage() {
             <Button
               type="button"
               className="h-11 lg:h-9"
-              disabled={submit.isPending}
+              disabled={!confirmed}
+              loading={submit.isPending}
+              loadingText="Submitting…"
               onClick={onSubmit}
             >
               Submit request

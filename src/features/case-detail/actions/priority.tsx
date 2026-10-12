@@ -42,7 +42,9 @@ export function PriorityDialog({ caseId, current, open, onOpenChange }: Props) {
         <Button
           type="button"
           className="h-11 lg:h-9"
-          disabled={priority === current || changePriority.isPending}
+          disabled={priority === current}
+          loading={changePriority.isPending}
+          loadingText="Saving…"
           onClick={confirm}
         >
           Save

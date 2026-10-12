@@ -82,6 +82,7 @@ function makeCase(overrides: Partial<CaseDto> = {}): CaseDto {
     requesterDesignation: null,
     assignedLegalRepName: null,
     assignedLegalRepRole: null,
+    assignedLegalRepDesignation: null,
     categoryName: "Internal",
     caseTypeName: "Query",
     departmentName: "Finance",
@@ -219,8 +220,8 @@ describe("CaseDetailPage", () => {
     expect(screen.getByRole("button", { name: /^escalate$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^change priority$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^edit$/i })).toBeInTheDocument();
-    // a case that has not been worked yet cannot be closed
-    expect(screen.queryByRole("button", { name: /^close case$/i })).not.toBeInTheDocument();
+    // a case that has not been worked yet cannot be closed: the button stays, disabled
+    expect(screen.getByRole("button", { name: /^close case$/i })).toBeDisabled();
   });
 
   it("offers Close case only once the case is In Progress", async () => {

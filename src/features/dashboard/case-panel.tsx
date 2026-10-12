@@ -1,4 +1,4 @@
-import { FolderOpen } from "lucide-react";
+import { BellRing, FolderOpen } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ResponsiveTable, type Column } from "@/components/common/responsive-table";
 import { EmptyState } from "@/components/common/empty-state";
@@ -48,6 +48,61 @@ const columns: Column<PanelItem>[] = [
       ) : null,
   },
 ];
+
+/**
+ * New assignments waiting for a yes or no, at the top of the dashboard so they can be handled
+ * without opening the case. Shows nothing when there is nothing to accept.
+ */
+export function NeedsYourAction({ items }: { items: PanelItem[] }) {
+  const waiting = items.filter((i) => i.status === "Assigned");
+  if (waiting.length === 0) return null;
+  return (
+    <section
+      aria-labelledby="needs-action-heading"
+      className="rounded-xl border border-primary/30 bg-primary/5 p-4"
+    >
+      <h2 id="needs-action-heading" className="flex items-center gap-2 text-base font-semibold">
+        <BellRing className="size-4 text-primary" aria-hidden />
+        Needs your action
+        <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+          {waiting.length}
+        </span>
+      </h2>
+      <p className="text-sm text-muted-foreground">
+        These cases were assigned to you. Accept to start work, or reject to send them back.
+      </p>
+      <ul className="mt-3 space-y-2">
+        {waiting.map((item) => (
+          <li
+            key={item.id}
+            className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="min-w-0">
+              <p className="truncate">
+                <Link
+                  to="/cases/$caseId"
+                  params={{ caseId: item.id }}
+                  className="font-medium underline-offset-2 hover:underline"
+                >
+                  {item.referenceNumber}
+                </Link>{" "}
+                — {item.title}
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <PriorityBadge priority={item.priority} />
+                <SlaBadge state={item.slaState} />
+                <span className="text-sm text-muted-foreground">
+                  {dueIn(item.resolutionDueAt).text}
+                </span>
+              </div>
+            </div>
+            <AcceptRejectActions caseId={item.id} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 /** A legal rep's own open cases, oldest first (as the backend orders them), capped at 20. */
 export function MyAssignedCases({ items }: { items: PanelItem[] }) {

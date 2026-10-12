@@ -4,6 +4,7 @@ import type {
   BusinessUnitListDto,
   CaseCategoryListDto,
   CaseTypeListDto,
+  CaseHolderListDto,
   ClosureOutcomeListDto,
   DepartmentListDto,
   EntityListDto,
@@ -41,6 +42,10 @@ export function useLegalReps() {
     enabled: !!me && can.assign(me.role),
   });
 }
+
+/** Everyone who can hold a case, for the Cases "Legal representative" filter; open to every role. */
+export const useCaseHolders = () =>
+  useQuery(lookup<CaseHolderListDto>(qk.caseHolders, "/case-holders"));
 
 /** Display name for a lookup id; "—" when the id or list is missing or unknown. */
 export function nameOf(

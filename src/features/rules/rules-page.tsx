@@ -157,14 +157,6 @@ export function RulesPage() {
       <PageHeader
         title="Rules & SLAs"
         description="How quickly legal responds to each type of case, and which legal representative a new case is automatically assigned to."
-        actions={
-          canEdit && (
-            <Button type="button" size="sm" onClick={() => setFormRule(null)}>
-              <Plus />
-              New rule
-            </Button>
-          )
-        }
       />
 
       {!canEdit && (
@@ -181,14 +173,22 @@ export function RulesPage() {
         <SlaTargets />
 
         <section aria-labelledby="rules-heading" className="space-y-3">
-          <div>
-            <h2 id="rules-heading" className="text-base font-semibold">
-              Routing rules
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Matched in order by category, case type, entity, business unit, department and
-              priority.
-            </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 id="rules-heading" className="text-base font-semibold">
+                Routing rules
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Matched in order by category, case type, entity, business unit, department and
+                priority.
+              </p>
+            </div>
+            {canEdit && (
+              <Button type="button" variant="outline" size="sm" onClick={() => setFormRule(null)}>
+                <Plus aria-hidden />
+                New rule
+              </Button>
+            )}
           </div>
 
           {data.length === 0 ? (

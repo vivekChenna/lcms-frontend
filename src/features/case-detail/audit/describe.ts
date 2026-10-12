@@ -32,6 +32,10 @@ const DESCRIBERS: Record<string, (row: AuditRow) => string> = {
     const priority = str(asRecord(row.afterValue)["priority"]);
     return priority ? `changed the priority to ${priority}` : "changed the priority";
   },
+  "case.target_dates_changed": (row) => {
+    const reason = str(asRecord(row.afterValue)["reason"]);
+    return reason ? `changed the target dates: "${reason}"` : "changed the target dates";
+  },
   "comment.created": (row) =>
     asRecord(row.afterValue)["isInternal"] === true
       ? "posted an internal note"

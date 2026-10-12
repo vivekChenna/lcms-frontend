@@ -2,13 +2,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/common/page-header";
 import {
   useBusinessUnits,
-  useCaseTypes,
   useCategories,
   useClosureOutcomes,
   useDepartments,
   useEntities,
 } from "@/lib/queries/lookups";
-import { CaseTypeForm } from "./case-type-form";
 import { EntityForm } from "./entity-form";
 import { SimpleResourceTable } from "./simple-resource-table";
 
@@ -18,7 +16,6 @@ export function MasterDataPage() {
   const closureOutcomes = useClosureOutcomes();
   const entities = useEntities();
   const businessUnits = useBusinessUnits();
-  const caseTypes = useCaseTypes();
 
   return (
     <div>
@@ -32,7 +29,6 @@ export function MasterDataPage() {
           <TabsTrigger value="categories">Case categories</TabsTrigger>
           <TabsTrigger value="outcomes">Closure outcomes</TabsTrigger>
           <TabsTrigger value="org">Entities &amp; business units</TabsTrigger>
-          <TabsTrigger value="case-types">Case types</TabsTrigger>
         </TabsList>
         <TabsContent value="departments">
           <SimpleResourceTable
@@ -60,9 +56,6 @@ export function MasterDataPage() {
         </TabsContent>
         <TabsContent value="org">
           <EntityForm entities={entities.data} businessUnits={businessUnits.data} />
-        </TabsContent>
-        <TabsContent value="case-types">
-          <CaseTypeForm categories={categories.data} caseTypes={caseTypes.data} />
         </TabsContent>
       </Tabs>
     </div>

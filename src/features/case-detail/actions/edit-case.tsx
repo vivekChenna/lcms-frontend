@@ -161,7 +161,8 @@ export function EditCaseDialog({ caseItem, open, onOpenChange }: Props) {
           type="submit"
           form="edit-case-form"
           className="h-11 lg:h-9"
-          disabled={update.isPending}
+          loading={update.isPending}
+          loadingText="Saving…"
         >
           Save
         </Button>

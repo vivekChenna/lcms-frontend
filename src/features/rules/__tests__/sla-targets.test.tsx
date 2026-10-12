@@ -1,4 +1,5 @@
-import { cleanup, screen, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { makeProfile, renderWithProviders } from "@/test/render";
 import { RulesPage } from "../rules-page";
@@ -110,5 +111,93 @@ describe("Rules & SLAs page", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: /assigned to/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("Case types on the Rules & SLAs page", () => {
+  it("an admin sees inactive types too, and can add a case type from here", async () => {
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.includes("/case-categories"))
+        return json([{ id: "cat1", name: "Internal", isActive: true }]);
+      if (url.includes("/case-types")) {
+        if (init?.method === "POST") return json({ id: "t9" });
+        return json([
+          {
+            id: "t1",
+            categoryId: "cat1",
+            name: "Contract review",
+            slaAckHours: 4,
+            slaResolutionHours: 72,
+            isActive: true,
+          },
+          {
+            id: "t2",
+            categoryId: "cat1",
+            name: "Retired type",
+            slaAckHours: 4,
+            slaResolutionHours: 72,
+            isActive: false,
+          },
+        ]);
+      }
+      return json([]);
+    });
+    renderWithProviders(<RulesPage />, { me: makeProfile({ role: "admin" }) });
+
+    expect(await screen.findByText("Retired type")).toBeInTheDocument();
+    expect(screen.getByText("Inactive")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /activate retired type/i })).not.toBeChecked();
+
+    await userEvent.click(screen.getByRole("button", { name: /new case type/i }));
+    await userEvent.click(await screen.findByLabelText(/^category$/i));
+    await userEvent.click(await screen.findByRole("option", { name: "Internal" }));
+    await userEvent.type(screen.getByLabelText(/^name$/i), "Dispute");
+    await userEvent.click(screen.getByRole("button", { name: /add case type/i }));
+
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(
+        (c) =>
+          String(c[0]).includes("/case-types") &&
+          (c[1] as RequestInit | undefined)?.method === "POST",
+      );
+      expect(post).toBeDefined();
+      expect(JSON.parse(String((post?.[1] as RequestInit).body))).toEqual({
+        categoryId: "cat1",
+        name: "Dispute",
+        slaAckHours: 24,
+        slaResolutionHours: 72,
+      });
+    });
+  });
+
+  it("everyone else sees only the active types and no way to add one", async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("/case-types")) {
+        return json([
+          {
+            id: "t1",
+            categoryId: "cat1",
+            name: "Contract review",
+            slaAckHours: 4,
+            slaResolutionHours: 72,
+            isActive: true,
+          },
+          {
+            id: "t2",
+            categoryId: "cat1",
+            name: "Retired type",
+            slaAckHours: 4,
+            slaResolutionHours: 72,
+            isActive: false,
+          },
+        ]);
+      }
+      return json([]);
+    });
+    renderWithProviders(<RulesPage />, { me: makeProfile({ role: "legal_manager" }) });
+
+    expect(await screen.findByText("Contract review")).toBeInTheDocument();
+    expect(screen.queryByText("Retired type")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /new case type/i })).not.toBeInTheDocument();
   });
 });

@@ -44,7 +44,8 @@ export function EscalateDialog({ caseId, isEscalated, open, onOpenChange }: Prop
         <Button
           type="button"
           className="h-11 lg:h-9"
-          disabled={escalate.isPending}
+          loading={escalate.isPending}
+          loadingText={isEscalated ? "Clearing…" : "Escalating…"}
           onClick={confirm}
         >
           {isEscalated ? "Clear escalation" : "Escalate"}

@@ -133,7 +133,8 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
           type="submit"
           form="user-form"
           className="h-11 lg:h-9"
-          disabled={mutation.isPending}
+          loading={mutation.isPending}
+          loadingText={isCreate ? "Creating…" : "Saving…"}
         >
           Save
         </Button>
@@ -142,7 +143,12 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
       <form id="user-form" onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Label htmlFor="uf-name">Full name</Label>
-          <Input id="uf-name" className="mt-1 h-11 lg:h-9" {...register("fullName")} />
+          <Input
+            id="uf-name"
+            className="mt-1 h-11 lg:h-9"
+            placeholder="e.g. Asha Rao"
+            {...register("fullName")}
+          />
           {errors.fullName && (
             <p role="alert" className="mt-1 text-sm text-danger">
               {errors.fullName.message}
@@ -152,9 +158,15 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
 
         {isCreate && (
           <>
-            <div>
+            <div className="sm:col-span-2">
               <Label htmlFor="uf-email">Email</Label>
-              <Input id="uf-email" className="mt-1 h-11 lg:h-9" {...register("email")} />
+              <Input
+                id="uf-email"
+                inputMode="email"
+                className="mt-1 h-11 lg:h-9"
+                placeholder="name@company.com"
+                {...register("email")}
+              />
               {errors.email && (
                 <p role="alert" className="mt-1 text-sm text-danger">
                   {errors.email.message}
@@ -170,11 +182,22 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
 
         <div>
           <Label htmlFor="uf-designation">Designation</Label>
-          <Input id="uf-designation" className="mt-1 h-11 lg:h-9" {...register("designation")} />
+          <Input
+            id="uf-designation"
+            className="mt-1 h-11 lg:h-9"
+            placeholder="e.g. Senior Counsel"
+            {...register("designation")}
+          />
         </div>
         <div>
           <Label htmlFor="uf-phone">Phone</Label>
-          <Input id="uf-phone" className="mt-1 h-11 lg:h-9" {...register("phone")} />
+          <Input
+            id="uf-phone"
+            type="tel"
+            className="mt-1 h-11 lg:h-9"
+            placeholder="e.g. +966 5X XXX XXXX"
+            {...register("phone")}
+          />
         </div>
 
         <div>

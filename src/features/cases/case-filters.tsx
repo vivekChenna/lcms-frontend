@@ -22,7 +22,7 @@ import {
   useCategories,
   useDepartments,
   useEntities,
-  useLegalReps,
+  useCaseHolders,
 } from "@/lib/queries/lookups";
 import { PRIORITY_LABEL, SLA_LABEL, STATUS_ORDER } from "@/lib/labels";
 import type { CasePriority, SlaState } from "@/lib/api/types";
@@ -69,7 +69,7 @@ export function CaseFilters({ value, onChange, onClear, loading }: Props) {
   const departments = useDepartments();
   const entities = useEntities();
   const businessUnits = useBusinessUnits();
-  const legalReps = useLegalReps();
+  const legalReps = useCaseHolders();
 
   const caseTypeOptions = (caseTypes.data ?? []).filter(
     (t) => !value.categoryId || t.categoryId === value.categoryId,
@@ -128,14 +128,12 @@ export function CaseFilters({ value, onChange, onClear, loading }: Props) {
         items={businessUnitOptions}
         onChange={(v) => onChange({ businessUnitId: v })}
       />
-      {me?.role === "legal_manager" && (
-        <NameFilter
-          label="Assigned to"
-          value={value.assignedLegalRepId}
-          items={legalReps.data?.map((r) => ({ id: r.id, name: r.fullName }))}
-          onChange={(v) => onChange({ assignedLegalRepId: v })}
-        />
-      )}
+      <NameFilter
+        label="Legal representative"
+        value={value.assignedLegalRepId}
+        items={legalReps.data?.map((r) => ({ id: r.id, name: r.fullName }))}
+        onChange={(v) => onChange({ assignedLegalRepId: v })}
+      />
       {(me?.role === "legal_rep" || me?.role === "admin") && (
         <ToggleFilter
           id="case-mine"

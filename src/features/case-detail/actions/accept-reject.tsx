@@ -33,7 +33,8 @@ export function AcceptRejectActions({ caseId }: { caseId: string }) {
         type="button"
         size="sm"
         className="h-11 lg:h-9"
-        disabled={accept.isPending}
+        loading={accept.isPending}
+        loadingText="Accepting…"
         onClick={() => accept.mutate()}
       >
         Accept
@@ -58,7 +59,8 @@ export function AcceptRejectActions({ caseId }: { caseId: string }) {
           <Button
             type="button"
             className="h-11 lg:h-9"
-            disabled={reject.isPending}
+            loading={reject.isPending}
+            loadingText="Rejecting…"
             onClick={confirm}
           >
             Confirm

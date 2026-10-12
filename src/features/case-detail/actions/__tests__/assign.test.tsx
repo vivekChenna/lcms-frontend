@@ -39,17 +39,12 @@ function renderIt(open = true) {
 describe("AssignDialog", () => {
   it("lists the active legal reps and assigns the chosen one", async () => {
     fetchMock.mockImplementation((url: string) => {
-      if (String(url).includes("/users")) {
+      if (String(url).includes("/case-holders")) {
         return Promise.resolve(
-          json({
-            items: [
-              { id: "r1", fullName: "Rep One" },
-              { id: "r2", fullName: "Rep Two" },
-            ],
-            total: 2,
-            page: 1,
-            pageSize: 100,
-          }),
+          json([
+            { id: "r1", fullName: "Rep One", designation: null, role: "legal_rep" },
+            { id: "r2", fullName: "Rep Two", designation: null, role: "legal_rep" },
+          ]),
         );
       }
       return Promise.resolve(json({ id: "c1" }));
@@ -70,8 +65,40 @@ describe("AssignDialog", () => {
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
 
+  it("lets a manager pick themselves, marked as you, and sends their own id", async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (String(url).includes("/case-holders")) {
+        return Promise.resolve(
+          json([
+            { id: "r1", fullName: "Rep One", designation: null, role: "legal_rep" },
+            {
+              id: "u-legal_manager",
+              fullName: "Mia Manager",
+              designation: null,
+              role: "legal_manager",
+            },
+          ]),
+        );
+      }
+      return Promise.resolve(json({ id: "c1" }));
+    });
+    renderIt();
+
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(await screen.findByText(/Mia Manager/));
+    await userEvent.click(screen.getByRole("button", { name: /^assign$/i }));
+
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).includes("/cases/c1/assign"))).toBe(
+        true,
+      ),
+    );
+    const call = fetchMock.mock.calls.find((c) => String(c[0]).includes("/cases/c1/assign"));
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({ targetLegalRepId: "u-legal_manager" });
+  });
+
   it("disables Assign until a rep is chosen", async () => {
-    fetchMock.mockResolvedValue(json({ items: [], total: 0, page: 1, pageSize: 100 }));
+    fetchMock.mockResolvedValue(json([]));
     renderIt();
     expect(screen.getByRole("button", { name: /^assign$/i })).toBeDisabled();
   });

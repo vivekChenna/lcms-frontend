@@ -36,7 +36,9 @@ export function RoleDialog({ user, open, onOpenChange }: Props) {
         <Button
           type="button"
           className="h-11 lg:h-9"
-          disabled={role === user.role || changeRole.isPending}
+          disabled={role === user.role}
+          loading={changeRole.isPending}
+          loadingText="Saving…"
           onClick={confirm}
         >
           Save

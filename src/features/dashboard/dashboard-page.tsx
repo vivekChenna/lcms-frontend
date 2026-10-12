@@ -6,7 +6,7 @@ import { isLegal } from "@/lib/permissions";
 import { useDashboard } from "./use-dashboard";
 import { TilesSkeletonGrid, Tiles } from "./tiles";
 import { StatusChart } from "./status-chart";
-import { MyAssignedCases } from "./case-panel";
+import { MyAssignedCases, NeedsYourAction } from "./case-panel";
 import { ManagerPanels } from "./manager-panels";
 
 export function DashboardPage() {
@@ -28,9 +28,15 @@ export function DashboardPage() {
 
       {data && me && (
         <div className="space-y-6">
+          {(me.role === "legal_rep" || me.role === "legal_manager") && (
+            <NeedsYourAction items={data.myAssignedCases ?? []} />
+          )}
           <Tiles data={data} role={me.role} />
           <StatusChart byStatus={data.byStatus} />
-          {me.role === "legal_rep" && <MyAssignedCases items={data.myAssignedCases ?? []} />}
+          {(me.role === "legal_rep" ||
+            (me.role === "legal_manager" && (data.myAssignedCases?.length ?? 0) > 0)) && (
+            <MyAssignedCases items={data.myAssignedCases ?? []} />
+          )}
           {isLegal(me.role) && data.managerPanels && <ManagerPanels panels={data.managerPanels} />}
         </div>
       )}

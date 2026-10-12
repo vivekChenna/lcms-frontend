@@ -123,7 +123,13 @@ export function SimpleResourceTable({ resource, label, pluralLabel, rows }: Prop
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && add()}
         />
-        <Button type="button" disabled={!name.trim() || create.isPending} onClick={add}>
+        <Button
+          type="button"
+          disabled={!name.trim()}
+          loading={create.isPending}
+          loadingText="Adding…"
+          onClick={add}
+        >
           <Plus />
           Add
         </Button>

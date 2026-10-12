@@ -100,6 +100,22 @@ export function useChangePriority(caseId: string) {
   });
 }
 
+type TargetDatesBody = ApiBody<"/cases/{id}/target-dates", "patch">;
+
+/** Move the deadlines; PATCH .../target-dates, body { ackDueAt?, resolutionDueAt?, reason }. */
+export function useChangeTargetDates(caseId: string) {
+  const qc = useQueryClient();
+  return useMutation<unknown, ApiError, TargetDatesBody>({
+    mutationFn: (body) =>
+      apiJson<unknown>(`/cases/${caseId}/target-dates`, { method: "PATCH", json: body }),
+    onSuccess: async () => {
+      await invalidateCase(qc, caseId);
+      toast.success("Target dates updated");
+    },
+    onError: onErrorToast,
+  });
+}
+
 type UpdateBody = ApiBody<"/cases/{id}", "patch">;
 
 /** Edit case fields; PATCH /cases/{id}, partial body (an explicit null clears a field). */
@@ -117,19 +133,42 @@ export function useUpdateCase(caseId: string) {
 }
 
 export type CaseAction =
-  "accept" | "reject" | "assign" | "escalate" | "close" | "priority" | "edit";
+  "accept" | "reject" | "assign" | "escalate" | "close" | "priority" | "dates" | "edit";
 
 /**
  * Which workflow actions `me` may take on `caseItem` right now, in a fixed display order. Each rule
  * is one the server enforces, so no button is offered that would only be refused:
- * - accept/reject: the assigned representative, while the case is Assigned
+ * - accept/reject: the assigned representative (a legal manager holding the case counts), while it is Assigned
  * - escalate: the assigned representative, a manager or an admin
- * - close: the same people, and only from In Progress (not while Waiting on Input)
+ * - close: the same people, and only from In Progress (not while Waiting on Input); see closeButton for
+ *   the button that stays on screen, disabled with a reason, until then
  * - edit: the submitter or an admin, and only while Submitted
  */
+/**
+ * The Close case button: shown to everyone who may ever close this case, but only usable from In Progress.
+ * `reason` says why it is disabled, for the tooltip.
+ */
+export function closeButton(
+  me: Profile,
+  caseItem: CaseDto,
+): { visible: boolean; enabled: boolean; reason?: string } {
+  const mayActAsLegal = me.role === "legal_rep" ? caseItem.assignedLegalRepId === me.id : true;
+  if (!can.close(me.role) || !mayActAsLegal || caseItem.status === "Closed") {
+    return { visible: false, enabled: false };
+  }
+  if (caseItem.status === "In Progress") return { visible: true, enabled: true };
+  const reason =
+    caseItem.status === "Waiting on Input"
+      ? "Close is available once every information request has been answered."
+      : "The case must be accepted and in progress before it can be closed.";
+  return { visible: true, enabled: false, reason };
+}
+
 export function actionsFor(me: Profile, caseItem: CaseDto): CaseAction[] {
   const notClosed = caseItem.status !== "Closed";
-  const owningRep = me.role === "legal_rep" && caseItem.assignedLegalRepId === me.id;
+  const owningRep =
+    (me.role === "legal_rep" || me.role === "legal_manager") &&
+    caseItem.assignedLegalRepId === me.id;
   // a representative acts only on their own case; managers and admins on any
   const mayActAsLegal = me.role === "legal_rep" ? owningRep : true;
 
@@ -147,6 +186,7 @@ export function actionsFor(me: Profile, caseItem: CaseDto): CaseAction[] {
   if (canEscalate) actions.push("escalate");
   if (canClose) actions.push("close");
   if (can.changePriority(me.role) && notClosed) actions.push("priority");
+  if (can.changeTargetDates(me.role) && notClosed) actions.push("dates");
   if (canEdit) actions.push("edit");
   return actions;
 }

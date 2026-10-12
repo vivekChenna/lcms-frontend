@@ -12,7 +12,7 @@ import { ResultsRegion } from "@/components/common/results-region";
 import { ListSkeleton } from "@/components/common/skeletons";
 import { Eye, History } from "lucide-react";
 import { describe, type AuditRow } from "@/features/case-detail/audit/describe";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, personLabel } from "@/lib/format";
 import { roleLabel } from "@/lib/labels";
 import { AuditDetails } from "./audit-details";
 import { AuditFiltersBar } from "./audit-filters";
@@ -59,7 +59,7 @@ export function AuditPage() {
       header: "Actor",
       cell: (r) => (
         <>
-          <p>{r.actorName ?? "—"}</p>
+          <p>{personLabel(r.actorName, r.actorDesignation)}</p>
           {r.actorRole && <p className="text-xs text-muted-foreground">{roleLabel(r.actorRole)}</p>}
         </>
       ),
@@ -152,7 +152,9 @@ export function AuditPage() {
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">{formatDateTime(r.createdAt)}</p>
                   <p>
-                    <span className="font-medium">{r.actorName ?? "—"}</span>{" "}
+                    <span className="font-medium">
+                      {personLabel(r.actorName, r.actorDesignation)}
+                    </span>{" "}
                     {r.actorRole && (
                       <span className="text-muted-foreground">({roleLabel(r.actorRole)})</span>
                     )}

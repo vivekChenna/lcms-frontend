@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { apiJson } from "@/lib/api/client";
 import type { UserListDto } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, personLabel } from "@/lib/format";
 import { roleLabel } from "@/lib/labels";
 import {
   useBusinessUnits,
@@ -81,7 +81,9 @@ export function AuditDetails({ row, summary }: { row: AuditRow; summary: string 
       <dl className="grid grid-cols-[5rem_1fr] gap-x-4 gap-y-2 text-sm">
         <dt className="text-muted-foreground">Who</dt>
         <dd>
-          <span className="font-medium">{row.actorName ?? "System"}</span>
+          <span className="font-medium">
+            {row.actorName ? personLabel(row.actorName, row.actorDesignation) : "System"}
+          </span>
           {row.actorRole && (
             <span className="text-muted-foreground"> ({roleLabel(row.actorRole)})</span>
           )}

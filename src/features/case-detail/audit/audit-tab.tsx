@@ -4,7 +4,7 @@ import { History } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { Pagination } from "@/components/common/pagination";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, personLabel } from "@/lib/format";
 import { roleLabel } from "@/lib/labels";
 import { describe } from "./describe";
 import { useCaseAudit } from "./use-case-audit";
@@ -38,7 +38,9 @@ export function AuditTab({ caseId }: { caseId: string }) {
         {data.items.map((row) => (
           <li key={row.id} className="rounded-lg border bg-card p-3">
             <p>
-              <span className="font-medium">{row.actorName ?? "Someone"}</span>
+              <span className="font-medium">
+                {row.actorName ? personLabel(row.actorName, row.actorDesignation) : "Someone"}
+              </span>
               {row.actorRole && (
                 <span className="text-muted-foreground"> ({roleLabel(row.actorRole)})</span>
               )}{" "}

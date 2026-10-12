@@ -35,8 +35,13 @@ export function UserMenu({ me }: { me: Profile }) {
             <span className="grid size-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
               {initials(me.fullName)}
             </span>
-            <span className="hidden max-w-40 truncate text-sm font-medium xl:block">
-              {me.fullName}
+            <span className="hidden min-w-0 max-w-40 text-left xl:block">
+              <span className="block truncate text-sm font-medium leading-tight">
+                {me.fullName}
+              </span>
+              <span className="block truncate text-xs leading-tight text-muted-foreground">
+                {ROLE_LABEL[me.role]}
+              </span>
             </span>
           </button>
         </DropdownMenuTrigger>

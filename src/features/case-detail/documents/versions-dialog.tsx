@@ -1,7 +1,8 @@
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, personLabel } from "@/lib/format";
+import { PreviewButton } from "./preview-dialog";
 import { downloadDocument, useDocumentVersions } from "./use-documents";
 
 type Props = {
@@ -25,9 +26,11 @@ export function VersionsDialog({ documentId, filename, open, onOpenChange }: Pro
               <div className="min-w-0">
                 <p className="font-medium">Version {v.version}</p>
                 <p className="text-sm text-muted-foreground">
-                  {v.uploadedByName ?? "—"} — {formatDateTime(v.createdAt)}
+                  {personLabel(v.uploadedByName, v.uploadedByDesignation)} —{" "}
+                  {formatDateTime(v.createdAt)}
                 </p>
               </div>
+              <PreviewButton id={v.id} filename={v.filename || filename} />
               <Button
                 type="button"
                 variant="outline"

@@ -52,3 +52,12 @@ export function dueIn(iso: string): { text: string; overdue: boolean } {
     ? { text: `${age} overdue`, overdue: true }
     : { text: `in ${age}`, overdue: false };
 }
+
+/** "Asha Rao — Senior Counsel": a person's name with their job title alongside, when they have one. */
+export function personLabel(
+  name: string | null | undefined,
+  designation: string | null | undefined,
+): string {
+  if (!name) return "—";
+  return designation ? `${name} — ${designation}` : name;
+}

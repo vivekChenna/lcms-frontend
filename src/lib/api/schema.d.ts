@@ -4,6 +4,103 @@
  */
 
 export interface paths {
+    "/auth/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {string} */
+                            mode: "local" | "drona";
+                            localLoginAllowed: boolean;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/drona": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            accessToken: string;
+                            refreshToken: string;
+                            user: {
+                                id: string;
+                                fullName: string;
+                                email: string;
+                                designation: string | null;
+                                role: string;
+                                departmentId: string | null;
+                                departmentName: string | null;
+                                entityId: string | null;
+                                entityName: string | null;
+                                businessUnitId: string | null;
+                                businessUnitName: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -363,6 +460,7 @@ export interface paths {
                                 caseReference: string | null;
                                 actorId: string;
                                 actorName: string | null;
+                                actorDesignation: string | null;
                                 actorRole: string | null;
                                 action: string;
                                 beforeValue: unknown | null;
@@ -421,6 +519,7 @@ export interface paths {
                                 caseReference: string | null;
                                 actorId: string;
                                 actorName: string | null;
+                                actorDesignation: string | null;
                                 actorRole: string | null;
                                 action: string;
                                 beforeValue: unknown | null;
@@ -588,6 +687,46 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/case-holders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            fullName: string;
+                            designation: string | null;
+                            role: string;
+                        }[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1852,6 +1991,7 @@ export interface paths {
                                 requesterDesignation: string | null;
                                 assignedLegalRepName: string | null;
                                 assignedLegalRepRole: string | null;
+                                assignedLegalRepDesignation: string | null;
                                 categoryName: string | null;
                                 caseTypeName: string | null;
                                 departmentName: string | null;
@@ -1966,6 +2106,7 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2097,6 +2238,7 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2198,6 +2340,7 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2293,6 +2436,7 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2381,6 +2525,7 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2475,6 +2620,7 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2570,6 +2716,7 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2668,6 +2815,104 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
+                            categoryName: string | null;
+                            caseTypeName: string | null;
+                            departmentName: string | null;
+                            entityName: string | null;
+                            businessUnitName: string | null;
+                            /** @enum {string} */
+                            slaState: "on_track" | "at_risk" | "breached" | "met";
+                            caseAgeHours: number;
+                            createdAt: string;
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/cases/{id}/target-dates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        ackDueAt?: unknown;
+                        resolutionDueAt?: unknown;
+                        reason: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            referenceNumber: string;
+                            title: string;
+                            description: string;
+                            declarationConfirmed: boolean;
+                            categoryId: string;
+                            caseTypeId: string;
+                            departmentId: string;
+                            entityId: string;
+                            businessUnitId: string | null;
+                            /** @enum {string} */
+                            priority: "P1" | "P2" | "P3" | "P4";
+                            /** @enum {string} */
+                            status: "Submitted" | "Assigned" | "In Progress" | "Waiting on Input" | "Closed";
+                            isEscalated: boolean;
+                            escalationReason: string | null;
+                            waitingOnReason: string | null;
+                            requesterId: string;
+                            assignedLegalRepId: string | null;
+                            assignmentAcceptedAt: string | null;
+                            ackDueAt: string;
+                            resolutionDueAt: string;
+                            closureSummary: string | null;
+                            closureOutcomeId: string | null;
+                            closedById: string | null;
+                            closedAt: string | null;
+                            isConfidential: boolean;
+                            contactName: string | null;
+                            contactEmail: string | null;
+                            contactPhone: string | null;
+                            desiredOutcome: string | null;
+                            incidentDate: string | null;
+                            businessDeadline: string | null;
+                            counterparty: string | null;
+                            estimatedValue: number | null;
+                            thirdPartyDetails: string | null;
+                            requesterName: string | null;
+                            requesterDesignation: string | null;
+                            assignedLegalRepName: string | null;
+                            assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2763,6 +3008,7 @@ export interface paths {
                             requesterDesignation: string | null;
                             assignedLegalRepName: string | null;
                             assignedLegalRepRole: string | null;
+                            assignedLegalRepDesignation: string | null;
                             categoryName: string | null;
                             caseTypeName: string | null;
                             departmentName: string | null;
@@ -2811,9 +3057,11 @@ export interface paths {
                             requirementDescription: string;
                             raisedById: string;
                             raisedByName: string | null;
+                            raisedByDesignation: string | null;
                             raisedByRole: string | null;
                             responderId: string;
                             responderName: string | null;
+                            responderDesignation: string | null;
                             dueDate: string | null;
                             /** @enum {string} */
                             status: "open" | "answered" | "superseded";
@@ -2861,9 +3109,11 @@ export interface paths {
                             requirementDescription: string;
                             raisedById: string;
                             raisedByName: string | null;
+                            raisedByDesignation: string | null;
                             raisedByRole: string | null;
                             responderId: string;
                             responderName: string | null;
+                            responderDesignation: string | null;
                             dueDate: string | null;
                             /** @enum {string} */
                             status: "open" | "answered" | "superseded";
@@ -2876,6 +3126,48 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cases/{id}/information-request-responders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            fullName: string;
+                            designation: string | null;
+                            role: string | null;
+                        }[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2921,9 +3213,11 @@ export interface paths {
                             requirementDescription: string;
                             raisedById: string;
                             raisedByName: string | null;
+                            raisedByDesignation: string | null;
                             raisedByRole: string | null;
                             responderId: string;
                             responderName: string | null;
+                            responderDesignation: string | null;
                             dueDate: string | null;
                             /** @enum {string} */
                             status: "open" | "answered" | "superseded";
@@ -2981,9 +3275,11 @@ export interface paths {
                             requirementDescription: string;
                             raisedById: string;
                             raisedByName: string | null;
+                            raisedByDesignation: string | null;
                             raisedByRole: string | null;
                             responderId: string;
                             responderName: string | null;
+                            responderDesignation: string | null;
                             dueDate: string | null;
                             /** @enum {string} */
                             status: "open" | "answered" | "superseded";
@@ -3031,6 +3327,7 @@ export interface paths {
                             caseId: string;
                             authorId: string;
                             authorName: string | null;
+                            authorDesignation: string | null;
                             authorRole: string | null;
                             body: string;
                             isInternal: boolean;
@@ -3072,6 +3369,7 @@ export interface paths {
                             caseId: string;
                             authorId: string;
                             authorName: string | null;
+                            authorDesignation: string | null;
                             authorRole: string | null;
                             body: string;
                             isInternal: boolean;
@@ -3148,6 +3446,7 @@ export interface paths {
                             caseId: string;
                             authorId: string;
                             authorName: string | null;
+                            authorDesignation: string | null;
                             authorRole: string | null;
                             body: string;
                             isInternal: boolean;
@@ -3201,6 +3500,7 @@ export interface paths {
                             previousVersionId: string | null;
                             uploaderId: string;
                             uploadedByName: string | null;
+                            uploadedByDesignation: string | null;
                             createdAt: string;
                         }[];
                     };
@@ -3241,6 +3541,7 @@ export interface paths {
                             previousVersionId: string | null;
                             uploaderId: string;
                             uploadedByName: string | null;
+                            uploadedByDesignation: string | null;
                             createdAt: string;
                         };
                     };
@@ -3291,6 +3592,7 @@ export interface paths {
                             previousVersionId: string | null;
                             uploaderId: string;
                             uploadedByName: string | null;
+                            uploadedByDesignation: string | null;
                             createdAt: string;
                         }[];
                     };
@@ -3331,6 +3633,7 @@ export interface paths {
                             previousVersionId: string | null;
                             uploaderId: string;
                             uploadedByName: string | null;
+                            uploadedByDesignation: string | null;
                             createdAt: string;
                         };
                     };
@@ -3422,6 +3725,7 @@ export interface paths {
                             previousVersionId: string | null;
                             uploaderId: string;
                             uploadedByName: string | null;
+                            uploadedByDesignation: string | null;
                             createdAt: string;
                         };
                     };
@@ -3664,6 +3968,7 @@ export interface paths {
                                 /** @enum {string} */
                                 slaState: "on_track" | "at_risk" | "breached" | "met";
                                 assignedLegalRepName: string | null;
+                                assignedLegalRepDesignation: string | null;
                             }[];
                             managerPanels?: {
                                 openCaseloadByRep: {
@@ -3686,6 +3991,7 @@ export interface paths {
                                         /** @enum {string} */
                                         slaState: "on_track" | "at_risk" | "breached" | "met";
                                         assignedLegalRepName: string | null;
+                                        assignedLegalRepDesignation: string | null;
                                     }[];
                                 };
                                 awaitingAcceptance: {
@@ -3702,6 +4008,7 @@ export interface paths {
                                         /** @enum {string} */
                                         slaState: "on_track" | "at_risk" | "breached" | "met";
                                         assignedLegalRepName: string | null;
+                                        assignedLegalRepDesignation: string | null;
                                     }[];
                                 };
                             };

@@ -51,7 +51,8 @@ export function RespondDialog({ request, open, onOpenChange }: Props) {
         <Button
           type="button"
           className="h-11 lg:h-9"
-          disabled={respond.isPending}
+          loading={respond.isPending}
+          loadingText="Sending…"
           onClick={confirm}
         >
           Send response

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { PriorityBadge, SlaBadge, StatusBadge } from "@/components/common/badges";
 import type { CaseDto } from "@/lib/api/types";
-import { formatDate, formatDateTime, formatMoney, humanAge } from "@/lib/format";
+import { formatDate, formatDateTime, formatMoney, humanAge, personLabel } from "@/lib/format";
 import { nameOf, useClosureOutcomes } from "@/lib/queries/lookups";
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
@@ -56,13 +56,13 @@ export function OverviewTab({ caseItem: c }: { caseItem: CaseDto }) {
       <Section title="People">
         <Field
           label="Requester"
-          value={[c.requesterName, c.requesterDesignation].filter(Boolean).join(" — ") || null}
+          value={c.requesterName ? personLabel(c.requesterName, c.requesterDesignation) : null}
         />
         <Field
           label="Assignee"
           value={
             c.assignedLegalRepName
-              ? [c.assignedLegalRepName, c.assignedLegalRepRole].filter(Boolean).join(" — ")
+              ? personLabel(c.assignedLegalRepName, c.assignedLegalRepDesignation)
               : null
           }
         />

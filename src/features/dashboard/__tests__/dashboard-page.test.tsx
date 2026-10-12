@@ -75,6 +75,26 @@ describe("DashboardPage", () => {
     await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/cases\/[^/]+$/));
   });
 
+  it("puts newly assigned cases at the top as quick actions", async () => {
+    fetchMock.mockResolvedValue(json(repDashboard()));
+    renderAt("legal_rep");
+    const section = (await screen.findByRole("heading", { name: /needs your action/i })).closest(
+      "section",
+    ) as HTMLElement;
+    expect(within(section).getByText("AGC-INT-000002")).toBeInTheDocument();
+    expect(within(section).getByRole("button", { name: /accept/i })).toBeInTheDocument();
+    expect(within(section).getByRole("button", { name: /reject/i })).toBeInTheDocument();
+    // only cases still waiting for a yes or no: the one already in progress is not listed
+    expect(within(section).queryByText("AGC-INT-000003")).not.toBeInTheDocument();
+  });
+
+  it("shows no quick-action block to a requester", async () => {
+    fetchMock.mockResolvedValue(json(requesterDashboard()));
+    renderAt("requester");
+    await screen.findByText("Cases by status");
+    expect(screen.queryByRole("heading", { name: /needs your action/i })).not.toBeInTheDocument();
+  });
+
   it("does not open the case when Accept is clicked", async () => {
     fetchMock.mockResolvedValue(json(repDashboard()));
     const { router } = renderAt("legal_rep");
@@ -152,7 +172,9 @@ describe("DashboardPage", () => {
   it("opens the case when an unassigned row is clicked, but Assign works in place", async () => {
     fetchMock.mockResolvedValue(json(managerDashboard()));
     const { router } = renderAt("legal_manager");
-    const row = (await screen.findByText("[Demo] Vendor payment dispute")).closest("tr") as HTMLElement;
+    const row = (await screen.findByText("[Demo] Vendor payment dispute")).closest(
+      "tr",
+    ) as HTMLElement;
 
     await userEvent.click(within(row).getByRole("button", { name: /^assign$/i }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();

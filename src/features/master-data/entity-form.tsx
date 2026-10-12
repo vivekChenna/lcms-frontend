@@ -89,7 +89,9 @@ function EntityRow({
           type="button"
           size="sm"
           variant="outline"
-          disabled={!newUnit.trim() || createUnit.isPending}
+          disabled={!newUnit.trim()}
+          loading={createUnit.isPending}
+          loadingText="Adding…"
           onClick={addUnit}
         >
           <Plus />
@@ -135,6 +137,7 @@ export function EntityForm({ entities, businessUnits }: Props) {
           <Input
             id="entity-name"
             className="mt-1 h-11 lg:h-9"
+            placeholder="e.g. Algihaz Holding"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -144,6 +147,7 @@ export function EntityForm({ entities, businessUnits }: Props) {
           <Input
             id="entity-code"
             className="mt-1 h-11 lg:h-9"
+            placeholder="e.g. AGC"
             value={code}
             onChange={(e) => setCode(e.target.value)}
           />
@@ -151,7 +155,9 @@ export function EntityForm({ entities, businessUnits }: Props) {
         <Button
           type="button"
           className="self-end"
-          disabled={!name.trim() || !code.trim() || createEntity.isPending}
+          disabled={!name.trim() || !code.trim()}
+          loading={createEntity.isPending}
+          loadingText="Adding…"
           onClick={addEntity}
         >
           <Plus />

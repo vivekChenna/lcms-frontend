@@ -45,6 +45,12 @@ export type DocumentListDto = ApiResponse<"/cases/{id}/documents", "get">;
 export type DocumentDto = DocumentListDto[number];
 export type InfoRequestListDto = ApiResponse<"/cases/{id}/information-requests", "get">;
 export type InfoRequestDto = InfoRequestListDto[number];
+export type ResponderCandidateListDto = ApiResponse<
+  "/cases/{id}/information-request-responders",
+  "get"
+>;
+export type ResponderCandidateDto = ResponderCandidateListDto[number];
+export type CaseHolderListDto = ApiResponse<"/case-holders", "get">;
 export type AuditListDto = ApiResponse<"/audit", "get">;
 
 export type SlaComplianceReportDto = ApiResponse<"/reports/sla-compliance", "get">;

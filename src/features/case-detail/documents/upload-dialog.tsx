@@ -30,16 +30,22 @@ export function fileHint(file: File): string | undefined {
   return undefined;
 }
 
-type Props = { caseId: string; open: boolean; onOpenChange: (open: boolean) => void };
+type Props = {
+  caseId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** The category the picker starts on (the close dialog starts it on "Closure Document"). */
+  defaultCategory?: Category;
+};
 
 /**
  * Choose or drop files, check them in the list, then press Upload. Nothing is sent before that.
  * Files upload one by one; the ones that go through leave the list, a rejected one stays with its
  * reason so it can be removed or retried without redoing the rest.
  */
-export function UploadDialog({ caseId, open, onOpenChange }: Props) {
+export function UploadDialog({ caseId, open, onOpenChange, defaultCategory = "Other" }: Props) {
   const upload = useUploadDocument(caseId);
-  const [category, setCategory] = useState<Category>("Other");
+  const [category, setCategory] = useState<Category>(defaultCategory);
   const [staged, setStaged] = useState<Staged[]>([]);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);

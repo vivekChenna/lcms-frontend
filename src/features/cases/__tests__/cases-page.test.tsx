@@ -34,6 +34,9 @@ function withLookupDefaults(handler: (url: string) => Response | Promise<Respons
     if (/\/(case-categories|case-types|departments|entities|business-units)(\?|$)/.test(url)) {
       return Promise.resolve(json([]));
     }
+    if (/\/case-holders$/.test(url)) {
+      return Promise.resolve(json([]));
+    }
     if (/\/users\?/.test(url)) {
       return Promise.resolve(json({ items: [], total: 0, page: 1, pageSize: 100 }));
     }

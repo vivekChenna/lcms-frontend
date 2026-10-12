@@ -9,9 +9,10 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
 import type { CaseDto, DocumentDto, InfoRequestDto, Profile } from "@/lib/api/types";
-import { formatDate, formatDateTime, formatSize } from "@/lib/format";
+import { formatDate, formatDateTime, formatSize, personLabel } from "@/lib/format";
 import { roleLabel } from "@/lib/labels";
 import { can } from "@/lib/permissions";
+import { PreviewButton } from "../documents/preview-dialog";
 import { downloadDocument, useDocuments } from "../documents/use-documents";
 import { RaiseDialog } from "./raise-dialog";
 import { RespondDialog } from "./respond-dialog";
@@ -53,7 +54,13 @@ function ReopenDialog({
       pending={reopen.isPending}
       title="Reopen this request"
       footer={
-        <Button type="button" className="h-11 lg:h-9" disabled={reopen.isPending} onClick={confirm}>
+        <Button
+          type="button"
+          className="h-11 lg:h-9"
+          loading={reopen.isPending}
+          loadingText="Reopening…"
+          onClick={confirm}
+        >
           Reopen
         </Button>
       }
@@ -97,10 +104,11 @@ function RequestAttachments({ files }: { files: DocumentDto[] }) {
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium">{d.filename}</span>
               <span className="block text-xs text-muted-foreground">
-                {formatSize(d.sizeBytes)} · {d.uploadedByName ?? "—"} ·{" "}
-                {formatDateTime(d.createdAt)}
+                {formatSize(d.sizeBytes)} · {personLabel(d.uploadedByName, d.uploadedByDesignation)}{" "}
+                · {formatDateTime(d.createdAt)}
               </span>
             </span>
+            <PreviewButton id={d.id} filename={d.filename} />
             <Button
               type="button"
               variant="outline"
@@ -140,7 +148,7 @@ function RequestCard({
         <div className="min-w-0">
           <p className="font-medium">{request.subject}</p>
           <p className="text-sm text-muted-foreground">
-            Raised by {request.raisedByName ?? "—"} (
+            Raised by {personLabel(request.raisedByName, request.raisedByDesignation)} (
             {request.raisedByRole ? roleLabel(request.raisedByRole) : "—"}) —{" "}
             {formatDateTime(request.createdAt)}
           </p>
@@ -156,7 +164,7 @@ function RequestCard({
       {request.responseText && (
         <div className="mt-3 rounded-md bg-muted p-3">
           <p className="text-xs text-muted-foreground">
-            Response from {request.responderName ?? "—"}
+            Response from {personLabel(request.responderName, request.responderDesignation)}
           </p>
           <p className="mt-1 whitespace-pre-wrap">{request.responseText}</p>
         </div>

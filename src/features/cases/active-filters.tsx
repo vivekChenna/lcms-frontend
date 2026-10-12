@@ -7,7 +7,7 @@ import {
   useCategories,
   useDepartments,
   useEntities,
-  useLegalReps,
+  useCaseHolders,
 } from "@/lib/queries/lookups";
 import type { CasesSearch } from "./search-params";
 
@@ -33,7 +33,7 @@ export function ActiveFilters({
   const departments = useDepartments();
   const entities = useEntities();
   const businessUnits = useBusinessUnits();
-  const legalReps = useLegalReps();
+  const legalReps = useCaseHolders();
 
   const chips: Chip[] = [];
   if (value.status)

@@ -58,6 +58,7 @@ export function repDashboard(): DashboardDto {
         resolutionDueAt: "2026-10-09T20:12:18.829Z",
         slaState: "on_track",
         assignedLegalRepName: "Vivek Legal Rep",
+        assignedLegalRepDesignation: null,
       },
       {
         id: "c-in-progress",
@@ -68,6 +69,7 @@ export function repDashboard(): DashboardDto {
         resolutionDueAt: "2026-10-05T20:12:18.829Z",
         slaState: "breached",
         assignedLegalRepName: "Vivek Legal Rep",
+        assignedLegalRepDesignation: null,
       },
     ],
   };
@@ -95,6 +97,7 @@ export function managerDashboard(): DashboardDto {
             resolutionDueAt: "2026-10-09T20:12:18.796Z",
             slaState: "on_track",
             assignedLegalRepName: null,
+            assignedLegalRepDesignation: null,
           },
         ],
       },
@@ -110,6 +113,7 @@ export function managerDashboard(): DashboardDto {
             resolutionDueAt: "2026-10-11T20:12:18.796Z",
             slaState: "on_track",
             assignedLegalRepName: "Vivek Legal Rep",
+            assignedLegalRepDesignation: null,
           },
         ],
       },

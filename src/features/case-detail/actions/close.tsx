@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FileText, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
+import { UploadDialog } from "../documents/upload-dialog";
+import { useDocuments } from "../documents/use-documents";
 import { useClosureOutcomes } from "@/lib/queries/lookups";
 import { useCloseCase } from "../use-case-actions";
 
@@ -21,7 +34,8 @@ type Props = {
 };
 
 /**
- * Close a case: requires an outcome, a summary and an explicit confirmation checkbox.
+ * Close a case: requires an outcome, a summary, at least one closure document and an explicit
+ * confirmation checkbox, and then asks once more ("Are you sure?") before anything is sent.
  * A 409 (e.g. an open information request) shows the backend's message inline and leaves the
  * dialog open, rather than closing it as if the request had succeeded.
  */
@@ -31,11 +45,17 @@ export function CloseCaseDialog({ caseId, open, onOpenChange }: Props) {
   const [outcomeId, setOutcomeId] = useState("");
   const [summary, setSummary] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [sure, setSure] = useState(false);
+  const documents = useDocuments(caseId);
+  const closureDocuments = (documents.data ?? []).filter((d) => d.category === "Closure Document");
 
-  const canSubmit = !!outcomeId && summary.trim().length > 0 && confirmed;
+  const canSubmit =
+    !!outcomeId && summary.trim().length > 0 && closureDocuments.length > 0 && confirmed;
 
   const confirm = () => {
     if (!canSubmit) return;
+    setSure(false);
     close.mutate(
       { confirm: true, closureSummary: summary.trim(), closureOutcomeId: outcomeId },
       { onSuccess: () => onOpenChange(false) },
@@ -53,8 +73,10 @@ export function CloseCaseDialog({ caseId, open, onOpenChange }: Props) {
         <Button
           type="button"
           className="h-11 lg:h-9"
-          disabled={!canSubmit || close.isPending}
-          onClick={confirm}
+          disabled={!canSubmit}
+          loading={close.isPending}
+          loadingText="Closing…"
+          onClick={() => setSure(true)}
         >
           Close case
         </Button>
@@ -85,6 +107,31 @@ export function CloseCaseDialog({ caseId, open, onOpenChange }: Props) {
         className="mt-1"
       />
 
+      <p className="mt-4 text-sm font-medium">Closure documents</p>
+      <p className="text-sm text-muted-foreground">
+        At least one is required, such as a settlement agreement or a closing memo.
+      </p>
+      {closureDocuments.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {closureDocuments.map((d) => (
+            <li key={d.id} className="flex items-center gap-2 text-sm">
+              <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="min-w-0 truncate">{d.filename}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="mt-2 h-11 lg:h-8"
+        onClick={() => setUploadOpen(true)}
+      >
+        <Upload aria-hidden />
+        Upload closure document
+      </Button>
+
       <div className="mt-4 flex items-start gap-2">
         <Checkbox
           id="close-confirm"
@@ -101,6 +148,27 @@ export function CloseCaseDialog({ caseId, open, onOpenChange }: Props) {
           {close.error.message}
         </p>
       )}
+
+      <UploadDialog
+        caseId={caseId}
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        defaultCategory="Closure Document"
+      />
+      <AlertDialog open={sure} onOpenChange={setSure}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Close this case for good?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Once closed, nothing on this case can be changed and it cannot be reopened.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go back</AlertDialogCancel>
+            <AlertDialogAction onClick={confirm}>Yes, close the case</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ResponsiveDialog>
   );
 }
