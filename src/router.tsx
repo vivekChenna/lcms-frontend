@@ -33,6 +33,11 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    // Matches vite.config.ts's `base` (import.meta.env.BASE_URL is Vite's own name for
+    // it) so the two can never drift apart -- "/" locally and on a root-path deploy,
+    // or e.g. "/lcms-frontend" when VITE_BASE_PATH is set at build time. TanStack
+    // Router wants no trailing slash; BASE_URL always has one except at the bare "/".
+    basepath: import.meta.env.BASE_URL.replace(/\/$/, "") || "/",
   });
 
   // A failed refresh sends the user to /login once, remembering where they were.
