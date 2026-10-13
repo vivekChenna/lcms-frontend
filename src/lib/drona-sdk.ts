@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-const SDK_URL = "/dronahq.js";
+const SDK_URL = `${import.meta.env.BASE_URL.replace(/\/$/, "")}/dronahq.js`;
 const TIMEOUT_MS = 10_000;
 
 let loading: Promise<void> | undefined;
