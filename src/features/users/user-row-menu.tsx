@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { UserDto } from "@/lib/api/types";
+import { usePasswordSignIn } from "@/lib/auth";
 
 type Props = {
   user: UserDto;
@@ -21,6 +22,7 @@ type Props = {
 
 /** One "⋯" menu per user row instead of four loose text buttons. */
 export function UserRowMenu({ user, isSelf, onEdit, onRole, onSendLink, onToggleActive }: Props) {
+  const passwordSignIn = usePasswordSignIn();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -41,7 +43,7 @@ export function UserRowMenu({ user, isSelf, onEdit, onRole, onSendLink, onToggle
         <DropdownMenuItem onSelect={onRole}>
           <ShieldCheck aria-hidden /> Change role
         </DropdownMenuItem>
-        {user.isActive && (
+        {user.isActive && passwordSignIn && (
           <DropdownMenuItem onSelect={onSendLink}>
             <KeyRound aria-hidden /> {user.isInvited ? "Resend invite" : "Send password reset link"}
           </DropdownMenuItem>

@@ -22,7 +22,7 @@ import { ResultsRegion } from "@/components/common/results-region";
 import { ListSkeleton } from "@/components/common/skeletons";
 import { SearchInput } from "@/components/common/search-input";
 import { useDebouncedField } from "@/hooks/use-debounced-field";
-import { useMe } from "@/lib/auth";
+import { useMe, usePasswordSignIn } from "@/lib/auth";
 import type { UserDto, UserRole } from "@/lib/api/types";
 import { nameOf, useBusinessUnits, useDepartments, useEntities } from "@/lib/queries/lookups";
 import { ROLE_LABEL } from "@/lib/labels";
@@ -38,8 +38,10 @@ const ROLES: UserRole[] = ["admin", "legal_manager", "legal_rep", "requester", "
 
 /** Active, Inactive, or Invited (added by an admin, has not chosen a password yet). */
 function StatusBadge({ user }: { user: UserDto }) {
+  // "Invited" means no password chosen yet, which says nothing when nobody uses passwords
+  const passwordSignIn = usePasswordSignIn();
   if (!user.isActive) return <Badge variant="secondary">Inactive</Badge>;
-  if (user.isInvited)
+  if (user.isInvited && passwordSignIn)
     return (
       <Badge variant="outline" className="border-warning/40 bg-warning/15 text-warning-foreground">
         Invited

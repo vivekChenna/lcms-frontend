@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Profile } from "@/lib/api/types";
-import { useLogout } from "@/lib/auth";
+import { useLogout, usePasswordSignIn } from "@/lib/auth";
 import { ROLE_LABEL } from "@/lib/labels";
 
 const initials = (name: string) =>
@@ -22,6 +22,8 @@ const initials = (name: string) =>
 
 export function UserMenu({ me }: { me: Profile }) {
   const logout = useLogout();
+  // in Drona mode the session belongs to the DronaHQ container, so there is nothing to sign out of here
+  const canSignOut = usePasswordSignIn();
 
   return (
     <>
@@ -60,14 +62,16 @@ export function UserMenu({ me }: { me: Profile }) {
               Profile
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="min-h-11 lg:min-h-8"
-            disabled={logout.isPending}
-            onSelect={() => logout.mutate()}
-          >
-            <LogOut />
-            Sign out
-          </DropdownMenuItem>
+          {canSignOut && (
+            <DropdownMenuItem
+              className="min-h-11 lg:min-h-8"
+              disabled={logout.isPending}
+              onSelect={() => logout.mutate()}
+            >
+              <LogOut />
+              Sign out
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </>

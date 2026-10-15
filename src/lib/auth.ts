@@ -39,6 +39,16 @@ export function useDronaSignIn() {
   });
 }
 
+/**
+ * True when people sign in with a password. In Drona mode they do not, so everything about passwords
+ * (change password, reset and invite links, the "Invited" label) and signing out is hidden. Until the
+ * server answers, or if it cannot, the password screens stay, which is the safe default.
+ */
+export function usePasswordSignIn(): boolean {
+  const { data } = useQuery({ ...authConfigQueryOptions(), staleTime: Infinity });
+  return data?.mode !== "drona";
+}
+
 export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({

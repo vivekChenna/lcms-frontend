@@ -5,7 +5,7 @@ import { ChangePasswordDialog } from "@/components/layout/change-password-dialog
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useMe } from "@/lib/auth";
+import { useMe, usePasswordSignIn } from "@/lib/auth";
 import { ROLE_LABEL } from "@/lib/labels";
 import {
   isSoundEnabled,
@@ -26,6 +26,7 @@ const initials = (name: string) =>
 export function ProfilePage() {
   const me = useMe();
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const passwordSignIn = usePasswordSignIn();
   const [sound, setSound] = useState(isSoundEnabled);
   if (!me) return null;
 
@@ -107,23 +108,25 @@ export function ProfilePage() {
         </section>
       )}
 
-      <section className="rounded-xl border bg-card p-5" aria-labelledby="profile-security">
-        <h2 id="profile-security" className="text-base font-semibold">
-          Password
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Changing your password signs you out on every device.
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-4"
-          onClick={() => setPasswordOpen(true)}
-        >
-          <KeyRound aria-hidden />
-          Change password
-        </Button>
-      </section>
+      {passwordSignIn && (
+        <section className="rounded-xl border bg-card p-5" aria-labelledby="profile-security">
+          <h2 id="profile-security" className="text-base font-semibold">
+            Password
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Changing your password signs you out on every device.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4"
+            onClick={() => setPasswordOpen(true)}
+          >
+            <KeyRound aria-hidden />
+            Change password
+          </Button>
+        </section>
+      )}
 
       <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
     </div>
