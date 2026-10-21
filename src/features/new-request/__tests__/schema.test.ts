@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { dayAfter, localToday } from "@/lib/dates";
 import { requestSchema, toCreateBody, type RequestFormValues } from "../schema";
 
 function values(overrides: Partial<RequestFormValues> = {}): RequestFormValues {
@@ -17,8 +18,8 @@ function values(overrides: Partial<RequestFormValues> = {}): RequestFormValues {
     contactPhone: "",
     counterparty: "",
     estimatedValue: "",
-    incidentDate: "",
-    businessDeadline: "",
+    incidentDate: "2026-01-10",
+    businessDeadline: "2026-12-31",
     desiredOutcome: "",
     thirdPartyDetails: "",
     declarationConfirmed: true,
@@ -85,6 +86,37 @@ describe("requestSchema", () => {
   it("accepts a blank contact email", () => {
     const result = requestSchema.safeParse(values({ contactEmail: "" }));
     expect(result.success).toBe(true);
+  });
+
+  it("requires the incident date and the business deadline", () => {
+    expect(requestSchema.safeParse(values({ incidentDate: "" })).success).toBe(false);
+    expect(requestSchema.safeParse(values({ businessDeadline: "" })).success).toBe(false);
+  });
+
+  it("rejects an incident date in the future", () => {
+    const tomorrow = dayAfter(localToday());
+    const result = requestSchema.safeParse(
+      values({ incidentDate: tomorrow, businessDeadline: dayAfter(tomorrow) }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a business deadline on or before the incident date", () => {
+    expect(
+      requestSchema.safeParse(
+        values({ incidentDate: "2026-05-01", businessDeadline: "2026-05-01" }),
+      ).success,
+    ).toBe(false);
+    expect(
+      requestSchema.safeParse(
+        values({ incidentDate: "2026-05-02", businessDeadline: "2026-05-01" }),
+      ).success,
+    ).toBe(false);
+    expect(
+      requestSchema.safeParse(
+        values({ incidentDate: "2026-05-01", businessDeadline: "2026-05-02" }),
+      ).success,
+    ).toBe(true);
   });
 
   it("rejects an estimated value above the backend's limit", () => {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { localToday } from "@/lib/dates";
 
 const ISO = "yyyy-MM-dd";
 
@@ -15,6 +16,9 @@ type Props = {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** Earliest and latest pickable day, "YYYY-MM-DD". Days outside are greyed out and cannot be chosen. */
+  min?: string | undefined;
+  max?: string | undefined;
   className?: string;
   "aria-invalid"?: boolean | undefined;
   "aria-describedby"?: string | undefined;
@@ -33,11 +37,17 @@ export function DatePicker({
   onChange,
   placeholder = "Pick a date",
   disabled,
+  min,
+  max,
   className,
   ...aria
 }: Props) {
   const [open, setOpen] = useState(false);
   const selected = toDate(value);
+  const minDate = toDate(min ?? "");
+  const maxDate = toDate(max ?? "");
+  const today = localToday();
+  const todayAllowed = (!min || today >= min) && (!max || today <= max);
 
   const choose = (d: Date | undefined) => {
     onChange(d ? format(d, ISO) : "");
@@ -73,6 +83,10 @@ export function DatePicker({
           selected={selected}
           {...(selected ? { defaultMonth: selected } : {})}
           onSelect={choose}
+          disabled={[
+            ...(minDate ? [{ before: minDate }] : []),
+            ...(maxDate ? [{ after: maxDate }] : []),
+          ]}
           captionLayout="dropdown"
           startMonth={new Date(2000, 0)}
           endMonth={new Date(2100, 11)}
@@ -82,7 +96,13 @@ export function DatePicker({
           <Button type="button" variant="ghost" size="sm" onClick={() => choose(undefined)}>
             Clear
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => choose(new Date())}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!todayAllowed}
+            onClick={() => choose(toDate(today))}
+          >
             Today
           </Button>
         </div>

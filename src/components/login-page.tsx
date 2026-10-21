@@ -97,7 +97,7 @@ export function LoginPage({
             type="email"
             inputMode="email"
             autoComplete="email"
-            placeholder="name@company.com"
+            placeholder="name@algihaz.com"
             className={AUTH_FIELD}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}

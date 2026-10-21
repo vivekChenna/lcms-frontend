@@ -1,3 +1,4 @@
+import { userTimeZone } from "@/lib/dates";
 import { ApiError, type ApiErrorBody } from "./errors";
 
 const BASE = ((import.meta.env["VITE_API_BASE_URL"] as string | undefined) ?? "").replace(
@@ -49,6 +50,8 @@ const NO_RETRY = [
 export async function apiFetch(path: string, init: Init = {}, retried = false): Promise<Response> {
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
+  // the server judges date rules ("not in the future") in the caller's own time zone
+  headers.set("X-Timezone", userTimeZone());
   let body: BodyInit | null | undefined = init.body;
   if (init.json !== undefined) {
     body = JSON.stringify(init.json);

@@ -19,6 +19,7 @@ import { ResponsiveDialog } from "@/components/common/responsive-dialog";
 import type { ApiBody, CaseDto } from "@/lib/api/types";
 import { useCaseTypes, useCategories, useDepartments } from "@/lib/queries/lookups";
 import { parseMoney } from "@/features/new-request/schema";
+import { dayAfter, intakeDateIssues, localToday } from "@/lib/dates";
 import { useUpdateCase } from "../use-case-actions";
 
 const optionalText = (max: number) => z.string().trim().max(max).optional().default("");
@@ -28,30 +29,37 @@ const optionalEmail = z
   .default("");
 const MAX_MONEY = 999_999_999_999.99;
 
-const editSchema = z.object({
-  title: z.string().trim().min(1, "Title is required"),
-  description: z.string().trim().min(20, "Description must be at least 20 characters"),
-  categoryId: z.string().min(1, "Category is required"),
-  caseTypeId: z.string().min(1, "Case type is required"),
-  departmentId: z.string().min(1, "Department is required"),
-  isConfidential: z.boolean().default(false),
-  contactName: optionalText(200),
-  contactEmail: optionalEmail,
-  contactPhone: optionalText(50),
-  counterparty: optionalText(300),
-  estimatedValue: z
-    .string()
-    .optional()
-    .default("")
-    .refine((v) => {
-      const n = parseMoney(v);
-      return n === undefined || (Number.isFinite(n) && n >= 0 && n <= MAX_MONEY);
-    }, `Enter a valid amount up to ${MAX_MONEY.toLocaleString()}`),
-  incidentDate: z.string().optional().default(""),
-  businessDeadline: z.string().optional().default(""),
-  desiredOutcome: optionalText(5000),
-  thirdPartyDetails: optionalText(5000),
-});
+const editSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required"),
+    description: z.string().trim().min(20, "Description must be at least 20 characters"),
+    categoryId: z.string().min(1, "Category is required"),
+    caseTypeId: z.string().min(1, "Case type is required"),
+    departmentId: z.string().min(1, "Department is required"),
+    isConfidential: z.boolean().default(false),
+    contactName: optionalText(200),
+    contactEmail: optionalEmail,
+    contactPhone: optionalText(50),
+    counterparty: optionalText(300),
+    estimatedValue: z
+      .string()
+      .optional()
+      .default("")
+      .refine((v) => {
+        const n = parseMoney(v);
+        return n === undefined || (Number.isFinite(n) && n >= 0 && n <= MAX_MONEY);
+      }, `Enter a valid amount up to ${MAX_MONEY.toLocaleString()}`),
+    incidentDate: z.string().min(1, "Incident date is required"),
+    businessDeadline: z.string().min(1, "Business deadline is required"),
+    desiredOutcome: optionalText(5000),
+    thirdPartyDetails: optionalText(5000),
+  })
+  .superRefine((values, ctx) => {
+    const issues = intakeDateIssues(values.incidentDate, values.businessDeadline);
+    for (const [path, message] of Object.entries(issues)) {
+      ctx.addIssue({ code: "custom", path: [path], message });
+    }
+  });
 
 type EditInput = z.input<typeof editSchema>;
 type EditValues = z.infer<typeof editSchema>;
@@ -135,6 +143,7 @@ export function EditCaseDialog({ caseItem, open, onOpenChange }: Props) {
   const { register, watch, control, formState, reset, handleSubmit } = form;
   const { errors } = formState;
   const categoryId = watch("categoryId");
+  const incidentDate = watch("incidentDate");
   const caseTypeOptions = (caseTypes.data ?? []).filter((t) => t.categoryId === categoryId);
 
   useEffect(() => {
@@ -320,9 +329,16 @@ export function EditCaseDialog({ caseItem, open, onOpenChange }: Props) {
                 id="ec-incident-date"
                 value={field.value ?? ""}
                 onChange={field.onChange}
+                max={localToday()}
+                aria-invalid={!!errors.incidentDate || undefined}
               />
             )}
           />
+          {errors.incidentDate && (
+            <p role="alert" className="mt-1 text-sm text-danger">
+              {errors.incidentDate.message}
+            </p>
+          )}
         </div>
         <div>
           <Label htmlFor="ec-business-deadline">Business deadline</Label>
@@ -334,9 +350,16 @@ export function EditCaseDialog({ caseItem, open, onOpenChange }: Props) {
                 id="ec-business-deadline"
                 value={field.value ?? ""}
                 onChange={field.onChange}
+                min={incidentDate ? dayAfter(incidentDate) : undefined}
+                aria-invalid={!!errors.businessDeadline || undefined}
               />
             )}
           />
+          {errors.businessDeadline && (
+            <p role="alert" className="mt-1 text-sm text-danger">
+              {errors.businessDeadline.message}
+            </p>
+          )}
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="ec-desired-outcome">Desired outcome</Label>

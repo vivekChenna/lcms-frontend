@@ -69,12 +69,17 @@ export function TargetDatesDialog({ caseItem, open, onOpenChange }: Props) {
       }
     >
       <Label htmlFor="td-ack">Acknowledge by</Label>
-      <DatePicker id="td-ack" value={ack} onChange={setAck} />
+      <DatePicker id="td-ack" value={ack} onChange={setAck} max={resolution || undefined} />
 
       <Label htmlFor="td-resolution" className="mt-4 block">
         Resolve by
       </Label>
-      <DatePicker id="td-resolution" value={resolution} onChange={setResolution} />
+      <DatePicker
+        id="td-resolution"
+        value={resolution}
+        onChange={setResolution}
+        min={ack || undefined}
+      />
       {crossed && (
         <p role="alert" className="mt-1 text-sm text-danger">
           The acknowledgement date cannot be after the resolution date.

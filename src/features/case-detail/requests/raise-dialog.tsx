@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
+import { localToday } from "@/lib/dates";
 import { personLabel } from "@/lib/format";
 import type { CaseDto } from "@/lib/api/types";
 import { useRaiseInfoRequest, useResponderCandidates } from "./use-info-requests";
@@ -38,10 +39,11 @@ export function RaiseDialog({ caseItem, open, onOpenChange }: Props) {
   const responderInvalid = responderId === "";
   const subjectInvalid = subject.trim().length === 0;
   const descriptionInvalid = description.trim().length === 0;
+  const dueDateInPast = dueDate !== "" && dueDate < localToday();
 
   const confirm = () => {
     setTouched(true);
-    if (subjectInvalid || descriptionInvalid || responderInvalid) return;
+    if (subjectInvalid || descriptionInvalid || responderInvalid || dueDateInPast) return;
     raise.mutate(
       {
         subject: subject.trim(),
@@ -136,7 +138,12 @@ export function RaiseDialog({ caseItem, open, onOpenChange }: Props) {
       <Label htmlFor="ir-due-date" className="mt-4 block">
         Due date (optional)
       </Label>
-      <DatePicker id="ir-due-date" value={dueDate} onChange={setDueDate} />
+      <DatePicker id="ir-due-date" value={dueDate} onChange={setDueDate} min={localToday()} />
+      {touched && dueDateInPast && (
+        <p role="alert" className="mt-1 text-sm text-danger">
+          The due date cannot be in the past.
+        </p>
+      )}
 
       {raise.isError && (
         <p role="alert" className="mt-2 text-sm text-danger">

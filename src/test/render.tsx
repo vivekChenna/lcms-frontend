@@ -28,6 +28,7 @@ export function makeProfile(overrides: Partial<Profile> = {}): Profile {
     fullName: NAMES[role],
     email: `${role.replace("_", ".")}@example.com`,
     designation: null,
+    phone: null,
     role,
     departmentId: null,
     departmentName: null,
@@ -35,6 +36,8 @@ export function makeProfile(overrides: Partial<Profile> = {}): Profile {
     entityName: null,
     businessUnitId: null,
     businessUnitName: null,
+    country: "SA",
+    timeZone: "Asia/Riyadh",
     ...overrides,
   };
 }

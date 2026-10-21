@@ -23,7 +23,14 @@ const STEP_LABELS = ["Details", "Parties & intake", "Review & submit"];
 
 const STEP_FIELDS: FieldPath<RequestFormInput>[][] = [
   ["title", "description", "categoryId", "caseTypeId", "departmentId", "priority"],
-  ["entityId", "businessUnitId", "contactEmail", "estimatedValue"],
+  [
+    "entityId",
+    "businessUnitId",
+    "contactEmail",
+    "estimatedValue",
+    "incidentDate",
+    "businessDeadline",
+  ],
   ["declarationConfirmed"],
 ];
 
@@ -55,6 +62,7 @@ function defaultsFor(me: Profile | null | undefined): RequestFormInput {
     ...DEFAULT_VALUES,
     contactName: me?.fullName ?? "",
     contactEmail: me?.email ?? "",
+    contactPhone: me?.phone ?? "",
     departmentId: me?.departmentId ?? "",
     entityId: me?.entityId ?? "",
     businessUnitId: me?.businessUnitId ?? "",

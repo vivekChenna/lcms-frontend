@@ -66,7 +66,7 @@ export function ForgotPasswordPage() {
             id="fp-email"
             type="email"
             autoComplete="email"
-            placeholder="name@company.com"
+            placeholder="name@algihaz.com"
             className={AUTH_FIELD}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "fp-email-error" : undefined}

@@ -124,6 +124,37 @@ describe("AuditPage", () => {
     );
   });
 
+  it("shows the case list in a dropdown as soon as the field is focused, before typing anything", async () => {
+    renderAt("", (url) => {
+      if (url.includes("/cases?search=")) {
+        return json({
+          items: [{ id: "c7", referenceNumber: "AGC-INT-000007", title: "Lease dispute" }],
+        });
+      }
+      if (url.includes("/audit?") || url.endsWith("/audit")) {
+        return json({ items: [], total: 0, page: 1, pageSize: 20 });
+      }
+      return undefined;
+    });
+
+    await userEvent.click(await screen.findByRole("combobox", { name: /case reference or id/i }));
+    // nothing typed yet, but the full list already shows - not an empty "type to search" state
+    const option = await screen.findByText("AGC-INT-000007");
+    expect(screen.getByText("Lease dispute")).toBeInTheDocument();
+    await userEvent.click(option);
+
+    await waitFor(() =>
+      expect(
+        urls().some(
+          (u) => (u.includes("/audit?") || u.endsWith("/audit")) && u.includes("caseId=c7"),
+        ),
+      ).toBe(true),
+    );
+    expect(screen.getByRole("combobox", { name: /case reference or id/i })).toHaveTextContent(
+      "AGC-INT-000007",
+    );
+  });
+
   it("the details drawer explains the change in plain words, with no raw data", async () => {
     renderAt("", (url) =>
       url.includes("/audit?") || url.endsWith("/audit")

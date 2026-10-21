@@ -1,6 +1,7 @@
 import { Menu } from "lucide-react";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import type { Profile } from "@/lib/api/types";
+import { RefreshButton } from "./refresh-button";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 
@@ -28,6 +29,7 @@ export function Topbar({ title, me, onOpenNav }: Props) {
       >
         {title}
       </span>
+      <RefreshButton />
       <ThemeToggle />
       <NotificationBell />
       <UserMenu me={me} />

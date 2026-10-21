@@ -10,6 +10,7 @@ import {
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { localToday } from "@/lib/dates";
 import { makeProfile } from "@/test/render";
 import { NewRequestPage } from "../new-request-page";
 
@@ -94,6 +95,15 @@ async function fillStep1() {
   await userEvent.click(await screen.findByRole("option", { name: "Finance" }));
 }
 
+/** Step 2: the incident date is today (where the user is), the deadline a later day in next month. */
+async function fillDates() {
+  await userEvent.click(document.getElementById("rf-incident-date")!);
+  await userEvent.click(screen.getByRole("button", { name: /^today$/i }));
+  await userEvent.click(document.getElementById("rf-business-deadline")!);
+  await userEvent.click(screen.getByRole("button", { name: /go to the next month/i }));
+  await userEvent.click(screen.getByRole("button", { name: /15th,/i }));
+}
+
 describe("NewRequestPage", () => {
   it("blocks Next on step 1 until the required fields are valid", async () => {
     fetchMock.mockImplementation(withLookupDefaults(() => undefined));
@@ -103,11 +113,54 @@ describe("NewRequestPage", () => {
     expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
   });
 
+  it("will not leave step 2 without an incident date and a business deadline", async () => {
+    fetchMock.mockImplementation(withLookupDefaults(() => undefined));
+    renderPage({ role: "requester" });
+    await fillStep1();
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(await screen.findByText(/incident date is required/i)).toBeInTheDocument();
+    expect(screen.getByText(/business deadline is required/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /submit request/i })).not.toBeInTheDocument();
+  });
+
+  it("sends the incident date and the business deadline with the case", async () => {
+    fetchMock.mockImplementation(
+      withLookupDefaults((url) => {
+        if (url.endsWith("/cases") || (url.includes("/cases") && !url.includes("/documents"))) {
+          return json({ id: "c1", referenceNumber: "AGC-INT-000099" }, 201);
+        }
+        return undefined;
+      }),
+    );
+    renderPage({ role: "requester" });
+    await fillStep1();
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await fillDates();
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await userEvent.click(screen.getByLabelText(/confirm the information/i));
+    await userEvent.click(screen.getByRole("button", { name: /submit request/i }));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(
+          (c) => String(c[0]).endsWith("/cases") && (c[1] as RequestInit)?.method === "POST",
+        ),
+      ).toBe(true),
+    );
+    const postCall = fetchMock.mock.calls.find(
+      (c) => String(c[0]).endsWith("/cases") && (c[1] as RequestInit)?.method === "POST",
+    )!;
+    const body = JSON.parse(String((postCall[1] as RequestInit).body));
+    expect(body.incidentDate).toBe(localToday());
+    expect(body.businessDeadline > body.incidentDate).toBe(true);
+  });
+
   it("keeps Submit disabled until the confirmation is ticked", async () => {
     fetchMock.mockImplementation(withLookupDefaults(() => undefined));
     renderPage({ role: "requester" });
     await fillStep1();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await fillDates();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
     const submit = screen.getByRole("button", { name: /submit request/i });
     expect(submit).toBeDisabled();
@@ -147,6 +200,7 @@ describe("NewRequestPage", () => {
     renderPage({ role: "requester" });
     await fillStep1();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await fillDates();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
     await userEvent.click(screen.getByLabelText(/confirm the information/i));
     await userEvent.click(screen.getByRole("button", { name: /submit request/i }));
@@ -176,6 +230,7 @@ describe("NewRequestPage", () => {
     renderPage({ role: "requester" });
     await fillStep1();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await fillDates();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
     await userEvent.click(screen.getByLabelText(/confirm the information/i));
     await userEvent.click(screen.getByRole("button", { name: /submit request/i }));
@@ -199,6 +254,7 @@ describe("NewRequestPage", () => {
     const { router } = renderPage({ role: "requester" });
     await fillStep1();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    await fillDates();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
     await userEvent.click(screen.getByLabelText(/confirm the information/i));
     await userEvent.click(screen.getByRole("button", { name: /submit request/i }));
@@ -233,6 +289,7 @@ describe("NewRequestPage", () => {
     expect(screen.getByLabelText(/^entity$/i)).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText(/^entity$/i));
     await userEvent.click(await screen.findByRole("option", { name: "AGC" }));
+    await fillDates();
     await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
     await userEvent.click(screen.getByLabelText(/confirm the information/i));
     await userEvent.click(screen.getByRole("button", { name: /submit request/i }));

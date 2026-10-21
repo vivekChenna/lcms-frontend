@@ -46,12 +46,13 @@ export function useCreateUser() {
       apiJson<ApiResponse<"/users", "post", 201>>("/users", { method: "POST", json: body }),
     onSuccess: async (created) => {
       await invalidateUsers(qc);
-      // the user exists either way; the toast says whether the email that lets them in went out
-      if (created.inviteEmailSent) toast.success(`Invitation sent to ${created.email}`);
-      else
+      toast.success("User created");
+      // the user exists either way; a failed invite still needs a visible way to recover it
+      if (!created.inviteEmailSent) {
         toast.warning(
-          "User created, but the invitation email could not be sent. Use \u201CResend invite\u201D on their row.",
+          "The invitation email could not be sent. Use \u201CResend invite\u201D on their row.",
         );
+      }
     },
     onError: onErrorToast,
   });

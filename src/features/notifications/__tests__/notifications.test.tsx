@@ -112,6 +112,35 @@ describe("NotificationBell", () => {
     expect(readCalls).toHaveLength(1);
   });
 
+  it("sends an information-request notification straight to the Information requests tab", async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("/notifications/n1/read")) {
+        return json(notification({ type: "info_request.raised", isRead: true }));
+      }
+      return json({
+        items: [
+          notification({
+            type: "info_request.raised",
+            title: "Information requested",
+            body: "The legal representative needs more information.",
+          }),
+        ],
+        total: 1,
+        page: 1,
+        pageSize: 5,
+        unreadCount: 1,
+      });
+    });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const router = renderWithRouter(<NotificationBell />, qc);
+
+    await userEvent.click(await screen.findByRole("button", { name: /notifications/i }));
+    await userEvent.click(await screen.findByText("Information requested"));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/cases/c1"));
+    expect(router.state.location.search).toMatchObject({ tab: "requests" });
+  });
+
   it("keeps the popup compact: the title and time, not the full wording", async () => {
     fetchMock.mockImplementation(async () =>
       json({ items: [notification()], total: 1, page: 1, pageSize: 5, unreadCount: 1 }),

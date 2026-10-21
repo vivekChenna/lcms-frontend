@@ -6,12 +6,62 @@ import {
   useRouter,
   HeadContent,
 } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { NetworkBanner } from "../components/common/network-banner";
 import { NotFoundScreen } from "../components/common/not-found-screen";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
+/** A page split by a jagged crack, its two halves drifting apart: "this broke". */
+function BrokenPage() {
+  const drift = (dx: number, dy: number, delay: number) => ({
+    animate: { x: [0, dx, 0], y: [0, dy, 0] },
+    transition: { duration: 3.6, delay, repeat: Infinity, ease: "easeInOut" as const },
+  });
+  return (
+    <svg
+      viewBox="0 0 320 240"
+      role="img"
+      aria-label="A page split apart by a jagged crack, with a warning mark at the break"
+      className="mx-auto h-auto w-full max-w-xs"
+    >
+      <ellipse cx="160" cy="212" rx="108" ry="12" className="fill-muted" />
+      <circle cx="160" cy="112" r="94" className="fill-danger/10" />
+
+      <motion.g {...drift(-6, -2, 0)}>
+        <path
+          d="M106 42h60l12 18-10 16 14 14-12 18 10 16-74 2V42Z"
+          className="fill-card stroke-border"
+          strokeWidth="2"
+        />
+        <rect x="118" y="60" width="38" height="8" rx="4" className="fill-muted" />
+        <rect x="118" y="148" width="30" height="8" rx="4" className="fill-muted" />
+      </motion.g>
+
+      <motion.g {...drift(6, 2, 0.15)}>
+        <path
+          d="M214 42h-32l-12 18 10 16-14 14 12 18-10 16 46 2V42Z"
+          className="fill-card stroke-border"
+          strokeWidth="2"
+        />
+        <rect x="178" y="164" width="30" height="8" rx="4" className="fill-muted" />
+      </motion.g>
+
+      <motion.g {...drift(0, -4, 0.3)}>
+        <circle cx="160" cy="176" r="26" className="fill-card stroke-danger" strokeWidth="6" />
+        <rect x="156" y="164" width="8" height="18" rx="3" className="fill-danger" />
+        <circle cx="160" cy="190" r="4" className="fill-danger" />
+      </motion.g>
+
+      <motion.g {...drift(0, 6, 0.2)}>
+        <circle cx="70" cy="90" r="5" className="fill-warning" />
+        <circle cx="252" cy="70" r="4" className="fill-danger/60" />
+      </motion.g>
+    </svg>
+  );
+}
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
@@ -23,7 +73,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+        <BrokenPage />
+        <h1 className="mt-4 text-xl font-semibold tracking-tight text-foreground">
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">

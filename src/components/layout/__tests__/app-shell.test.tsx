@@ -1,11 +1,17 @@
 import { QueryClient } from "@tanstack/react-query";
 import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Profile, UserRole } from "@/lib/api/types";
 import { setViewport } from "@/test/media";
 import { renderWithRouter } from "@/test/router";
 import { AppShell } from "../app-shell";
+
+vi.mock("sonner", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("sonner")>()),
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+}));
 
 const fetchMock = vi.fn();
 const me = (role: UserRole) =>
@@ -34,6 +40,7 @@ beforeEach(() => {
   );
   vi.stubGlobal("fetch", fetchMock);
   window.localStorage.clear();
+  vi.mocked(toast.success).mockClear();
 });
 afterEach(() => {
   cleanup();
@@ -151,6 +158,44 @@ describe("AppShell", () => {
     await ue.click(await screen.findByRole("button", { name: /notifications/i }));
     const link = await screen.findByRole("link", { name: /view all/i });
     expect(link).toHaveAttribute("href", "/notifications");
+  });
+
+  it("refresh button refetches every active query and disables itself meanwhile", async () => {
+    setViewport(1280);
+    let notificationCalls = 0;
+    let holdRefetch = false;
+    const unblockers: (() => void)[] = [];
+    fetchMock.mockImplementation(async (url: string) => {
+      if (!String(url).includes("/notifications")) return new Response(null, { status: 204 });
+      notificationCalls += 1;
+      // let the mount-time calls through immediately; hold the refresh's refetches open so the
+      // test can observe the in-between "Refreshing…" state before resolving them
+      if (holdRefetch) {
+        await new Promise<void>((resolve) => unblockers.push(resolve));
+      }
+      return notificationsPage();
+    });
+    const { ue } = setup("viewer");
+    await screen.findByText("page body");
+    await waitFor(() => expect(notificationCalls).toBeGreaterThan(0));
+    const callsBeforeRefresh = notificationCalls;
+
+    holdRefetch = true;
+    const button = screen.getByRole("button", { name: "Refresh" });
+    await ue.click(button);
+
+    expect(await screen.findByText("Refreshing…")).toBeInTheDocument();
+    expect(button).toBeDisabled();
+    expect(notificationCalls).toBeGreaterThan(callsBeforeRefresh);
+
+    unblockers.forEach((unblock) => unblock());
+    // the button holds the "Refreshing…" state open for a minimum visible duration, separate
+    // from how long the refetches themselves take
+    await waitFor(() => expect(screen.queryByText("Refreshing…")).not.toBeInTheDocument(), {
+      timeout: 3000,
+    });
+    expect(button).not.toBeDisabled();
+    expect(toast.success).toHaveBeenCalledWith("Refreshed");
   });
 
   it("user menu shows who is signed in and signs out", async () => {

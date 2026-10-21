@@ -3,6 +3,21 @@ import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useMarkRead, type NotificationDto } from "./use-notifications";
 
+type TabKey = "overview" | "documents" | "requests" | "comments" | "audit";
+
+/** Where each notification type's "open" action lands on the case detail page. A type not
+ * listed here (including ones the backend adds later) falls back to the overview tab, which is
+ * also where actions that aren't tied to a tab (e.g. Accept/Reject) live. */
+const TAB_BY_NOTIFICATION_TYPE: Record<string, TabKey> = {
+  "info_request.raised": "requests",
+  "info_request.answered": "requests",
+  "info_request.reopened": "requests",
+};
+
+function tabFor(notificationType: string): TabKey {
+  return TAB_BY_NOTIFICATION_TYPE[notificationType] ?? "overview";
+}
+
 type Props = {
   notification: NotificationDto;
   onNavigate?: () => void;
@@ -19,7 +34,11 @@ export function NotificationItem({ notification, onNavigate, compact }: Props) {
     if (!notification.isRead) markRead.mutate(notification.id);
     onNavigate?.();
     if (notification.relatedCaseId) {
-      void navigate({ to: "/cases/$caseId", params: { caseId: notification.relatedCaseId } });
+      void navigate({
+        to: "/cases/$caseId",
+        params: { caseId: notification.relatedCaseId },
+        search: { tab: tabFor(notification.type) } as never,
+      });
     }
   };
 

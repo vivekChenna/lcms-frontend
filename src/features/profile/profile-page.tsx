@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useMe, usePasswordSignIn } from "@/lib/auth";
+import { CountryLabel } from "@/lib/countries";
 import { ROLE_LABEL } from "@/lib/labels";
 import {
   isSoundEnabled,
@@ -30,10 +31,12 @@ export function ProfilePage() {
   const [sound, setSound] = useState(isSoundEnabled);
   if (!me) return null;
 
-  const details: [string, string | null][] = [
+  const beforeCountry: [string, string | null][] = [
     ["Email", me.email],
     ["Role", ROLE_LABEL[me.role]],
     ["Designation", me.designation],
+  ];
+  const afterCountry: [string, string | null][] = [
     ["Department", me.departmentName],
     ["Entity", me.entityName],
     ["Business unit", me.businessUnitName],
@@ -59,7 +62,19 @@ export function ProfilePage() {
           </div>
         </div>
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-          {details.map(([label, value]) => (
+          {beforeCountry.map(([label, value]) => (
+            <div key={label} className="min-w-0">
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              <dd className="break-words text-sm">{value || "—"}</dd>
+            </div>
+          ))}
+          <div className="min-w-0">
+            <dt className="text-xs text-muted-foreground">Country</dt>
+            <dd className="break-words text-sm">
+              <CountryLabel code={me.country} />
+            </dd>
+          </div>
+          {afterCountry.map(([label, value]) => (
             <div key={label} className="min-w-0">
               <dt className="text-xs text-muted-foreground">{label}</dt>
               <dd className="break-words text-sm">{value || "—"}</dd>

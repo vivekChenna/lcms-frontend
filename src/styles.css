@@ -211,6 +211,13 @@
     border-color: var(--color-border);
   }
 
+  /* Reserves the scrollbar's width up front, so content that changes the page's height (a
+     dropdown's result list growing or shrinking, a dialog opening) never shifts everything
+     sideways by toggling the scrollbar on and off. */
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);

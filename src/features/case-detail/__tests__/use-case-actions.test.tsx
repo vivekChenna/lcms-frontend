@@ -140,8 +140,6 @@ describe("useEscalateCase", () => {
   });
 });
 
-const closureDocuments = [{ id: "d1", category: "Closure Document", filename: "memo.pdf" }];
-
 describe("useCloseCase", () => {
   it("PATCHes /cases/:id/close with the exact body and invalidates the five key prefixes", async () => {
     fetchMock.mockResolvedValue(json({ id: "c1", status: "Closed" }));
@@ -165,12 +163,32 @@ describe("useCloseCase", () => {
     expect(invalidateSpy).toHaveBeenCalledTimes(5);
   });
 
+  /** Fills outcome + summary + confirm, then uploads one file through the nested "Upload closure
+   * document" dialog, which defaults its category picker to "Closure Document" (still changeable),
+   * and waits for it to land back in the outer dialog's list. */
+  async function uploadOneClosureDocument(filename = "memo.pdf") {
+    await userEvent.click(await screen.findByLabelText(/outcome/i));
+    await userEvent.click(await screen.findByRole("option", { name: "Resolved" }));
+    await userEvent.type(screen.getByLabelText(/summary/i), "Resolved by refund");
+    await userEvent.click(screen.getByRole("checkbox"));
+
+    await userEvent.click(screen.getByRole("button", { name: /upload closure document/i }));
+    expect(await screen.findByLabelText(/^category$/i)).toHaveTextContent("Closure Document");
+    const input = screen.getByLabelText(/choose files/i);
+    await userEvent.upload(input, new File(["x"], filename, { type: "application/pdf" }));
+    await userEvent.click(screen.getByRole("button", { name: /^upload$/i }));
+
+    expect(await screen.findByText(filename)).toBeInTheDocument();
+  }
+
   it("a stubbed 409 (open information requests) leaves the dialog open with the backend message", async () => {
     fetchMock.mockImplementation(async (url: string) => {
       if (url.includes("/closure-outcomes")) {
         return json([{ id: "outcome-1", name: "Resolved" }]);
       }
-      if (url.endsWith("/cases/c1/documents")) return json(closureDocuments);
+      if (url.includes("/cases/c1/documents")) {
+        return json({ id: "d1", category: "Closure Document", filename: "memo.pdf" }, 201);
+      }
       if (url.includes("/close")) {
         return json(
           {
@@ -192,15 +210,8 @@ describe("useCloseCase", () => {
       </Wrapper>,
     );
 
-    await userEvent.click(await screen.findByLabelText(/outcome/i));
-    await userEvent.click(await screen.findByRole("option", { name: "Resolved" }));
-    await userEvent.type(screen.getByLabelText(/summary/i), "Resolved by refund");
-    await userEvent.click(screen.getByRole("checkbox"));
-    await userEvent.click(
-      await screen
-        .findByText("memo.pdf")
-        .then(() => screen.getByRole("button", { name: /^close case$/i })),
-    );
+    await uploadOneClosureDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^close case$/i }));
     // nothing is sent until the second, "are you sure" step is accepted
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes("/close"))).toBe(false);
     await userEvent.click(await screen.findByRole("button", { name: /yes, close the case/i }));
@@ -209,11 +220,45 @@ describe("useCloseCase", () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
-  it("cannot be submitted without a closure document, and says one is needed", async () => {
+  it("shows nothing from the case's Documents tab, and needs a document uploaded here before it can submit", async () => {
     fetchMock.mockImplementation(async (url: string) => {
       if (url.includes("/closure-outcomes")) return json([{ id: "outcome-1", name: "Resolved" }]);
-      if (url.endsWith("/cases/c1/documents")) {
-        return json([{ id: "d1", category: "Evidence", filename: "evidence.pdf" }]);
+      // the dialog must never call this: nothing already on the case is fetched or shown here
+      if (url.endsWith("/cases/c1/documents") && !url.includes("category")) {
+        throw new Error("CloseCaseDialog must not fetch the case's existing documents");
+      }
+      if (url.includes("/cases/c1/documents")) {
+        return json({ id: "d1", category: "Closure Document", filename: "settlement.pdf" }, 201);
+      }
+      return json({});
+    });
+    const { Wrapper } = wrapper();
+    render(
+      <Wrapper>
+        <CloseCaseDialog caseId="c1" open onOpenChange={vi.fn()} />
+      </Wrapper>,
+    );
+
+    await userEvent.type(await screen.findByLabelText(/summary/i), "Resolved by refund");
+    await userEvent.click(screen.getByRole("checkbox"));
+    await userEvent.click(screen.getByLabelText(/outcome/i));
+    await userEvent.click(await screen.findByRole("option", { name: "Resolved" }));
+    expect(screen.getByRole("button", { name: /^close case$/i })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("button", { name: /upload closure document/i }));
+    const input = await screen.findByLabelText(/choose files/i);
+    await userEvent.upload(input, new File(["x"], "settlement.pdf", { type: "application/pdf" }));
+    await userEvent.click(screen.getByRole("button", { name: /^upload$/i }));
+
+    expect(await screen.findByText("settlement.pdf")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^close case$/i })).toBeEnabled();
+  });
+
+  it("enables Close case for a document uploaded under any tag, and still shows which tag it got", async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("/closure-outcomes")) return json([{ id: "outcome-1", name: "Resolved" }]);
+      if (url.includes("category=Evidence")) {
+        return json({ id: "d1", category: "Evidence", filename: "evidence.pdf" }, 201);
       }
       return json({});
     });
@@ -229,8 +274,81 @@ describe("useCloseCase", () => {
     await userEvent.click(screen.getByLabelText(/outcome/i));
     await userEvent.click(await screen.findByRole("option", { name: "Resolved" }));
 
-    expect(screen.getByText(/at least one is required/i)).toBeInTheDocument();
-    expect(screen.queryByText("evidence.pdf")).not.toBeInTheDocument();
+    // upload one under "Evidence" instead of the default "Closure Document"
+    await userEvent.click(screen.getByRole("button", { name: /upload closure document/i }));
+    await userEvent.click(await screen.findByLabelText(/^category$/i));
+    await userEvent.click(await screen.findByRole("option", { name: "Evidence" }));
+    await userEvent.upload(
+      screen.getByLabelText(/choose files/i),
+      new File(["x"], "evidence.pdf", { type: "application/pdf" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /^upload$/i }));
+
+    expect(await screen.findByText("evidence.pdf")).toBeInTheDocument();
+    expect(screen.getByText("Evidence")).toBeInTheDocument(); // shown as its actual tag
+    expect(screen.getByRole("button", { name: /^close case$/i })).toBeEnabled();
+  });
+
+  it("stops offering more uploads once 5 documents have been added, here, this session", async () => {
+    let n = 0;
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("/closure-outcomes")) return json([{ id: "outcome-1", name: "Resolved" }]);
+      if (url.includes("/cases/c1/documents")) {
+        n += 1;
+        return json({ id: `d${n}`, category: "Closure Document", filename: `doc${n}.pdf` }, 201);
+      }
+      return json({});
+    });
+    const { Wrapper } = wrapper();
+    render(
+      <Wrapper>
+        <CloseCaseDialog caseId="c1" open onOpenChange={vi.fn()} />
+      </Wrapper>,
+    );
+
+    for (let i = 1; i <= 5; i++) {
+      await userEvent.click(screen.getByRole("button", { name: /upload closure document/i }));
+      const input = await screen.findByLabelText(/choose files/i);
+      await userEvent.upload(input, new File(["x"], `doc${i}.pdf`, { type: "application/pdf" }));
+      await userEvent.click(screen.getByRole("button", { name: /^upload$/i }));
+      await screen.findByText(`doc${i}.pdf`);
+    }
+
+    expect(screen.getByRole("button", { name: /upload closure document/i })).toBeDisabled();
+    expect(screen.getByText(/5 documents uploaded, the most allowed here/i)).toBeInTheDocument();
+  });
+
+  it("lets a document uploaded here be removed before closing", async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("/closure-outcomes")) return json([{ id: "outcome-1", name: "Resolved" }]);
+      if (url.includes("/cases/c1/documents")) {
+        return json({ id: "d1", category: "Closure Document", filename: "memo.pdf" }, 201);
+      }
+      if (url.endsWith("/documents/d1")) return new Response(null, { status: 204 });
+      return json({});
+    });
+    const { Wrapper } = wrapper();
+    render(
+      <Wrapper>
+        <CloseCaseDialog caseId="c1" open onOpenChange={vi.fn()} />
+      </Wrapper>,
+    );
+
+    await uploadOneClosureDocument();
+    expect(screen.getByRole("button", { name: /^close case$/i })).toBeEnabled();
+
+    await userEvent.click(screen.getByLabelText(/delete memo\.pdf/i));
+    expect(await screen.findByText(/"memo\.pdf" will be removed/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(
+          ([u, init]) => String(u).endsWith("/documents/d1") && init?.method === "DELETE",
+        ),
+      ).toBe(true),
+    );
+    expect(screen.queryByText("memo.pdf")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^close case$/i })).toBeDisabled();
   });
 });

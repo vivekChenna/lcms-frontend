@@ -89,16 +89,72 @@ describe("UsersPage password ownership", () => {
 
   beforeEach(() => vi.mocked(toast.success).mockClear());
 
-  it("the New user form has no password field and says the person chooses their own", async () => {
+  it("the New user form has no password field, and defaults the country to Saudi Arabia", async () => {
     renderAt("admin", "admin-1", listHandler([userRow()]));
     await screen.findByText("Rex Rep");
     await userEvent.click(screen.getByRole("button", { name: /new user/i }));
     expect(await screen.findByLabelText(/full name/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/email with a link to choose their own password/i)).toBeInTheDocument();
+    // exact match: the phone input's own hidden country-code select is also named "...country"
+    expect(screen.getByRole("combobox", { name: "Country" })).toHaveTextContent("Saudi Arabia");
   });
 
-  it("sends only the details, never a password, and reports that the invitation went out", async () => {
+  it("lets the country be searched by typing, and switches the phone field's dial code to match", async () => {
+    renderAt("admin", "admin-1", listHandler([userRow()]));
+    await screen.findByText("Rex Rep");
+    await userEvent.click(screen.getByRole("button", { name: /new user/i }));
+    await screen.findByLabelText(/full name/i);
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Country" }));
+    await userEvent.type(await screen.findByPlaceholderText(/search countries/i), "india");
+    await userEvent.click(await screen.findByRole("option", { name: "India" }, { timeout: 5000 }));
+
+    expect(screen.getByRole("combobox", { name: "Country" })).toHaveTextContent("India");
+    const phoneCountry = screen.getByRole("combobox", { name: "Phone number country" });
+    expect(within(phoneCountry).getByTitle("India")).toBeInTheDocument();
+  }, 30000);
+
+  // Longer timeout: two full phone-input interactions in one test, each parsing against
+  // libphonenumber-js's full international metadata, which is measurably heavier than a plain
+  // text field under the full suite's concurrent load (reliable alone; needs headroom here).
+  it("rejects an invalid phone number and accepts a valid Saudi one, sent in full international format", async () => {
+    renderAt("admin", "admin-1", listHandler([userRow()]));
+    await screen.findByText("Rex Rep");
+    await userEvent.click(screen.getByRole("button", { name: /new user/i }));
+    await userEvent.type(await screen.findByLabelText(/full name/i), "New Person");
+    await userEvent.type(screen.getByLabelText(/^email$/i), "new@example.com");
+
+    const phone = screen.getByLabelText(/^phone$/i);
+    await userEvent.type(phone, "123");
+    await userEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    expect(await screen.findByText(/valid phone number/i)).toBeInTheDocument();
+    const postedBefore = fetchMock.mock.calls.some(
+      ([u, init]) =>
+        String(u).endsWith("/users") && (init as RequestInit | undefined)?.method === "POST",
+    );
+    expect(postedBefore).toBe(false);
+
+    fetchMock.mockImplementation(
+      withLookupDefaults((url) =>
+        url.endsWith("/users")
+          ? json({ ...userRow({ id: "u9" }), inviteEmailSent: true }, 201)
+          : undefined,
+      ),
+    );
+    await userEvent.clear(phone);
+    await userEvent.type(phone, "501234567");
+    await userEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("User created"));
+    const post = fetchMock.mock.calls.find(
+      ([u, init]) =>
+        String(u).endsWith("/users") && (init as RequestInit | undefined)?.method === "POST",
+    );
+    const body = JSON.parse(String((post![1] as RequestInit).body)) as { phone: string };
+    expect(body.phone).toBe("+966501234567");
+  }, 30000);
+
+  it("sends the country along with the details, and reports success", async () => {
     renderAt("admin", "admin-1", listHandler([]));
     await screen.findByText(/no users match/i);
     await userEvent.click(screen.getByRole("button", { name: /new user/i }));
@@ -107,7 +163,7 @@ describe("UsersPage password ownership", () => {
         url.endsWith("/users")
           ? json(
               {
-                ...userRow({ id: "u9", email: "new@example.com", isInvited: true }),
+                ...userRow({ id: "u9", email: "new@example.com", isInvited: true, country: "SA" }),
                 inviteEmailSent: true,
               },
               201,
@@ -119,15 +175,16 @@ describe("UsersPage password ownership", () => {
     await userEvent.type(screen.getByLabelText(/^email$/i), "new@example.com");
     await userEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
-    await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringMatching(/invitation sent to new@example.com/i),
-      ),
-    );
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("User created"));
+    expect(toast.warning).not.toHaveBeenCalled();
     const post = fetchMock.mock.calls.find(
       ([u, init]) => String(u).endsWith("/users") && init?.method === "POST",
     );
-    expect(JSON.parse(post![1].body)).toEqual({ fullName: "New Person", email: "new@example.com" });
+    expect(JSON.parse(post![1].body)).toEqual({
+      fullName: "New Person",
+      email: "new@example.com",
+      country: "SA",
+    });
   });
 
   it("warns, and says what to do, when the user was created but the email could not be sent", async () => {
@@ -150,7 +207,8 @@ describe("UsersPage password ownership", () => {
         expect.stringMatching(/could not be sent.*resend invite/i),
       ),
     );
-    expect(toast.success).not.toHaveBeenCalled();
+    // the user was created either way; the success toast still fires alongside the warning
+    expect(toast.success).toHaveBeenCalledWith("User created");
   });
 
   it("marks users who have not chosen a password yet as Invited", async () => {

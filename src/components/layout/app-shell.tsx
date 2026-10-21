@@ -92,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <NavDrawer open={navOpen} onOpenChange={setNavOpen}>
         <Sidebar role={me.role} variant="sheet" onNavigate={() => setNavOpen(false)} />
       </NavDrawer>
-      <Toaster richColors position="top-right" theme={theme} />
+      <Toaster richColors position="bottom-right" theme={theme} />
     </div>
   );
 }

@@ -19,6 +19,19 @@ afterEach(() => {
 });
 
 describe("apiFetch", () => {
+  it("sends the browser's time zone so the server judges dates where the user is", async () => {
+    fetchMock.mockResolvedValue(json(200, {}));
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+      timeZone: "Asia/Kolkata",
+    } as Intl.ResolvedDateTimeFormatOptions);
+    await apiFetch("/cases");
+    await apiFetch("/cases", { method: "POST", json: { a: 1 } });
+    for (const c of fetchMock.mock.calls) {
+      expect(new Headers(c[1].headers).get("X-Timezone")).toBe("Asia/Kolkata");
+    }
+    vi.restoreAllMocks();
+  });
+
   it("(a) sends credentials: include on every call", async () => {
     fetchMock.mockResolvedValue(json(200, {}));
     await apiFetch("/cases");

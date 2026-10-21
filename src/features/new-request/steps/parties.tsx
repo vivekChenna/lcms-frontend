@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Profile } from "@/lib/api/types";
+import { dayAfter, localToday } from "@/lib/dates";
 import { useBusinessUnits, useEntities } from "@/lib/queries/lookups";
 import type { RequestFormInput, RequestFormValues } from "../schema";
 
@@ -22,6 +23,7 @@ export function PartiesStep({ form, me }: Props) {
   const entities = useEntities();
   const businessUnits = useBusinessUnits();
   const entityId = watch("entityId");
+  const incidentDate = watch("incidentDate");
   const businessUnitOptions = (businessUnits.data ?? []).filter((b) => b.entityId === entityId);
 
   return (
@@ -158,9 +160,16 @@ export function PartiesStep({ form, me }: Props) {
                   id="rf-incident-date"
                   value={field.value ?? ""}
                   onChange={field.onChange}
+                  max={localToday()}
+                  aria-invalid={!!errors.incidentDate || undefined}
                 />
               )}
             />
+            {errors.incidentDate && (
+              <p role="alert" className="mt-1 text-sm text-danger">
+                {errors.incidentDate.message}
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="rf-business-deadline">Business deadline</Label>
@@ -172,9 +181,16 @@ export function PartiesStep({ form, me }: Props) {
                   id="rf-business-deadline"
                   value={field.value ?? ""}
                   onChange={field.onChange}
+                  min={incidentDate ? dayAfter(incidentDate) : undefined}
+                  aria-invalid={!!errors.businessDeadline || undefined}
                 />
               )}
             />
+            {errors.businessDeadline && (
+              <p role="alert" className="mt-1 text-sm text-danger">
+                {errors.businessDeadline.message}
+              </p>
+            )}
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="rf-desired-outcome">Desired outcome</Label>

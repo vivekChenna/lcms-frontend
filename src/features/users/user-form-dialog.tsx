@@ -12,18 +12,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CountryCombobox } from "@/components/common/country-combobox";
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
-import type { UserDto } from "@/lib/api/types";
+import { isValidPhoneNumber, PhoneInput } from "@/components/ui/phone-input";
+import type { ApiBody, UserDto } from "@/lib/api/types";
+import { isCountryCode } from "@/lib/countries";
 import { useBusinessUnits, useDepartments, useEntities } from "@/lib/queries/lookups";
 import { useCreateUser, useUpdateUser } from "./use-users";
 
 const ALL = "__none__";
+// The form validates `country` against isCountryCode already; this cast narrows it to the API's
+// generated literal-union type, which z.string().refine() can't express on its own.
+type CountryValue = NonNullable<ApiBody<"/users", "post">["country"]>;
 const optionalText = (max: number) => z.string().trim().max(max).optional().default("");
 
 const baseFields = {
   fullName: z.string().trim().min(1, "Full name is required"),
+  country: z.string().refine(isCountryCode, "Select a country").default("SA"),
   designation: optionalText(200),
-  phone: optionalText(50),
+  phone: optionalText(50).refine(
+    (v) => v === "" || isValidPhoneNumber(v),
+    "Enter a valid phone number",
+  ),
   departmentId: z.string().optional().default(""),
   entityId: z.string().optional().default(""),
   businessUnitId: z.string().optional().default(""),
@@ -50,6 +60,7 @@ function toFormValues(user: UserDto | null): CreateInput {
     departmentId: user?.departmentId ?? "",
     entityId: user?.entityId ?? "",
     businessUnitId: user?.businessUnitId ?? "",
+    country: user?.country ?? "SA",
   };
 }
 
@@ -73,6 +84,7 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
   const entities = useEntities();
   const businessUnits = useBusinessUnits();
   const entityId = watch("entityId");
+  const country = watch("country");
   const businessUnitOptions = (businessUnits.data ?? []).filter(
     (b) => !entityId || b.entityId === entityId,
   );
@@ -91,6 +103,7 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
         {
           fullName: createValues.fullName.trim(),
           email: createValues.email.trim(),
+          country: createValues.country as CountryValue,
           ...(trim(createValues.designation)
             ? { designation: trim(createValues.designation)! }
             : {}),
@@ -111,6 +124,7 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
       update.mutate(
         {
           fullName: editValues.fullName.trim(),
+          country: editValues.country as CountryValue,
           designation: trim(editValues.designation),
           phone: trim(editValues.phone),
           departmentId: editValues.departmentId || null,
@@ -164,7 +178,7 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
                 id="uf-email"
                 inputMode="email"
                 className="mt-1 h-11 lg:h-9"
-                placeholder="name@company.com"
+                placeholder="name@algihaz.com"
                 {...register("email")}
               />
               {errors.email && (
@@ -173,12 +187,23 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
                 </p>
               )}
             </div>
-            <p className="text-sm text-muted-foreground sm:col-span-2">
-              They will get an email with a link to choose their own password. You never see or set
-              it.
-            </p>
           </>
         )}
+
+        <div>
+          <Label htmlFor="uf-country">Country</Label>
+          <Controller
+            control={control}
+            name="country"
+            render={({ field }) => (
+              <CountryCombobox
+                id="uf-country"
+                value={field.value ?? "SA"}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        </div>
 
         <div>
           <Label htmlFor="uf-designation">Designation</Label>
@@ -191,13 +216,25 @@ export function UserFormDialog({ user, open, onOpenChange }: Props) {
         </div>
         <div>
           <Label htmlFor="uf-phone">Phone</Label>
-          <Input
-            id="uf-phone"
-            type="tel"
-            className="mt-1 h-11 lg:h-9"
-            placeholder="e.g. +966 5X XXX XXXX"
-            {...register("phone")}
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneInput
+                id="uf-phone"
+                className="mt-1"
+                placeholder="5X XXX XXXX"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                defaultCountry={country ?? "SA"}
+              />
+            )}
           />
+          {errors.phone && (
+            <p role="alert" className="mt-1 text-sm text-danger">
+              {errors.phone.message}
+            </p>
+          )}
         </div>
 
         <div>

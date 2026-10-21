@@ -8,6 +8,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import type { CaseDto, UserRole } from "@/lib/api/types";
@@ -222,6 +223,30 @@ describe("CaseDetailPage", () => {
     expect(screen.getByRole("button", { name: /^edit$/i })).toBeInTheDocument();
     // a case that has not been worked yet cannot be closed: the button stays, disabled
     expect(screen.getByRole("button", { name: /^close case$/i })).toBeDisabled();
+  });
+
+  it("a legal manager holding a case sees Accept/Reject disappear once they accept it", async () => {
+    let status: CaseDto["status"] = "Assigned";
+    renderAt("legal_manager", (url) => {
+      if (url.endsWith("/cases/c1/accept")) {
+        status = "In Progress";
+        return json({ id: "c1", status });
+      }
+      if (url.endsWith("/cases/c1")) {
+        return json(makeCase({ status, assignedLegalRepId: "me-1", assignmentAcceptedAt: null }));
+      }
+      return undefined;
+    });
+
+    expect(await screen.findByRole("button", { name: /^accept$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^reject$/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /^accept$/i }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^accept$/i })).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
   });
 
   it("offers Close case only once the case is In Progress", async () => {

@@ -92,6 +92,8 @@ export const _create: CreateCaseBody = {
   categoryId: "x",
   caseTypeId: "x",
   departmentId: "x",
+  incidentDate: "2026-01-01",
+  businessDeadline: "2026-12-31",
 };
 export const _dash = (d: DashboardDto) => [
   d.tiles.assignedToMe,

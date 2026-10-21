@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CreateCaseBody, UserRole } from "@/lib/api/types";
+import { intakeDateIssues } from "@/lib/dates";
 
 export const PRIORITY_UI = ["Critical", "High", "Medium", "Low"] as const;
 export type PriorityUi = (typeof PRIORITY_UI)[number];
@@ -28,36 +29,43 @@ const optionalEmail = z
 const optionalText = (max: number) => z.string().trim().max(max).optional().default("");
 
 /** Mirrors the backend's create-case validation (BRD + `cases.schemas.ts`); frontend-only (zod 3). */
-export const requestSchema = z.object({
-  title: z.string().trim().min(1, "Title is required"),
-  description: z.string().trim().min(20, "Description must be at least 20 characters"),
-  categoryId: z.string().min(1, "Category is required"),
-  caseTypeId: z.string().min(1, "Case type is required"),
-  departmentId: z.string().min(1, "Department is required"),
-  priority: z.enum(PRIORITY_UI).default("Medium"),
-  isConfidential: z.boolean().default(false),
-  entityId: z.string().optional().default(""),
-  businessUnitId: z.string().optional().default(""),
-  contactName: optionalText(200),
-  contactEmail: optionalEmail,
-  contactPhone: optionalText(50),
-  counterparty: optionalText(300),
-  estimatedValue: z
-    .string()
-    .optional()
-    .default("")
-    .refine((v) => {
-      const n = parseMoney(v);
-      return n === undefined || (Number.isFinite(n) && n >= 0 && n <= MAX_MONEY);
-    }, `Enter a valid amount up to ${MAX_MONEY.toLocaleString()}`),
-  incidentDate: z.string().optional().default(""),
-  businessDeadline: z.string().optional().default(""),
-  desiredOutcome: optionalText(5000),
-  thirdPartyDetails: optionalText(5000),
-  declarationConfirmed: z
-    .boolean()
-    .refine((v) => v === true, "You must confirm the declaration before submitting"),
-});
+export const requestSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required"),
+    description: z.string().trim().min(20, "Description must be at least 20 characters"),
+    categoryId: z.string().min(1, "Category is required"),
+    caseTypeId: z.string().min(1, "Case type is required"),
+    departmentId: z.string().min(1, "Department is required"),
+    priority: z.enum(PRIORITY_UI).default("Medium"),
+    isConfidential: z.boolean().default(false),
+    entityId: z.string().optional().default(""),
+    businessUnitId: z.string().optional().default(""),
+    contactName: optionalText(200),
+    contactEmail: optionalEmail,
+    contactPhone: optionalText(50),
+    counterparty: optionalText(300),
+    estimatedValue: z
+      .string()
+      .optional()
+      .default("")
+      .refine((v) => {
+        const n = parseMoney(v);
+        return n === undefined || (Number.isFinite(n) && n >= 0 && n <= MAX_MONEY);
+      }, `Enter a valid amount up to ${MAX_MONEY.toLocaleString()}`),
+    incidentDate: z.string().min(1, "Incident date is required"),
+    businessDeadline: z.string().min(1, "Business deadline is required"),
+    desiredOutcome: optionalText(5000),
+    thirdPartyDetails: optionalText(5000),
+    declarationConfirmed: z
+      .boolean()
+      .refine((v) => v === true, "You must confirm the declaration before submitting"),
+  })
+  .superRefine((values, ctx) => {
+    const issues = intakeDateIssues(values.incidentDate, values.businessDeadline);
+    for (const [path, message] of Object.entries(issues)) {
+      ctx.addIssue({ code: "custom", path: [path], message });
+    }
+  });
 
 /** The form's live field state (register/watch/control): optional fields may be `undefined`
  * before `defaultValues` or a user edit fills them in. */

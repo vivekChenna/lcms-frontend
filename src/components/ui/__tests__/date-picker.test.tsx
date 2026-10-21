@@ -57,4 +57,30 @@ describe("DatePicker", () => {
     render(<DatePicker id="d" value="" onChange={() => {}} aria-invalid />);
     expect(screen.getByRole("button")).toHaveAttribute("aria-invalid", "true");
   });
+
+  it("greys out days outside min and max so they cannot be chosen", async () => {
+    const onChange = vi.fn();
+    render(
+      <DatePicker
+        id="d"
+        value="2026-10-15"
+        onChange={onChange}
+        min="2026-10-10"
+        max="2026-10-20"
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: /15 oct 2026/i }));
+    expect(screen.getByRole("button", { name: /october 9th, 2026/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /october 21st, 2026/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /october 10th, 2026/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /october 20th, 2026/i })).toBeEnabled();
+    await userEvent.click(screen.getByRole("button", { name: /october 21st, 2026/i }));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("disables the Today button when today is outside the allowed range", async () => {
+    render(<DatePicker id="d" value="" onChange={() => {}} max="2000-01-01" />);
+    await userEvent.click(screen.getByRole("button", { name: /pick a date/i }));
+    expect(screen.getByRole("button", { name: /^today$/i })).toBeDisabled();
+  });
 });

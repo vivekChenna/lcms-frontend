@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,15 +11,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FilterSheet } from "@/components/common/filter-sheet";
 import { SearchInput } from "@/components/common/search-input";
 import { useDebouncedField } from "@/hooks/use-debounced-field";
 import { apiJson } from "@/lib/api/client";
 import type { UserListDto } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 import { dateRangeInvalid, type AuditFilters } from "./use-audit";
 
 const ALL = "__all__";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type CaseOption = { id: string; referenceNumber: string; title: string };
 
 type Props = {
   value: AuditFilters;
@@ -44,29 +57,36 @@ export function AuditFiltersBar({ value, onChange, onClear, loading }: Props) {
     staleTime: 5 * 60_000,
   });
 
-  const [caseInput, setCaseInput] = useState(value.caseId ?? "");
-  useEffect(() => setCaseInput(value.caseId ?? ""), [value.caseId]);
-
+  const [caseOpen, setCaseOpen] = useState(false);
+  const [caseLabel, setCaseLabel] = useState(value.caseId ?? "");
+  // only reset the box back to empty when the filter is cleared from elsewhere (e.g. "Clear
+  // filters") - not on every value change, or picking a case would overwrite its own label
   useEffect(() => {
-    if (!caseInput || caseInput === value.caseId) return;
-    if (UUID_RE.test(caseInput)) {
-      onChange({ caseId: caseInput });
-      return;
-    }
-    const id = setTimeout(async () => {
-      try {
-        const page = await apiJson<{ items: { id: string; referenceNumber: string }[] }>(
-          `/cases?search=${encodeURIComponent(caseInput)}&pageSize=5`,
-        );
-        const match = page.items[0];
-        if (match) onChange({ caseId: match.id });
-      } catch {
-        // leave the filter unset; the input still shows what the user typed
-      }
-    }, 400);
+    if (!value.caseId) setCaseLabel("");
+  }, [value.caseId]);
+
+  const [caseQuery, setCaseQuery] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setCaseQuery(caseLabel), 300);
     return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseInput]);
+  }, [caseLabel]);
+
+  // no `enabled` gate on an empty query: opening the box shows the full case list, not nothing
+  const caseResults = useQuery({
+    queryKey: ["cases", "picker", caseQuery],
+    queryFn: () =>
+      apiJson<{ items: CaseOption[] }>(
+        `/cases?search=${encodeURIComponent(caseQuery)}&pageSize=10`,
+      ),
+    enabled: !UUID_RE.test(caseQuery),
+    staleTime: 30_000,
+  });
+
+  const pickCase = (c: CaseOption) => {
+    setCaseLabel(c.referenceNumber);
+    onChange({ caseId: c.id });
+    setCaseOpen(false);
+  };
 
   const invalidRange = dateRangeInvalid(value);
   const activeCount = Object.values(value).filter((v) => v !== undefined).length;
@@ -108,16 +128,61 @@ export function AuditFiltersBar({ value, onChange, onClear, loading }: Props) {
 
         <div>
           <Label htmlFor="audit-case">Case reference or ID</Label>
-          <Input
-            id="audit-case"
-            className="mt-1 h-11 lg:h-9"
-            placeholder="AGC-INT-000012"
-            value={caseInput}
-            onChange={(e) => {
-              setCaseInput(e.target.value);
-              if (!e.target.value) onChange({ caseId: undefined });
-            }}
-          />
+          <Popover open={caseOpen} onOpenChange={setCaseOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                id="audit-case"
+                type="button"
+                variant="outline"
+                role="combobox"
+                aria-expanded={caseOpen}
+                className="mt-1 h-11 w-full justify-between font-normal lg:h-9"
+              >
+                <span className="truncate">{caseLabel || "Any case"}</span>
+                <ChevronsUpDown className="size-4 shrink-0 opacity-50" aria-hidden />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+              <Command shouldFilter={false}>
+                <CommandInput
+                  placeholder="Search by reference or title…"
+                  value={caseLabel}
+                  onValueChange={(v) => {
+                    setCaseLabel(v);
+                    if (!v) onChange({ caseId: undefined });
+                    else if (UUID_RE.test(v)) onChange({ caseId: v });
+                  }}
+                />
+                <CommandList>
+                  {caseResults.isFetching ? (
+                    <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
+                      <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
+                      Searching…
+                    </div>
+                  ) : (
+                    <CommandEmpty>No case found.</CommandEmpty>
+                  )}
+                  <CommandGroup>
+                    {(caseResults.data?.items ?? []).map((c) => (
+                      <CommandItem key={c.id} value={c.id} onSelect={() => pickCase(c)}>
+                        <span className="flex min-w-0 flex-col">
+                          <span className="font-medium">{c.referenceNumber}</span>
+                          <span className="truncate text-xs text-muted-foreground">{c.title}</span>
+                        </span>
+                        <Check
+                          className={cn(
+                            "ml-auto size-4",
+                            c.id === value.caseId ? "opacity-100" : "opacity-0",
+                          )}
+                          aria-hidden
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div>
@@ -126,6 +191,7 @@ export function AuditFiltersBar({ value, onChange, onClear, loading }: Props) {
             id="audit-from"
             value={value.createdFrom ?? ""}
             onChange={(v) => onChange({ createdFrom: v || undefined })}
+            max={value.createdTo}
             aria-invalid={invalidRange || undefined}
           />
         </div>
@@ -135,6 +201,7 @@ export function AuditFiltersBar({ value, onChange, onClear, loading }: Props) {
             id="audit-to"
             value={value.createdTo ?? ""}
             onChange={(v) => onChange({ createdTo: v || undefined })}
+            min={value.createdFrom}
             aria-invalid={invalidRange || undefined}
           />
         </div>

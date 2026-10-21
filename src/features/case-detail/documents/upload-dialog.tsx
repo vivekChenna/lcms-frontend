@@ -13,6 +13,7 @@ import {
 import { ResponsiveDialog } from "@/components/common/responsive-dialog";
 import { SelectedFiles } from "@/components/common/selected-files";
 import { ApiError } from "@/lib/api/errors";
+import type { DocumentDto } from "@/lib/api/types";
 import { DOCUMENT_CATEGORIES, useUploadDocument } from "./use-documents";
 
 type Category = (typeof DOCUMENT_CATEGORIES)[number];
@@ -36,6 +37,12 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   /** The category the picker starts on (the close dialog starts it on "Closure Document"). */
   defaultCategory?: Category;
+  /** Caps how many files may be staged in this dialog at once (the close dialog passes however
+   * many of its own 5-document limit are left); picking past it is refused with a toast. Unset
+   * means no limit. */
+  maxFiles?: number;
+  /** Called once per file that finishes uploading, with the documents the server created. */
+  onUploaded?: (docs: DocumentDto[]) => void;
 };
 
 /**
@@ -43,7 +50,14 @@ type Props = {
  * Files upload one by one; the ones that go through leave the list, a rejected one stays with its
  * reason so it can be removed or retried without redoing the rest.
  */
-export function UploadDialog({ caseId, open, onOpenChange, defaultCategory = "Other" }: Props) {
+export function UploadDialog({
+  caseId,
+  open,
+  onOpenChange,
+  defaultCategory = "Other",
+  maxFiles,
+  onUploaded,
+}: Props) {
   const upload = useUploadDocument(caseId);
   const [category, setCategory] = useState<Category>(defaultCategory);
   const [staged, setStaged] = useState<Staged[]>([]);
@@ -52,6 +66,10 @@ export function UploadDialog({ caseId, open, onOpenChange, defaultCategory = "Ot
 
   const addFiles = (fileList: FileList | File[]) => {
     const picked = Array.from(fileList);
+    if (maxFiles !== undefined && staged.length + picked.length > maxFiles) {
+      toast.error(`You can upload at most ${maxFiles} documents at a time.`);
+      return;
+    }
     setStaged((prev) => [
       ...prev,
       ...picked.map((file) => {
@@ -71,11 +89,11 @@ export function UploadDialog({ caseId, open, onOpenChange, defaultCategory = "Ot
 
   const submit = async () => {
     setUploading(true);
-    let sent = 0;
+    const uploaded: DocumentDto[] = [];
     for (const item of sendable) {
       try {
-        await upload.mutateAsync({ file: item.file, category });
-        sent += 1;
+        const doc = await upload.mutateAsync({ file: item.file, category });
+        uploaded.push(doc);
         setStaged((prev) => prev.filter((s) => s.id !== item.id));
       } catch (err) {
         const message = err instanceof ApiError ? err.message : "Upload failed";
@@ -83,9 +101,14 @@ export function UploadDialog({ caseId, open, onOpenChange, defaultCategory = "Ot
       }
     }
     setUploading(false);
-    if (sent > 0) toast.success(sent === 1 ? "Document uploaded" : `${sent} documents uploaded`);
+    if (uploaded.length > 0) {
+      toast.success(
+        uploaded.length === 1 ? "Document uploaded" : `${uploaded.length} documents uploaded`,
+      );
+      onUploaded?.(uploaded);
+    }
     // everything went through: nothing left to look at
-    if (sent === staged.length) close();
+    if (uploaded.length === staged.length) close();
   };
 
   return (

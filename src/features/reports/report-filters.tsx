@@ -111,6 +111,7 @@ export function ReportFilters({ value, onChange, onClear }: Props) {
             id="report-from"
             value={value.createdFrom ?? ""}
             onChange={(v) => onChange({ createdFrom: v || undefined })}
+            max={value.createdTo}
             aria-invalid={invalidRange || undefined}
           />
         </div>
@@ -120,6 +121,7 @@ export function ReportFilters({ value, onChange, onClear }: Props) {
             id="report-to"
             value={value.createdTo ?? ""}
             onChange={(v) => onChange({ createdTo: v || undefined })}
+            min={value.createdFrom}
             aria-invalid={invalidRange || undefined}
           />
         </div>
